@@ -2,15 +2,17 @@ import type { Config } from 'jest';
 import nextJest from 'next/jest';
 
 const createJestConfig = nextJest({
-  // Provide the path to your Next.js app to load next.config.js and .env files in your test environment
   dir: './',
 });
 
-// Add any custom config to be passed to Jest
 const config: Config = {
   coverageProvider: 'v8',
   testEnvironment: 'jsdom',
-  // Add more setup options before each test is run
+  testEnvironmentOptions: {
+    customExportConditions: [''],
+  },
+  // fetch 폴리필 (MSW 2.x + jsdom 환경)
+  setupFiles: ['<rootDir>/jest.polyfills.js'],
   setupFilesAfterEnv: ['<rootDir>/src/__tests__/setup.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -32,5 +34,16 @@ const config: Config = {
   },
 };
 
-// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-export default createJestConfig(config);
+// Next.js의 기본 설정을 확장하되, transformIgnorePatterns를 재정의
+async function jestConfig() {
+  const nextJestConfig = await createJestConfig(config)();
+  return {
+    ...nextJestConfig,
+    // MSW 2.x ESM 패키지들을 변환 대상에 포함
+    transformIgnorePatterns: [
+      '/node_modules/(?!(msw|@mswjs|undici|rettime|is-network-error|outvariant|@open-draft|@bundled-es-modules)/)',
+    ],
+  };
+}
+
+export default jestConfig;

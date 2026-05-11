@@ -14,7 +14,7 @@
  */
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface SessionState {
   sajuResultId: string | null;
@@ -75,8 +75,9 @@ export const useSessionStore = create<SessionStore>()(
       },
     }),
     {
-      name: 'session-storage', // localStorage key
-      // persist할 필드 지정
+      name: 'ssaju-session', // sessionStorage key
+      storage: createJSONStorage(() => sessionStorage), // sessionStorage 사용 (탭 닫으면 삭제)
+      // persist할 필드만 선택 (currentAnalysisData, isAnalyzing은 메모리만)
       partialize: (state) => ({
         sajuResultId: state.sajuResultId,
         lastAnalysisType: state.lastAnalysisType,
