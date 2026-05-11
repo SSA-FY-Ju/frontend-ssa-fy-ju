@@ -1,0 +1,18 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd /Users/glory/Desktop/SSAju && bash << 'HOOK_EOF'\nset -e\n\n# Build 확인\necho \"🔨 Build 확인 중...\"\ncd ssaju-frontend/\nif ! npm run build > /tmp/build.log 2>&1; then\n  echo \"❌ Build 실패. 코드 수정 후 다시 시도하세요.\"\n  exit 1\nfi\ncd ..\n\n# 변경된 파일 확인\nif [ $(git status --porcelain | wc -l) -eq 0 ]; then\n  exit 0\nfi\n\n# 현재 브랜치 (main 제외)\nBRANCH=$(git rev-parse --abbrev-ref HEAD)\nif [ \"$BRANCH\" = \"main\" ]; then\n  exit 0\nfi\n\n# Git add\necho \"📝 변경사항 스테이징 중...\"\ngit add .\n\n# Commit\nCOMMIT_MSG=\"chore: auto-commit - build passed\"\ngit commit -m \"$COMMIT_MSG\" 2>/dev/null || exit 0\n\n# Push\necho \"🚀 Push 중...\"\nif git push origin \"$BRANCH\" 2>/dev/null; then\n  # PR 생성\n  echo \"📋 PR 생성 중...\"\n  if gh pr create --fill 2>/dev/null; then\n    echo \"✅ 완료! PR이 생성되었습니다.\"\n  else\n    echo \"⚠️ PR 생성 실패. 수동으로 생성하세요: gh pr create --fill\"\n  fi\nelse\n  echo \"⚠️ Push 실패. 수동으로 처리하세요.\"\nfi\nHOOK_EOF\n",
+            "timeout": 180,
+            "statusMessage": "🔄 자동 Git workflow 실행 중...",
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global Styles */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-night-900 text-white font-body;
+  margin: 0;
+  padding: 0;
+}
+
+/* Custom Components */
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 bg-star-500 text-night-900 rounded-md font-semibold hover:bg-star-400 transition-colors;
+  }
+
+  .btn-secondary {
+    @apply px-4 py-2 bg-night-800 text-star-500 border border-star-500 rounded-md font-semibold hover:bg-night-700 transition-colors;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 bg-night-800 text-white border border-night-700 rounded-md focus:outline-none focus:border-star-500 transition-colors;
+  }
+
+  .card {
+    @apply bg-night-800 rounded-lg p-6 shadow-md border border-night-700;
+  }
+
+  .section-title {
+    @apply text-2xl font-heading font-bold text-star-400;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 215, 0, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 215, 0, 0.5);
+}
