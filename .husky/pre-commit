@@ -1,0 +1,19 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Pre-commit 훅: Build 확인 의무
+# npm run build가 성공해야 commit 가능
+
+echo "🔍 Running pre-commit checks..."
+echo "📦 Building project..."
+
+npm run build
+
+if [ $? -ne 0 ]; then
+  echo "❌ Build failed. Commit aborted."
+  echo "Please fix the errors and try again."
+  exit 1
+fi
+
+echo "✅ Build passed. Commit allowed."
+exit 0

@@ -27,6 +27,7 @@ interface ErrorStore {
   // State
   globalError: GlobalError | null;
   toastQueue: Toast[];
+  isLoading: boolean;
 
   // Actions
   setGlobalError: (error: GlobalError | null) => void;
@@ -34,6 +35,7 @@ interface ErrorStore {
   removeToast: (id: string) => void;
   clearToasts: () => void;
   clearGlobalError: () => void;
+  setIsLoading: (loading: boolean) => void;
   reset: () => void;
 }
 
@@ -41,6 +43,7 @@ export const useErrorStore = create<ErrorStore>((set) => ({
   // Initial state
   globalError: null,
   toastQueue: [],
+  isLoading: false,
 
   // Actions
   setGlobalError: (error: GlobalError | null) => {
@@ -67,10 +70,15 @@ export const useErrorStore = create<ErrorStore>((set) => ({
     set({ globalError: null });
   },
 
+  setIsLoading: (loading: boolean) => {
+    set({ isLoading: loading });
+  },
+
   reset: () => {
     set({
       globalError: null,
       toastQueue: [],
+      isLoading: false,
     });
   },
 }));
