@@ -17,7 +17,11 @@ const config: Config = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
-  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+  testPathIgnorePatterns: [
+    '<rootDir>/.next/',
+    '<rootDir>/node_modules/',
+    '<rootDir>/src/__tests__/setup.ts', // 테스트 파일이 아닌 설정 파일
+  ],
   collectCoverageFrom: [
     'src/**/*.{js,jsx,ts,tsx}',
     '!src/**/*.d.ts',
@@ -43,6 +47,8 @@ async function jestConfig() {
     transformIgnorePatterns: [
       '/node_modules/(?!(msw|@mswjs|undici|rettime|is-network-error|outvariant|@open-draft|@bundled-es-modules)/)',
     ],
+    // *.test.ts(x) / *.spec.ts(x) 파일만 테스트로 인식 (setup.ts 제외)
+    testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
   };
 }
 
