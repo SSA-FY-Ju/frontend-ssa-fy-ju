@@ -134,9 +134,9 @@
 ### 2.5 Jest 테스트 인프라 및 초기 커버리지
 
 - [x] T033 `__tests__/setup.ts` - Jest 설정 (MSW, Zustand, localStorage 모킹)
-- [ ] T034 `__tests__/hooks/useCareerTiming.test.ts` - 기본 훅 테스트 (성공, 타임아웃, 재시도)
+- [x] T034 `__tests__/hooks/useCareerTiming.test.ts` - 기본 훅 테스트 (성공, 타임아웃, 재시도)
 - [x] T035 `__tests__/utils/validation.test.ts` - Zod 검증 테스트
-- [ ] T036 `__tests__/components/InputForm.test.ts` - 폼 렌더링, 검증 에러 표시
+- [x] T036 `__tests__/components/InputForm.test.ts` - 폼 렌더링, 검증 에러 표시
 
 ---
 
