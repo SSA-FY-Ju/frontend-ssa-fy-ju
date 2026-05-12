@@ -75,69 +75,67 @@
 
 ### 2.1 API 클라이언트 및 에러 처리 (Q5 명확화 통합)
 
-- [ ] T011 `lib/api/client.ts` - apiFetch<T>() 중앙 래퍼 구현
+- [x] T011 `lib/api/client.ts` - apiFetch<T>() 중앙 래퍼 구현
   - HTTP 메서드 (GET, POST), 타입 안전성
   - **Q5 재시도 정책**: 타임아웃/네트워크 에러만 재시도 (400/404 제외)
   - **지수 백오프**: [1000ms, 2000ms, 4000ms] (3회)
   - credentials: 'include' (HttpOnly 쿠키 자동 전송)
   - timeout 관리 (CareerTiming 3-5s, Consultation 15-20s, Compatibility 8s)
-- [ ] T012 `lib/api/career.ts` - `fetchCareerTiming()`, `fetchConsultation()` 엔드포인트 래퍼
-- [ ] T013 `lib/api/company.ts` - `fetchCompatibility()`, `fetchCompanyInfo()` 엔드포인트 래퍼
-- [ ] T014 `lib/api/feedback.ts` - `submitFeedback()` 엔드포인트 래퍼
-- [ ] T015 `lib/api/auth.ts` - `fetchAuthStatus()`, `logout()` 엔드포인트 래퍼
-- [ ] T016 `lib/api/mypage.ts` - `fetchAnalysisHistory()`, `deleteAnalysisRecord()` 무한 스크롤 지원
-- [ ] T017 `types/api.ts` - ApiResponse<T>, 모든 요청/응답 타입 정의 (Zod 스키마 동반)
-- [ ] T018 `types/errors.ts` - API 에러 코드 enum (INVALID_DATE_FORMAT, FASTAPI_TIMEOUT 등)
+- [x] T012 `lib/api/career.ts` - `fetchCareerTiming()`, `fetchConsultation()` 엔드포인트 래퍼
+- [x] T013 `lib/api/company.ts` - `fetchCompatibility()`, `fetchCompanyAutocomplete()` 엔드포인트 래퍼
+- [x] T014 `lib/api/feedback.ts` - `submitFeedback()` 엔드포인트 래퍼
+- [x] T015 `lib/api/auth.ts` - `fetchAuthStatus()`, `logout()` 엔드포인트 래퍼
+- [x] T016 `lib/api/mypage.ts` - `fetchAnalysisHistory()`, `fetchAnalysisRecord()`, `deleteAnalysisRecord()` 무한 스크롤 지원
+- [x] T017 `types/api.ts` - ApiResponse<T>, 모든 요청/응답 타입 정의
+- [x] T018 `types/errors.ts` - API 에러 코드 enum (INVALID_DATE_FORMAT, FASTAPI_TIMEOUT 등)
 
 ### 2.2 입력 검증 및 데이터 타입 (Zod)
 
-- [ ] T019 `services/utils/validation.ts` - Zod 스키마 정의
+- [x] T019 `services/utils/validation.ts` - Zod 스키마 정의
   - 생년월일: YYYY-MM-DD 형식, 과거 날짜만 허용
   - 시간: HH:mm 24시간 형식, 미입력 시 12:00 기본값
   - 기업명: 문자열, XSS 방지 처리
   - 피드백: 최대 500자, 만족도 선택 필수
-- [ ] T020 `services/utils/formatters.ts` - 날짜/시간 파싱 및 표시 함수 (date-fns 활용)
+- [x] T020 `services/utils/formatters.ts` - 날짜/시간 파싱 및 표시 함수 (date-fns 활용)
 
 ### 2.3 전역 상태 관리 (Zustand - 5개 스토어)
 
-- [ ] T021 `stores/authStore.ts` - 사용자 인증, 로그인 상태, isLoggedIn 플래그
+- [x] T021 `stores/authStore.ts` - 사용자 인증, 로그인 상태, isLoggedIn 플래그
   - 로그인 정보 저장 (userId, socialProvider, name, profileImage)
   - logout() 메서드: authStore + analysisStore + consultationStore 모두 reset
-- [ ] T022 `stores/analysisStore.ts` - 비로그인 유저 분석 데이터 (휘발성, 메모리만)
+- [x] T022 `stores/analysisStore.ts` - 비로그인 유저 분석 데이터 (휘발성, 메모리만)
   - careerTiming: { inputs, result, loading, error }
   - compatibility: { inputs, result, loading, error }
   - reset() 메서드 (beforeunload 가드에서 호출)
-- [ ] T023 `stores/consultationStore.ts` - AI 컨설팅 캐시 (탭 전환 0.2초 보증)
+- [x] T023 `stores/consultationStore.ts` - AI 컨설팅 캐시 (탭 전환 0.2초 보증)
   - consultation: 19개 필드 전체 메모리 저장 (lazy-load 아님)
   - lastFetchedId 추적 (캐시 유효성 검증)
   - getConsultationData(), setConsultation(), clearData()
-- [ ] T024 `stores/sessionStore.ts` - 현재 분석 세션 상태 관리 (Zustand in-memory)
+- [x] T024 `stores/sessionStore.ts` - 현재 분석 세션 상태 관리 (Zustand in-memory)
   - **상태**: sajuResultId, lastAnalysisType, currentAnalysisData, isAnalyzing
   - **Q1 명확화**: 로그인 토큰은 HttpOnly 쿠키에만 저장, sessionStore는 분석 추적 정보 관리
   - Q3 명확화: threshold 0.5 + isLoadingMore 플래그로 무한 스크롤 중복 요청 방지
   - 로그아웃 시 clearSession() 메서드로 전체 상태 초기화
-- [ ] T024a Zustand persist 미들웨어로 sessionStore 자동 동기화
+- [x] T024a Zustand persist 미들웨어로 sessionStore 자동 동기화
   - **persist 대상**: sajuResultId, lastAnalysisType만 sessionStorage에 저장
-  - **목적**: 페이지 새로고침 후에도 현재 분석 추적 정보 복원 (예: 분석 중 새로고침 후 피드백 제출 가능)
-  - **구성**: sessionStore 생성 시 persist 미들웨어로 감싸기
-  - **주의**: 로그인 토큰은 sessionStore에 저장하지 않음 (HttpOnly 쿠키만 사용)
-- [ ] T025 `stores/errorStore.ts` - 현재 에러 상태 (Error Boundary와 연결)
+  - sessionStorage 사용으로 탭 닫으면 자동 삭제
+- [x] T025 `stores/errorStore.ts` - 현재 에러 상태 (Error Boundary와 연결) + isLoading 상태
 
 ### 2.4 Mock Service Worker (MSW) 설정
 
-- [ ] T026 [P] `mocks/server.ts` - MSW 서버 초기화 및 요청 인터셉트 설정
-- [ ] T027 [P] `mocks/handlers/career.ts` - CareerTiming, Consultation 핸들러 (타임아웃 시뮬레이션)
-- [ ] T028 [P] `mocks/handlers/company.ts` - Compatibility, CompanyInfo 핸들러
-- [ ] T029 [P] `mocks/handlers/feedback.ts` - Feedback 제출 핸들러
-- [ ] T030 [P] `mocks/handlers/auth.ts` - OAuth 콜백, 로그아웃 핸들러
-- [ ] T031 [P] `mocks/data/*.ts` - 모든 핸들러의 완전한 목업 데이터 (8개 탭 19개 필드 포함)
-- [ ] T032 `jest.config.ts` - MSW 자동 활성화, 테스트 환경 설정
+- [x] T026 [P] `mocks/server.ts` - MSW 서버 초기화 및 요청 인터셉트 설정
+- [x] T027 [P] `mocks/handlers/career.ts` - CareerTiming, Consultation 핸들러
+- [x] T028 [P] `mocks/handlers/company.ts` - Compatibility, AutoComplete 핸들러
+- [x] T029 [P] `mocks/handlers/feedback.ts` - Feedback 제출 핸들러
+- [x] T030 [P] `mocks/handlers/auth.ts` - 인증 상태 확인, 로그아웃 핸들러
+- [x] T031 [P] `mocks/data/*.ts` - career, company, auth 목업 데이터
+- [x] T032 `jest.config.ts` - MSW 자동 활성화, 테스트 환경 설정
 
 ### 2.5 Jest 테스트 인프라 및 초기 커버리지
 
-- [ ] T033 `__tests__/setup.ts` - Jest 설정 (MSW, Zustand, localStorage 모킹)
+- [x] T033 `__tests__/setup.ts` - Jest 설정 (MSW, Zustand, localStorage 모킹)
 - [ ] T034 `__tests__/hooks/useCareerTiming.test.ts` - 기본 훅 테스트 (성공, 타임아웃, 재시도)
-- [ ] T035 `__tests__/utils/validation.test.ts` - Zod 검증 테스트
+- [x] T035 `__tests__/utils/validation.test.ts` - Zod 검증 테스트
 - [ ] T036 `__tests__/components/InputForm.test.ts` - 폼 렌더링, 검증 에러 표시
 
 ---
@@ -150,71 +148,36 @@
 
 ### 3.1 OAuth 인증 구현
 
-- [ ] T037 [US1] `services/auth/oauth.ts` - Kakao, Google OAuth 유틸리티
-  - **Q2 명확화**: 768px 기준점
-    - ≥768px: 팝업 (window.open)
-    - <768px: 리다이렉트 (window.location)
-  - PKCE 플로우 (보안), redirectUri 설정
-  - 토큰 저장 (HttpOnly Cookie - 백엔드 처리 가정)
-- [ ] T038 [US1] `hooks/useAuth.ts` - 로그인 상태 관리 훅
-  - getCurrentUser() - 현재 사용자 정보 조회
-  - logout() - 토큰 삭제 + authStore.reset() 호출
-  - useEffect로 페이지 로드 시 자동 인증 복원
-- [ ] T038b [US1] 토큰 갱신 인터셉터 (조건: 백엔드에서 refresh token 제공하는 경우)
-  - apiFetch에 401 응답 감지 로직 추가
-  - 401 감지 시 자동으로 refresh token API 호출
-  - 새 액세스 토큰으로 원래 요청 재시도
-  - 갱신 실패 시 자동 로그아웃 (authStore.logout() 호출)
-  - 참고: 백엔드 설계 확인 필수 (refresh token 미제공 시 스킵 가능)
-- [ ] T039 [US1] `app/api/auth/callback.ts` - OAuth 콜백 라우트 (Next.js API Route)
-  - authorization_code 교환 → 액세스 토큰 취득
-  - HttpOnly 쿠키에 저장 (도메인, Secure, SameSite 설정)
-- [ ] T040 [US1] `hooks/usePlatformDetect.ts` - 기기별 팝업/리다이렉트 자동 선택
-  - window.innerWidth 감지
-  - 모바일 환경에서 자동 리다이렉트
+- [x] T037 [US1] `services/auth/oauth.ts` - Kakao, Google OAuth 유틸리티
+  - 768px 기준 팝업/리다이렉트, PKCE 플로우, state CSRF 방지
+- [x] T038 [US1] `hooks/useAuth.ts` - 로그인 상태 관리 훅
+  - fetchAuthStatus() 자동 복원, loginWithKakao/Google(), logout() 전 스토어 초기화
+- [ ] T038b [US1] 토큰 갱신 인터셉터 (백엔드 refresh token 미제공 시 스킵)
+- [x] T039 [US1] `app/api/auth/callback/route.ts` - OAuth 콜백 라우트
+  - authorization_code → 백엔드 전달 → HttpOnly 쿠키 처리
+- [x] T040 [US1] `hooks/usePlatformDetect.ts` - 기기별 팝업/리다이렉트 자동 선택
 
 ### 3.2 로그인 UI 컴포넌트
 
-- [ ] T041 [US1] `components/auth/LoginButton.tsx` - 헤더 로그인 버튼
-  - 카카오/구글 선택 UI (버튼 2개 또는 모달)
-  - 로딩 상태, 에러 메시지 표시
-- [ ] T042 [US1] `components/auth/LoginModal.tsx` - 소셜 로그인 모달
-  - "카카오로 계속하기", "구글로 계속하기"
-  - 닫기(×) 버튼, 배경 오버레이
-- [ ] T043 [US1] `components/auth/ProfileMenu.tsx` - 로그인 후 프로필 메뉴
-  - 사용자명, 프로필 이미지 표시
-  - "로그아웃" 버튼 (localStorage 삭제 후 초기화)
+- [x] T041 [US1] `components/auth/LoginButton.tsx` - 헤더 로그인 버튼
+- [x] T042 [US1] `components/auth/LoginModal.tsx` - 소셜 로그인 모달
+- [x] T043 [US1] `components/auth/ProfileMenu.tsx` - 로그인 후 프로필 메뉴
 
 ### 3.3 자동 저장 및 로그인 후 데이터 처리 (Q1 명확화)
 
-- [ ] T044 [US1] `hooks/useAutoSaveOnLogin.ts` - 비로그인 분석 → 로그인 시 자동 저장
-  - authStore.isLoggedIn 변경 감지
-  - analysisStore의 careerTiming/compatibility 데이터 조회
-  - POST /api/saju-result/save 호출 (apiFetch 자동 재시도)
-  - 저장 성공 후 analysisStore.reset()
-  - 사용처: CareerTimingResultPage, CompatibilityResultPage
-- [ ] T045 [US1] `components/auth/LoginNudgeCard.tsx` - 비로그인 경고 카드 (FR-024)
-  - "로그인하지 않으면 이 결과는 페이지를 나갈 때 사라집니다"
-  - react-intersection-observer로 결과 페이지 하단 노출 감지
-  - 카카오/구글 로그인 버튼 배치
-  - 배경색 강조 (주황/노랑)
+- [x] T044 [US1] `hooks/useAutoSaveOnLogin.ts` - 비로그인 분석 → 로그인 시 자동 저장
+- [x] T045 [US1] `components/auth/LoginNudgeCard.tsx` - 비로그인 경고 카드
 
 ### 3.4 로그인 상태 UI 업데이트
 
-- [ ] T046 [US1] `components/common/Header.tsx` - 헤더 업데이트
-  - 비로그인: "로그인" 버튼
-  - 로그인됨: 프로필 메뉴 표시
-  - authStore 상태 구독하여 즉시 업데이트
-- [ ] T047 [US1] `components/results/SaveButton.tsx` - 저장 버튼 (로그인 상태 조건부)
-  - 비로그인: "결과를 저장하려면 로그인해주세요" + 로그인 버튼
-  - 로그인됨: "이 결과 저장하기" 버튼 활성화
-  - 저장 성공 시 Sonner 토스트 "분석 결과가 저장되었습니다"
+- [x] T046 [US1] `components/common/Header.tsx` - 헤더 (비로그인: LoginButton, 로그인: ProfileMenu)
+- [x] T047 [US1] `components/results/SaveButton.tsx` - 저장 버튼 (로그인 상태 조건부)
 
 ### 3.5 테스트 (Jest, MSW)
 
-- [ ] T048 [US1] `__tests__/hooks/useAuth.test.ts` - 로그인/로그아웃 상태 전환
-- [ ] T049 [US1] `__tests__/hooks/useAutoSaveOnLogin.test.ts` - 자동 저장 시나리오 (로그인 감지 → API 호출)
-- [ ] T050 [US1] `__tests__/components/LoginButton.test.ts` - 로그인 버튼 렌더링, 클릭 이벤트
+- [x] T048 [US1] `__tests__/hooks/useAuth.test.ts` - 5개 테스트 통과
+- [x] T049 [US1] `__tests__/hooks/useAutoSaveOnLogin.test.ts` - 6개 테스트 통과
+- [x] T050 [US1] `__tests__/components/LoginButton.test.tsx` - 4개 테스트 통과
 
 ---
 

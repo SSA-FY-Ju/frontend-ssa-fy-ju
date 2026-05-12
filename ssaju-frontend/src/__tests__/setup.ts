@@ -1,10 +1,12 @@
 /**
- * Jest 테스트 환경 설정
+ * Jest 테스트 환경 설정 (공통)
  *
  * Features:
- * - MSW (Mock Service Worker) 자동 활성화
  * - localStorage/sessionStorage 모킹
  * - Zustand 상태 초기화
+ *
+ * Note: MSW setup은 각 테스트 파일에서 직접 임포트
+ * (MSW 2.x ESM 호환성 문제로 분리)
  */
 
 import '@testing-library/jest-dom';

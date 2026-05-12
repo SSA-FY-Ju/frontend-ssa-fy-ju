@@ -1,0 +1,71 @@
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+
+/**
+ * 로그인 후 프로필 메뉴
+ */
+export function ProfileMenu() {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const { user, logout } = useAuth();
+
+  // 외부 클릭 시 메뉴 닫기
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  if (!user) return null;
+
+  const handleLogout = async () => {
+    setIsOpen(false);
+    await logout();
+  };
+
+  return (
+    <div ref={menuRef} className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-night-700"
+        aria-expanded={isOpen}
+        aria-label="프로필 메뉴"
+      >
+        {user.profileImage ? (
+          <img
+            src={user.profileImage}
+            alt={user.name}
+            className="h-8 w-8 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-star-500 text-sm font-bold text-night-900">
+            {user.name.charAt(0)}
+          </div>
+        )}
+        <span className="text-sm text-white">{user.name}</span>
+        <span className="text-xs text-gray-400">{isOpen ? '▲' : '▼'}</span>
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-night-700 bg-night-800 py-1 shadow-xl">
+          <div className="border-b border-night-700 px-4 py-2">
+            <p className="text-sm font-medium text-white">{user.name}</p>
+            {user.email && <p className="text-xs text-gray-400">{user.email}</p>}
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-night-700 transition-colors"
+          >
+            로그아웃
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

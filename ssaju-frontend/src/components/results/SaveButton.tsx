@@ -1,0 +1,86 @@
+'use client';
+
+import { useState } from 'react';
+import { useAuthStore } from '@/stores/authStore';
+import { LoginModal } from '@/components/auth/LoginModal';
+import { useAuth } from '@/hooks/useAuth';
+import { apiFetch } from '@/lib/api/client';
+import { useSessionStore } from '@/stores/sessionStore';
+import { toastUtils } from '@/lib/toast';
+
+interface SaveButtonProps {
+  analysisType: 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
+}
+
+/**
+ * 분석 결과 저장 버튼
+ *
+ * 로그인 상태에 따라:
+ * - 비로그인: "결과를 저장하려면 로그인해주세요" + 로그인 모달
+ * - 로그인됨: "이 결과 저장하기" 버튼
+ */
+export function SaveButton({ analysisType }: SaveButtonProps) {
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const { loginWithKakao, loginWithGoogle, isLoading, loginError } = useAuth();
+  const sajuResultId = useSessionStore((state) => state.sajuResultId);
+
+  const handleSave = async () => {
+    if (!sajuResultId) {
+      toastUtils.error('저장할 분석 결과가 없습니다');
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await apiFetch('/api/saju-result/save', {
+        method: 'POST',
+        body: { sajuResultId, analysisType },
+      });
+      toastUtils.success('분석 결과가 저장되었습니다');
+    } catch {
+      toastUtils.error('저장에 실패했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoggedIn) {
+    return (
+      <button
+        onClick={handleSave}
+        disabled={isSaving}
+        className="rounded-xl bg-star-500 px-6 py-3 font-medium text-night-900 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        {isSaving ? '저장 중...' : '이 결과 저장하기'}
+      </button>
+    );
+  }
+
+  return (
+    <>
+      <button
+        onClick={() => setIsModalOpen(true)}
+        className="rounded-xl border border-star-500/50 px-6 py-3 text-sm text-star-400 transition-colors hover:border-star-500 hover:text-star-300"
+      >
+        결과를 저장하려면 로그인해주세요
+      </button>
+
+      <LoginModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onKakaoLogin={async () => {
+          await loginWithKakao();
+          setIsModalOpen(false);
+        }}
+        onGoogleLogin={async () => {
+          await loginWithGoogle();
+          setIsModalOpen(false);
+        }}
+        isLoading={isLoading}
+        error={loginError}
+      />
+    </>
+  );
+}
