@@ -325,9 +325,11 @@
 ㅁ
 #### 2. API 호출 및 응답 처리
 
-- **FR-006**: 관운 분석 API 호출 시 요청 본문은 `{ "birthDate": "1990-10-10", "birthTime": "14:30" }` 형식. 응답은 `favoredPeriod` (H1/H2), `confidenceScore` (0-100), `reasoning` (문자열) 포함
+- **FR-006**: 관운 분석 API 호출 시 요청 본문은 `{ "birthDate": "1990-10-10", "birthTime": "14:30", "solarType": "SOLAR" }` 형식. (`solarType`: 양력/음력 구분, 기본값 "SOLAR"). 응답은 `sajuResultId`, `h1Period`, `h2Period`, `h1Confidence` (0-100), `h2Confidence` (0-100), `recommendation` (문자열) 포함
 
-- **FR-007**: AI 커리어 컨설팅 API는 **한 번의 POST 호출로 19개 필드를 모두 수신**. 예상 응답 시간은 15-20초. 이 시간 동안 로딩 스피너 + "AI 분석 중입니다..." 메시지 표시. 진행 시간을 사용자에게 명시(예: "약 20초 소요됩니다"). 응답 수신 후 모든 탭 데이터가 로드되어 탭 클릭 시 즉시(0.2초 이내) 전환 가능
+- **FR-007**: AI 커리어 컨설팅 API는 **한 번의 POST 호출로 8개 탭 데이터를 모두 수신** (Q5 결정 — Phase 1 MVP). 예상 응답 시간은 15-20초. 이 시간 동안 로딩 스피너 + "AI 분석 중입니다..." 메시지 표시. 응답 수신 후 모든 탭 데이터가 로드되어 탭 클릭 시 즉시(0.2초 이내) 전환 가능.
+  - **Phase 1 탭 (8개)**: 추천산업, 면접팁, 강점, 사주프로필, 부의운, 경력로드맵, 브랜딩, 월별운세
+  - **Phase 2 추가 탭**: 정신관리(`mentalCare`), 직장환경(`environmentFit`, `workStyle`, `relationshipStrategy`)
 
 - **FR-008**: 기업 궁합 분석 API는 다음 우선순위로 기업 정보 조회:
   1. 기업명 제공 시 → 공공데이터 API로 자동 조회
@@ -759,7 +761,7 @@
 
 ### Completeness & Coverage
 
-- **S-017**: ConsultationData의 19개 필드가 모두 누락 없이 렌더링되어야 함. 빈 필드는 허용하지 않음 (백엔드에서 항상 채워짐)
+- **S-017**: ConsultationData의 8개 탭 데이터(Phase 1)가 모두 누락 없이 렌더링되어야 함. 빈 필드는 허용하지 않음 (백엔드에서 항상 채워짐). Phase 2에서 정신관리·직장환경 탭 추가 예정
 
 - **S-018**: CompatibilityData의 모든 섹션(점수/직무/강점/주의/월별/마일스톤)이 사용자에게 표시되고, 각 정보가 명확하게 구분됨
 
