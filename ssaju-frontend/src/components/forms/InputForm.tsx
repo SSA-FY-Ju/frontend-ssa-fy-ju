@@ -1,16 +1,21 @@
 'use client';
 
 /**
- * 사주 분석 입력 폼 컴포넌트
+ * 사주 분석 입력 폼 (T051)
  *
  * 입력:
- * - 생년월일 (YYYY-MM-DD)
- * - 태어난 시간 (HH:mm, 선택 — 미입력 시 12:00 기본값)
+ * - 생년월일: react-datepicker 밤하늘 테마 캘린더
+ * - 태어난 시간: HH:mm 텍스트 입력 (미입력 시 12:00 기본값)
  *
- * Phase 4(T051)에서 react-datepicker 캘린더 UI로 업그레이드 예정
+ * 검증: useInputValidation 훅으로 실시간 Zod 검증
  */
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { format } from 'date-fns';
+import { ko } from 'date-fns/locale';
+import { useInputValidation } from '@/hooks/useInputValidation';
 
 interface InputFormProps {
   /** 분석 제출 콜백 */
@@ -19,88 +24,104 @@ interface InputFormProps {
   isLoading?: boolean;
 }
 
-const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
-const TIME_REGEX = /^([01]\d|2[0-3]):([0-5]\d)$/;
-
 export function InputForm({ onSubmit, isLoading = false }: InputFormProps) {
-  const [birthDate, setBirthDate] = useState('');
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [birthTime, setBirthTime] = useState('');
-  const [dateError, setDateError] = useState('');
-  const [timeError, setTimeError] = useState('');
+  const { errors, validateBirthDate, validateBirthTime, validateAll } = useInputValidation();
 
-  const validate = (): boolean => {
-    let valid = true;
+  /** 날짜 선택 핸들러 */
+  const handleDateChange = useCallback(
+    (date: Date | null) => {
+      setSelectedDate(date);
+      if (date) {
+        // 실시간 검증
+        validateBirthDate(format(date, 'yyyy-MM-dd'));
+      }
+    },
+    [validateBirthDate],
+  );
 
-    // 생년월일 검증 (필수)
-    if (!birthDate) {
-      setDateError('생년월일을 입력해주세요.');
-      valid = false;
-    } else if (!DATE_REGEX.test(birthDate)) {
-      setDateError('생년월일 형식이 올바르지 않습니다 (YYYY-MM-DD)');
-      valid = false;
-    } else {
-      setDateError('');
-    }
+  /** 시간 입력 핸들러 */
+  const handleTimeChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setBirthTime(e.target.value);
+      validateBirthTime(e.target.value);
+    },
+    [validateBirthTime],
+  );
 
-    // 시간 검증 (선택)
-    if (birthTime && !TIME_REGEX.test(birthTime)) {
-      setTimeError('시간 형식이 올바르지 않습니다 (HH:mm)');
-      valid = false;
-    } else {
-      setTimeError('');
-    }
+  /** 폼 제출 핸들러 */
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      const birthDateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
+      if (!validateAll(birthDateStr, birthTime)) return;
 
-    return valid;
-  };
+      // 시간 미입력 시 12:00 기본값 적용
+      onSubmit(birthDateStr, birthTime || '12:00');
+    },
+    [selectedDate, birthTime, validateAll, onSubmit],
+  );
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    // 시간 미입력 시 정오(12:00) 기본값 적용
-    const resolvedTime = birthTime || '12:00';
-    onSubmit(birthDate, resolvedTime);
-  };
+  const birthDateStr = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : '';
 
   return (
     <form onSubmit={handleSubmit} aria-label="사주 분석 입력 폼">
-      <div>
-        <label htmlFor="birthDate">생년월일 (YYYY-MM-DD)</label>
-        <input
+      {/* 생년월일 입력 */}
+      <div className="mb-4">
+        <label htmlFor="birthDate" className="block text-star-300 text-sm font-medium mb-1">
+          생년월일
+        </label>
+        <DatePicker
           id="birthDate"
-          type="text"
-          value={birthDate}
-          onChange={(e) => setBirthDate(e.target.value)}
-          placeholder="예: 1990-10-10"
-          aria-required="true"
-          aria-describedby={dateError ? 'birthDate-error' : undefined}
+          selected={selectedDate}
+          onChange={handleDateChange}
+          dateFormat="yyyy-MM-dd"
+          maxDate={new Date()}
+          locale={ko}
+          placeholderText="예: 1990-10-10"
+          className="w-full bg-night-800 border border-night-700 text-white rounded px-3 py-2 focus:outline-none focus:border-star-500"
+          calendarClassName="bg-night-900 text-white border border-night-700"
+          required
+          aria-describedby={errors.birthDate ? 'birthDate-error' : undefined}
         />
-        {dateError && (
-          <p id="birthDate-error" role="alert" style={{ color: 'red' }}>
-            {dateError}
+        {errors.birthDate && (
+          <p id="birthDate-error" role="alert" className="mt-1 text-red-400 text-sm">
+            {errors.birthDate}
           </p>
         )}
       </div>
 
-      <div>
-        <label htmlFor="birthTime">태어난 시간 (HH:mm, 선택)</label>
+      {/* 시간 입력 */}
+      <div className="mb-6">
+        <label htmlFor="birthTime" className="block text-star-300 text-sm font-medium mb-1">
+          태어난 시간 <span className="text-night-700 text-xs">(선택)</span>
+        </label>
         <input
           id="birthTime"
           type="text"
           value={birthTime}
-          onChange={(e) => setBirthTime(e.target.value)}
+          onChange={handleTimeChange}
           placeholder="예: 14:30"
-          aria-describedby={timeError ? 'birthTime-error' : undefined}
+          className="w-full bg-night-800 border border-night-700 text-white rounded px-3 py-2 focus:outline-none focus:border-star-500"
+          aria-describedby="birthTime-hint"
         />
-        <p>시간이 미상인 경우 정오(12:00)로 분석합니다</p>
-        {timeError && (
-          <p id="birthTime-error" role="alert" style={{ color: 'red' }}>
-            {timeError}
+        <p id="birthTime-hint" className="mt-1 text-night-700 text-xs">
+          시간이 미상인 경우 정오(12:00)로 분석합니다
+        </p>
+        {errors.birthTime && (
+          <p role="alert" className="mt-1 text-red-400 text-sm">
+            {errors.birthTime}
           </p>
         )}
       </div>
 
-      <button type="submit" disabled={!birthDate || isLoading}>
+      {/* 제출 버튼 */}
+      <button
+        type="submit"
+        disabled={!birthDateStr || isLoading}
+        className="w-full bg-star-500 hover:bg-star-400 disabled:bg-night-700 disabled:cursor-not-allowed text-night-900 font-bold py-3 px-6 rounded transition-colors"
+      >
         {isLoading ? '분석 중...' : '분석하기'}
       </button>
     </form>

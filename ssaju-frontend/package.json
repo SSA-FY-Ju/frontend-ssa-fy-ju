@@ -14,11 +14,13 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
+    "@types/react-datepicker": "^6.2.0",
     "axios": "^1.6.0",
     "date-fns": "^2.30.0",
     "framer-motion": "^10.16.0",
     "next": "^14.0.0",
     "react": "^18.2.0",
+    "react-datepicker": "^9.1.0",
     "react-dom": "^18.2.0",
     "recharts": "^2.10.0",
     "sonner": "^1.0.0",

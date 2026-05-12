@@ -189,20 +189,20 @@
 
 ### 4.1 입력 폼 및 검증
 
-- [ ] T051 [US3] `components/forms/InputForm.tsx` - 생년월일/시간 입력 폼
+- [x] T051 [US3] `components/forms/InputForm.tsx` - 생년월일/시간 입력 폼
   - 생년월일: react-datepicker로 커스텀 캘린더 (밤하늘 테마 적용)
   - 시간: HH:mm 텍스트 입력 또는 타임 피커
   - 검증 에러: 필드 아래 인라인 빨간색 메시지
   - 미입력 시 12:00 기본값 안내 메시지 표시 (FR-003)
   - "분석하기" 버튼 활성화 조건: 생년월일 유효
-- [ ] T052 [US3] `hooks/useInputValidation.ts` - Zod 검증 훅
+- [x] T052 [US3] `hooks/useInputValidation.ts` - Zod 검증 훅
   - birthDate: YYYY-MM-DD, 과거 날짜만 (FR-001, FR-004)
   - birthTime: HH:mm 또는 빈값 (FR-002, FR-003)
   - 실시간 검증 + 에러 메시지 매핑
 
 ### 4.2 고지 문구 오버레이 (FR-055, FR-056, Q 명확화)
 
-- [ ] T053 [US3] `components/results/DisclaimerOverlay.tsx` - 고지 문구 전환 UI
+- [x] T053 [US3] `components/results/DisclaimerOverlay.tsx` - 고지 문구 전환 UI
   - **표현**: opacity: 0.5 다크 오버레이 + 중앙 흰색 텍스트
   - **문구**: "본 사주는 재미로 보는 것이니 참고만 바랍니다"
   - **폰트 크기** (반응형):
@@ -215,61 +215,61 @@
   - **사용자 입력 차단**: `pointer-events: none` (터치/클릭 불가)
   - **접근성**: `role="alert" aria-live="assertive"` (스크린 리더)
   - **성능**: 60fps 이상 애니메이션 (Framer Motion 최적화)
-- [ ] T054 [US3] `hooks/useDisclaimerTimer.ts` - 고지 문구 타이밍 관리 훅
+- [x] T054 [US3] `hooks/useDisclaimerTimer.ts` - 고지 문구 타이밍 관리 훅
   - 1.5초 카운트다운 (setTimeout 또는 framer-motion keyframes)
   - 500ms 페이드 트리거
   - 로딩 상태로 자동 전환
 
 ### 4.3 분석 API 호출 및 로딩
 
-- [ ] T055 [US3] `hooks/useCareerTiming.ts` - 관운 분석 훅 (타이밍 제어)
+- [x] T055 [US3] `hooks/useCareerTiming.ts` - 관운 분석 훅 (타이밍 제어)
   - submitAnalysis(birthDate, birthTime)
   - apiFetch로 POST /api/career/timing 호출 (타임아웃 3-5초)
   - 고지 문구 → 로딩 → 결과 UI 자동 연계
   - sajuResultId를 sessionStore에 저장 (피드백용)
   - 비로그인 시 analysisStore에 저장 (휘발성)
   - 로딩, 에러 상태 관리
-- [ ] T055b [US3] 중복 요청 방지 (Race Condition)
+- [x] T055b [US3] 중복 요청 방지 (Race Condition)
   - loading 상태일 때 "분석하기" 버튼 비활성화 (disabled={loading})
   - submitAnalysis 호출 시 즉시 loading = true 설정
   - useRef로 요청 추적하여 동시 다중 API 호출 방지
   - 참고: useConsultation, useCompatibility도 동일 패턴 적용
-- [ ] T056 [US3] `components/results/LoadingProgress.tsx` - 로딩 진행 바
+- [x] T056 [US3] `components/results/LoadingProgress.tsx` - 로딩 진행 바
   - 부드러운 무한 애니메이션 (진행 바, 별 아이콘 회전)
   - "로딩 중..." 또는 "AI 분석 중입니다..." 메시지
   - 예상 시간 표시 없음 (간결함 유지, FR-058)
 
 ### 4.4 결과 표시 및 시각화
 
-- [ ] T057 [US3] `components/results/CareerTimingResult.tsx` - 관운 분석 결과 페이지
+- [x] T057 [US3] `components/results/CareerTimingResult.tsx` - 관운 분석 결과 페이지
   - H1 또는 H2 예측 결과 표시 (큰 텍스트, 별 아이콘 강조)
   - 신뢰도 점수 (0-100) + 진행 바 시각화 (Recharts)
   - 분석 근거 텍스트 설명
   - 로그인 상태에 따라 "이 결과 저장하기" 또는 "로그인해주세요" 표시
   - 하단 "피드백" 버튼 (US6과 연계)
-- [ ] T058 [US3] `components/visualization/ConfidenceBar.tsx` - 신뢰도 진행 바
+- [x] T058 [US3] `components/visualization/ConfidenceBar.tsx` - 신뢰도 진행 바
   - 0-100 점수를 진행 바로 시각화 (Recharts)
   - 색상: 신뢰도에 따라 동적 (높음: 초록, 중간: 주황, 낮음: 빨강)
   - 수치 표시 (예: "85 / 100")
 
 ### 4.5 에러 처리 (FR-029, FR-026)
 
-- [ ] T059 [US3] `components/errors/ErrorMessage.tsx` - 에러 메시지 + 재시도 버튼
+- [x] T059 [US3] `components/errors/ErrorMessage.tsx` - 에러 메시지 + 재시도 버튼
   - API 에러 코드 → 사용자 친화적 메시지 매핑
   - INVALID_DATE_FORMAT → "생년월일 형식이 올바르지 않습니다 (YYYY-MM-DD)"
   - FASTAPI_TIMEOUT → "사주 데이터 조회 중 시간초과. 잠시 후 다시 시도해주세요"
   - "다시 시도" 버튼 (최대 3회 자동 재시도, 지수 백오프 1s-2s-4s)
   - 3회 실패 시 "분석에 실패했습니다. 잠시 후 다시 시도해주세요" 최종 메시지
-- [ ] T060 [US3] `hooks/useErrorHandler.ts` - 에러 코드 처리 훅
+- [x] T060 [US3] `hooks/useErrorHandler.ts` - 에러 코드 처리 훅
   - ApiError를 UI 메시지로 변환
   - 재시도 로직 통합 (Q5 정책: 타임아웃/네트워크만 재시도)
 
 ### 4.6 테스트 (Jest, MSW)
 
-- [ ] T061 [US3] `__tests__/components/InputForm.test.ts` - 폼 렌더링, 검증
-- [ ] T062 [US3] `__tests__/components/DisclaimerOverlay.test.ts` - 1.5초 노출, 500ms 페이드
-- [ ] T063 [US3] `__tests__/hooks/useCareerTiming.test.ts` - API 호출, 타임아웃, 재시도, sajuResultId 저장
-- [ ] T064 [US3] `__tests__/components/CareerTimingResult.test.ts` - 결과 렌더링, 저장 버튼 조건부 표시
+- [x] T061 [US3] `__tests__/components/InputForm.test.ts` - 폼 렌더링, 검증
+- [x] T062 [US3] `__tests__/components/DisclaimerOverlay.test.ts` - 1.5초 노출, 500ms 페이드
+- [x] T063 [US3] `__tests__/hooks/useCareerTiming.test.ts` - API 호출, 타임아웃, 재시도, sajuResultId 저장
+- [x] T064 [US3] `__tests__/components/CareerTimingResult.test.ts` - 결과 렌더링, 저장 버튼 조건부 표시
 
 ---
 

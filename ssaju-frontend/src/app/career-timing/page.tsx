@@ -1,0 +1,70 @@
+'use client';
+
+/**
+ * 관운 기반 채용 시기 분석 페이지
+ *
+ * 흐름: 입력 폼 → 고지 문구(1.5초) → 로딩 → 결과
+ */
+
+import { useCareerTiming } from '@/hooks/useCareerTiming';
+import { useAuth } from '@/hooks/useAuth';
+import { InputForm } from '@/components/forms/InputForm';
+import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
+import { LoadingProgress } from '@/components/results/LoadingProgress';
+import { CareerTimingResult } from '@/components/results/CareerTimingResult';
+import { ErrorMessage } from '@/components/errors/ErrorMessage';
+import { useErrorHandler } from '@/hooks/useErrorHandler';
+
+export default function CareerTimingPage() {
+  const { phase, result, error, disclaimerVisible, disclaimerFading, submitAnalysis, reset } =
+    useCareerTiming();
+  const { isLoggedIn } = useAuth();
+  const { getDisplayMessage } = useErrorHandler();
+
+  return (
+    <main className="min-h-screen bg-night-900 text-white">
+      {/* 고지 문구 오버레이 */}
+      <DisclaimerOverlay isVisible={disclaimerVisible} isFading={disclaimerFading} />
+
+      <div className="max-w-lg mx-auto px-4 py-12">
+        <h1 className="text-star-500 text-3xl font-bold text-center mb-2">관운 분석</h1>
+        <p className="text-star-300 text-sm text-center mb-8">
+          생년월일과 시간으로 채용 운이 좋은 시기를 알아보세요
+        </p>
+
+        {/* 입력 폼 (idle 또는 재시도 시) */}
+        {(phase === 'idle' || phase === 'error') && (
+          <>
+            <InputForm
+              onSubmit={submitAnalysis}
+              isLoading={false}
+            />
+            {phase === 'error' && error && (
+              <div className="mt-4">
+                <ErrorMessage
+                  message={getDisplayMessage(new Error(error))}
+                  onRetry={reset}
+                  retryLabel="다시 입력하기"
+                />
+              </div>
+            )}
+          </>
+        )}
+
+        {/* 로딩 */}
+        {phase === 'loading' && <LoadingProgress message="사주를 분석하고 있습니다..." />}
+
+        {/* 결과 */}
+        {phase === 'result' && result && (
+          <CareerTimingResult
+            result={result}
+            isLoggedIn={isLoggedIn}
+            onSave={() => {/* TODO: Phase 8 저장 연동 */}}
+            onFeedback={() => {/* TODO: Phase 7 피드백 연동 */}}
+            onLoginToSave={() => {/* TODO: 로그인 모달 열기 */}}
+          />
+        )}
+      </div>
+    </main>
+  );
+}
