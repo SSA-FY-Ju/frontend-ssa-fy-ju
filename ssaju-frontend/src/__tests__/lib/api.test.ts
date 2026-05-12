@@ -63,10 +63,10 @@ describe('fetchConsultation', () => {
   });
 
   it('올바른 경로와 옵션으로 apiFetch 호출', async () => {
-    const mockData = { sajuResultId: 'saju-001', careerPath: '데이터 분석가' };
+    const mockData = { sajuResultId: 'saju-001', recommendedIndustries: [] };
     apiFetch.mockResolvedValueOnce(mockData);
 
-    const request = { sajuResultId: 'saju-001', userInput: '분석', fieldId: 'career' };
+    const request = { birthDate: '1990-10-10', birthTime: '14:30', solarType: 'SOLAR' as const };
     const result = await fetchConsultation(request);
 
     expect(apiFetch).toHaveBeenCalledWith('/api/career/consultation', {
@@ -81,7 +81,7 @@ describe('fetchConsultation', () => {
     apiFetch.mockRejectedValueOnce(new Error('AI 타임아웃'));
 
     await expect(
-      fetchConsultation({ sajuResultId: 'saju-001', userInput: '분석', fieldId: 'career' }),
+      fetchConsultation({ birthDate: '1990-10-10', solarType: 'SOLAR' }),
     ).rejects.toThrow('AI 타임아웃');
   });
 });

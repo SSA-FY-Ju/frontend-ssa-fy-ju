@@ -281,7 +281,7 @@
 
 ### 5.1 컨설팅 탭 네비게이션
 
-- [ ] T065 [US4] `components/navigation/TabNavigation.tsx` - 8개 탭 UI
+- [x] T065 [US4] `components/navigation/TabNavigation.tsx` - 8개 탭 UI
   - 탭 목록: 추천산업, 면접팁, 강점, 사주프로필, 부의운, 경력로드맵, 브랜딩, 월별운세
   - **반응형 배치**:
     - 데스크톱(≥1024px): 모든 탭 한 줄 표시
@@ -294,7 +294,7 @@
 
 ### 5.2 컨설팅 데이터 캐싱 (Q4 명확화)
 
-- [ ] T066 [US4] `hooks/useConsultation.ts` - 컨설팅 데이터 로드 및 캐싱
+- [x] T066 [US4] `hooks/useConsultation.ts` - 컨설팅 데이터 로드 및 캐싱
   - **초기 로드**: POST /api/career/consultation 호출 시 19개 필드 전체 수신 (lazy-load 아님)
   - **타임아웃**: 15-20초 (AI 분석)
   - **Zustand 저장**: consultationStore.setConsultation() 호출 (메모리 캐싱)
@@ -304,22 +304,22 @@
 
 ### 5.3 탭별 컨텐츠 컴포넌트
 
-- [ ] T067 [US4] `components/consultation/IndustriesTab.tsx` - 추천산업 탭
+- [x] T067 [US4] `components/consultation/IndustriesTab.tsx` - 추천산업 탭
   - 상위 2-3개 산업명, 이유, 추천 직무 리스트
-- [ ] T068 [US4] `components/consultation/InterviewTipsTab.tsx` - 면접팁 탭
+- [x] T068 [US4] `components/consultation/InterviewTipsTab.tsx` - 면접팁 탭
   - 3-5개 항목 리스트
-- [ ] T069 [US4] `components/consultation/StrengthsTab.tsx` - 강점 탭
+- [x] T069 [US4] `components/consultation/StrengthsTab.tsx` - 강점 탭
   - 3-5개 강점 항목
-- [ ] T070 [US4] `components/consultation/SajuProfileTab.tsx` - 사주프로필 탭
+- [x] T070 [US4] `components/consultation/SajuProfileTab.tsx` - 사주프로필 탭
   - 일주(천간), 성격 특성, 오행 분포 막대 차트(木火土金水), 십신 분포
   - `components/visualization/OHangChart.tsx` 재사용 (Recharts)
-- [ ] T071 [US4] `components/consultation/WealthStyleTab.tsx` - 부의운 탭
+- [x] T071 [US4] `components/consultation/WealthStyleTab.tsx` - 부의운 탭
   - 소득원, 재무 조언, 투자 성향, 추가 수입 정보
-- [ ] T072 [US4] `components/consultation/CareerRoadmapTab.tsx` - 경력로드맵 탭
+- [x] T072 [US4] `components/consultation/CareerRoadmapTab.tsx` - 경력로드맵 탭
   - 0-2년, 3-5년, 최종목표 단계별 로드맵
-- [ ] T073 [US4] `components/consultation/BrandingTab.tsx` - 브랜딩 탭
+- [x] T073 [US4] `components/consultation/BrandingTab.tsx` - 브랜딩 탭
   - 정장 색상, 이미지, 헤어메이크업, 파워 키워드 3-5개
-- [ ] T074 [US4] `components/consultation/MonthlyForecastTab.tsx` - 월별운세 탭 (US5와 공유)
+- [x] T074 [US4] `components/consultation/MonthlyForecastTab.tsx` - 월별운세 탭 (US5와 공유)
   - 캘린더 형식 12개월 표시
   - 반응형 배치 (데스크톱: 가로, 모바일: 리스트)
   - 행운/주의/일반 색상 구분 + 아이콘
@@ -327,11 +327,11 @@
 
 ### 5.4 데이터 시각화
 
-- [ ] T075 [US4] `components/visualization/OHangChart.tsx` - 오행 분포 막대 차트
+- [x] T075 [US4] `components/visualization/OHangChart.tsx` - 오행 분포 막대 차트
   - 木火土金水 5개 오행, 각각의 개수를 막대로 시각화
   - 색상: 전통 색상 적용 (木-초록, 火-빨강, 土-갈색, 金-금색, 水-파랑)
   - Recharts BarChart 사용
-- [ ] T076 [US4] `components/visualization/MonthlyCalendar.tsx` - 월별 운세 캘린더
+- [x] T076 [US4] `components/visualization/MonthlyCalendar.tsx` - 월별 운세 캘린더
   - 12개월 데이터 표시 (월 번호, 점수 0-100, 조언 문구)
   - 행운(LUCKY): 금색/노란색 배경 + ★
   - 주의(CAUTION): 빨간색 배경 + ⚠️
@@ -341,17 +341,17 @@
 
 ### 5.5 로딩 및 에러 처리
 
-- [ ] T077 [US4] `components/results/ConsultationLoading.tsx` - 컨설팅 로딩 상태
+- [x] T077 [US4] `components/results/ConsultationLoading.tsx` - 컨설팅 로딩 상태
   - 로딩 진행 바 (별 아이콘 회전)
   - "AI 분석 중입니다..." 메시지
   - 예상 시간 표시 없음 (간결함)
-- [ ] T078 [US4] 타임아웃 처리 (FR-027)
+- [x] T078 [US4] 타임아웃 처리 (FR-027)
   - Consultation 타임아웃: 20초, 최대 2회 재시도 (각 5초 간격)
   - 3회 실패 시: "AI 분석이 지연되고 있습니다. 잠시 후 다시 시도해주세요." + "다시 시도" 버튼
 
 ### 5.6 컨설팅 결과 페이지
 
-- [ ] T079 [US4] `app/consultation/page.tsx` - ConsultationPage 페이지 (50-100줄)
+- [x] T079 [US4] `app/consultation/page.tsx` - ConsultationPage 페이지 (50-100줄)
   - InputForm (생년월일/시간 입력)
   - DisclaimerOverlay (고지 문구, US3과 공유)
   - TabNavigation + 선택된 탭 컨텐츠 렌더링
@@ -361,9 +361,9 @@
 
 ### 5.7 테스트 (Jest, MSW)
 
-- [ ] T080 [US4] `__tests__/hooks/useConsultation.test.ts` - 19개 필드 로드, Zustand 캐싱, 탭 전환 0.2초
-- [ ] T081 [US4] `__tests__/components/TabNavigation.test.ts` - 탭 렌더링, 선택, 전환 애니메이션
-- [ ] T082 [US4] `__tests__/components/ConsultationResult.test.ts` - 탭별 데이터 표시
+- [x] T080 [US4] `__tests__/hooks/useConsultation.test.ts` - 19개 필드 로드, Zustand 캐싱, 탭 전환 0.2초
+- [x] T081 [US4] `__tests__/components/TabNavigation.test.ts` - 탭 렌더링, 선택, 전환 애니메이션
+- [x] T082 [US4] `__tests__/components/ConsultationResult.test.ts` - 탭별 데이터 표시
 
 ---
 
