@@ -144,71 +144,36 @@
 
 ### 3.1 OAuth 인증 구현
 
-- [ ] T037 [US1] `services/auth/oauth.ts` - Kakao, Google OAuth 유틸리티
-  - **Q2 명확화**: 768px 기준점
-    - ≥768px: 팝업 (window.open)
-    - <768px: 리다이렉트 (window.location)
-  - PKCE 플로우 (보안), redirectUri 설정
-  - 토큰 저장 (HttpOnly Cookie - 백엔드 처리 가정)
-- [ ] T038 [US1] `hooks/useAuth.ts` - 로그인 상태 관리 훅
-  - getCurrentUser() - 현재 사용자 정보 조회
-  - logout() - 토큰 삭제 + authStore.reset() 호출
-  - useEffect로 페이지 로드 시 자동 인증 복원
-- [ ] T038b [US1] 토큰 갱신 인터셉터 (조건: 백엔드에서 refresh token 제공하는 경우)
-  - apiFetch에 401 응답 감지 로직 추가
-  - 401 감지 시 자동으로 refresh token API 호출
-  - 새 액세스 토큰으로 원래 요청 재시도
-  - 갱신 실패 시 자동 로그아웃 (authStore.logout() 호출)
-  - 참고: 백엔드 설계 확인 필수 (refresh token 미제공 시 스킵 가능)
-- [ ] T039 [US1] `app/api/auth/callback.ts` - OAuth 콜백 라우트 (Next.js API Route)
-  - authorization_code 교환 → 액세스 토큰 취득
-  - HttpOnly 쿠키에 저장 (도메인, Secure, SameSite 설정)
-- [ ] T040 [US1] `hooks/usePlatformDetect.ts` - 기기별 팝업/리다이렉트 자동 선택
-  - window.innerWidth 감지
-  - 모바일 환경에서 자동 리다이렉트
+- [x] T037 [US1] `services/auth/oauth.ts` - Kakao, Google OAuth 유틸리티
+  - 768px 기준 팝업/리다이렉트, PKCE 플로우, state CSRF 방지
+- [x] T038 [US1] `hooks/useAuth.ts` - 로그인 상태 관리 훅
+  - fetchAuthStatus() 자동 복원, loginWithKakao/Google(), logout() 전 스토어 초기화
+- [ ] T038b [US1] 토큰 갱신 인터셉터 (백엔드 refresh token 미제공 시 스킵)
+- [x] T039 [US1] `app/api/auth/callback/route.ts` - OAuth 콜백 라우트
+  - authorization_code → 백엔드 전달 → HttpOnly 쿠키 처리
+- [x] T040 [US1] `hooks/usePlatformDetect.ts` - 기기별 팝업/리다이렉트 자동 선택
 
 ### 3.2 로그인 UI 컴포넌트
 
-- [ ] T041 [US1] `components/auth/LoginButton.tsx` - 헤더 로그인 버튼
-  - 카카오/구글 선택 UI (버튼 2개 또는 모달)
-  - 로딩 상태, 에러 메시지 표시
-- [ ] T042 [US1] `components/auth/LoginModal.tsx` - 소셜 로그인 모달
-  - "카카오로 계속하기", "구글로 계속하기"
-  - 닫기(×) 버튼, 배경 오버레이
-- [ ] T043 [US1] `components/auth/ProfileMenu.tsx` - 로그인 후 프로필 메뉴
-  - 사용자명, 프로필 이미지 표시
-  - "로그아웃" 버튼 (localStorage 삭제 후 초기화)
+- [x] T041 [US1] `components/auth/LoginButton.tsx` - 헤더 로그인 버튼
+- [x] T042 [US1] `components/auth/LoginModal.tsx` - 소셜 로그인 모달
+- [x] T043 [US1] `components/auth/ProfileMenu.tsx` - 로그인 후 프로필 메뉴
 
 ### 3.3 자동 저장 및 로그인 후 데이터 처리 (Q1 명확화)
 
-- [ ] T044 [US1] `hooks/useAutoSaveOnLogin.ts` - 비로그인 분석 → 로그인 시 자동 저장
-  - authStore.isLoggedIn 변경 감지
-  - analysisStore의 careerTiming/compatibility 데이터 조회
-  - POST /api/saju-result/save 호출 (apiFetch 자동 재시도)
-  - 저장 성공 후 analysisStore.reset()
-  - 사용처: CareerTimingResultPage, CompatibilityResultPage
-- [ ] T045 [US1] `components/auth/LoginNudgeCard.tsx` - 비로그인 경고 카드 (FR-024)
-  - "로그인하지 않으면 이 결과는 페이지를 나갈 때 사라집니다"
-  - react-intersection-observer로 결과 페이지 하단 노출 감지
-  - 카카오/구글 로그인 버튼 배치
-  - 배경색 강조 (주황/노랑)
+- [x] T044 [US1] `hooks/useAutoSaveOnLogin.ts` - 비로그인 분석 → 로그인 시 자동 저장
+- [x] T045 [US1] `components/auth/LoginNudgeCard.tsx` - 비로그인 경고 카드
 
 ### 3.4 로그인 상태 UI 업데이트
 
-- [ ] T046 [US1] `components/common/Header.tsx` - 헤더 업데이트
-  - 비로그인: "로그인" 버튼
-  - 로그인됨: 프로필 메뉴 표시
-  - authStore 상태 구독하여 즉시 업데이트
-- [ ] T047 [US1] `components/results/SaveButton.tsx` - 저장 버튼 (로그인 상태 조건부)
-  - 비로그인: "결과를 저장하려면 로그인해주세요" + 로그인 버튼
-  - 로그인됨: "이 결과 저장하기" 버튼 활성화
-  - 저장 성공 시 Sonner 토스트 "분석 결과가 저장되었습니다"
+- [x] T046 [US1] `components/common/Header.tsx` - 헤더 (비로그인: LoginButton, 로그인: ProfileMenu)
+- [x] T047 [US1] `components/results/SaveButton.tsx` - 저장 버튼 (로그인 상태 조건부)
 
 ### 3.5 테스트 (Jest, MSW)
 
-- [ ] T048 [US1] `__tests__/hooks/useAuth.test.ts` - 로그인/로그아웃 상태 전환
-- [ ] T049 [US1] `__tests__/hooks/useAutoSaveOnLogin.test.ts` - 자동 저장 시나리오 (로그인 감지 → API 호출)
-- [ ] T050 [US1] `__tests__/components/LoginButton.test.ts` - 로그인 버튼 렌더링, 클릭 이벤트
+- [x] T048 [US1] `__tests__/hooks/useAuth.test.ts` - 5개 테스트 통과
+- [x] T049 [US1] `__tests__/hooks/useAutoSaveOnLogin.test.ts` - 6개 테스트 통과
+- [x] T050 [US1] `__tests__/components/LoginButton.test.tsx` - 4개 테스트 통과
 
 ---
 
