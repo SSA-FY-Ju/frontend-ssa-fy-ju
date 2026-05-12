@@ -36,12 +36,23 @@ describe('mockCareerTimingResult', () => {
 describe('mockConsultationData', () => {
   it('필수 필드 존재', () => {
     expect(mockConsultationData.sajuResultId).toBeTruthy();
-    expect(mockConsultationData.careerPath).toBeTruthy();
-    expect(mockConsultationData.timing).toBeTruthy();
+    expect(mockConsultationData.recommendedIndustries).toBeTruthy();
+    expect(mockConsultationData.monthlyForecasts).toHaveLength(12);
   });
 
   it('CareerTiming과 동일한 sajuResultId 사용', () => {
     expect(mockConsultationData.sajuResultId).toBe(mockCareerTimingResult.sajuResultId);
+  });
+
+  it('8개 탭 데이터 모두 존재', () => {
+    expect(Array.isArray(mockConsultationData.recommendedIndustries)).toBe(true);
+    expect(Array.isArray(mockConsultationData.interviewTips)).toBe(true);
+    expect(Array.isArray(mockConsultationData.strengths)).toBe(true);
+    expect(mockConsultationData.sajuProfile).toBeDefined();
+    expect(mockConsultationData.wealthStyle).toBeDefined();
+    expect(mockConsultationData.careerRoadmap).toBeDefined();
+    expect(mockConsultationData.branding).toBeDefined();
+    expect(Array.isArray(mockConsultationData.monthlyForecasts)).toBe(true);
   });
 });
 

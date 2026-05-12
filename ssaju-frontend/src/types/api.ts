@@ -40,27 +40,73 @@ export interface CareerTimingResult {
 }
 
 /**
- * AI 컨설팅 요청
+ * AI 컨설팅 요청 (한 번 호출로 19개 필드 전체 수신)
  */
 export interface ConsultationRequest {
-  sajuResultId: string;
-  userInput: string;
-  fieldId: string; // 8개 탭 중 하나
+  birthDate: string;
+  birthTime?: string;
+  solarType: 'SOLAR' | 'LUNAR';
+}
+
+/** 추천 산업 항목 */
+export interface IndustryRecommendation {
+  industryName: string;
+  reason: string;
+  recommendedRoles: string[];
+}
+
+/** 사주 프로필 */
+export interface SajuProfile {
+  dayMaster: string; // 일주 천간 (예: 丙)
+  personality: string;
+  oHangDistribution: Record<string, number>; // 木火土金水 개수
+  sipShinDistribution: Record<string, number>;
+}
+
+/** 부의운 */
+export interface WealthStyle {
+  incomeSource: string;
+  financialAdvice: string;
+  investmentStyle: string;
+  additionalIncome: string;
+}
+
+/** 경력 로드맵 */
+export interface CareerRoadmap {
+  shortTerm: string; // 0-2년
+  midTerm: string;   // 3-5년
+  longTerm: string;  // 최종 목표
+}
+
+/** 브랜딩 */
+export interface BrandingInfo {
+  suitColor: string;
+  imageStyle: string;
+  hairMakeup: string;
+  powerKeywords: string[];
+}
+
+/** 월별 운세 항목 */
+export interface MonthlyForecast {
+  month: number;        // 1-12
+  score: number;        // 0-100
+  type: 'LUCKY' | 'CAUTION' | 'NORMAL';
+  advice: string;
 }
 
 /**
- * AI 컨설팅 응답 (8개 탭)
+ * AI 컨설팅 응답 (8개 탭 전체 데이터)
  */
 export interface ConsultationData {
   sajuResultId: string;
-  careerPath: string;
-  timing: string;
-  marketTrend: string;
-  skillGap: string;
-  networkStrategy: string;
-  riskManagement: string;
-  psychologicalPrepare: string;
-  alternativePlans: string;
+  recommendedIndustries: IndustryRecommendation[]; // 탭1: 추천산업
+  interviewTips: string[];                          // 탭2: 면접팁
+  strengths: string[];                              // 탭3: 강점
+  sajuProfile: SajuProfile;                         // 탭4: 사주프로필
+  wealthStyle: WealthStyle;                         // 탭5: 부의운
+  careerRoadmap: CareerRoadmap;                     // 탭6: 경력로드맵
+  branding: BrandingInfo;                           // 탭7: 브랜딩
+  monthlyForecasts: MonthlyForecast[];              // 탭8: 월별운세
 }
 
 /**

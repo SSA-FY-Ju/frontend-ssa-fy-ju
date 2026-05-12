@@ -14,18 +14,10 @@
 
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { ConsultationData } from '@/types/api';
 
-export interface ConsultationData {
-  careerPath: string;
-  timing: string;
-  marketTrend: string;
-  skillGap: string;
-  networkStrategy: string;
-  riskManagement: string;
-  psychologicalPrepare: string;
-  alternativePlans: string;
-  [key: string]: string; // 추가 필드 허용
-}
+// types/api.ts의 ConsultationData 재수출 (스토어 내부 사용)
+export type { ConsultationData } from '@/types/api';
 
 interface ConsultationStore {
   // State
