@@ -57,12 +57,16 @@
 - [x] T008 `package.json` scripts 업데이트
   - `npm run dev`, `npm run build`, `npm run start`, `npm test`, `npm run lint`
   - Build 시 TypeScript + ESLint 자동 실행
+- [x] T008a [필수] `npm install` - 모든 의존성 설치
+  - package.json에 정의된 dependencies와 devDependencies 설치
+  - node_modules 디렉토리 생성
+  - package-lock.json 자동 생성
 - [x] T009 Husky & pre-commit 훅 설정 (`npm run build` 의무 실행)
-- [ ] T009b 전역 로딩 인디케이터 구현
-  - Zustand loadingStore 또는 errorStore 확장으로 API 요청 추적
+- [x] T009b 전역 로딩 인디케이터 구현
+  - Zustand errorStore에 isLoading 상태 추가 (`stores/errorStore.ts`)
   - 앱 상단에 진행 바 컴포넌트 배치 (`components/common/GlobalLoadingBar.tsx`)
-  - apiFetch에서 자동으로 로딩 상태 업데이트
-  - 참고: NProgress 유사 기능
+  - apiFetch에서 자동으로 로딩 상태 업데이트 (`lib/api/client.ts`)
+  - providers.tsx에 GlobalLoadingBar 통합
 - [x] T010 `.gitignore` 확인 (`.env.local`, `node_modules/`, `.next/`, 빌드 산출물 제외)
 
 ---

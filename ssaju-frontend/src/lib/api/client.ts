@@ -49,6 +49,21 @@ class ApiError extends Error {
 }
 
 /**
+ * 로딩 상태 업데이트 (에러 스토어)
+ */
+const updateLoadingState = (loading: boolean): void => {
+  try {
+    // 클라이언트 환경에서만 실행
+    if (typeof window !== 'undefined') {
+      const { useErrorStore } = require('@/stores/errorStore');
+      useErrorStore.getState().setIsLoading(loading);
+    }
+  } catch {
+    // 에러 스토어를 사용할 수 없으면 무시
+  }
+};
+
+/**
  * 중앙 API fetch 래퍼
  *
  * @param path - API 경로 (예: /api/career/timing)
@@ -70,89 +85,96 @@ export async function apiFetch<T>(
   const baseUrl = config.apiBaseUrl;
   const url = `${baseUrl}${path}`;
 
-  let lastError: Error | null = null;
-  const maxAttempts = retry?.maxAttempts || 3;
+  updateLoadingState(true);
 
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
+  try {
+    let lastError: Error | null = null;
+    const maxAttempts = retry?.maxAttempts || 3;
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...headers,
-        },
-        body: body ? JSON.stringify(body) : null,
-        credentials: 'include', // HttpOnly 쿠키 자동 전송
-        signal: controller.signal,
-      });
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
 
-      clearTimeout(timeoutId);
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            ...headers,
+          },
+          body: body ? JSON.stringify(body) : null,
+          credentials: 'include', // HttpOnly 쿠키 자동 전송
+          signal: controller.signal,
+        });
 
-      // 성공 응답 처리
-      if (response.ok) {
-        const json = (await response.json()) as ApiResponse<T>;
+        clearTimeout(timeoutId);
 
-        if (json.success) {
-          return json.data as T;
+        // 성공 응답 처리
+        if (response.ok) {
+          const json = (await response.json()) as ApiResponse<T>;
+
+          if (json.success) {
+            return json.data as T;
+          }
+
+          // API 비즈니스 에러
+          throw new ApiError(
+            response.status,
+            json.error?.code || 'UNKNOWN_ERROR',
+            json.error?.message || 'Unknown error',
+            json.error?.requestId || 'unknown',
+          );
         }
 
-        // API 비즈니스 에러
-        throw new ApiError(
-          response.status,
-          json.error?.code || 'UNKNOWN_ERROR',
-          json.error?.message || 'Unknown error',
-          json.error?.requestId || 'unknown',
-        );
-      }
+        // 4xx 에러 (재시도 하지 않음)
+        if (response.status >= 400 && response.status < 500) {
+          const json = (await response.json()) as ApiResponse<T>;
+          throw new ApiError(
+            response.status,
+            json.error?.code || 'CLIENT_ERROR',
+            json.error?.message || response.statusText,
+            json.error?.requestId || 'unknown',
+          );
+        }
 
-      // 4xx 에러 (재시도 하지 않음)
-      if (response.status >= 400 && response.status < 500) {
-        const json = (await response.json()) as ApiResponse<T>;
-        throw new ApiError(
-          response.status,
-          json.error?.code || 'CLIENT_ERROR',
-          json.error?.message || response.statusText,
-          json.error?.requestId || 'unknown',
-        );
-      }
-
-      // 5xx 에러 (재시도 가능)
-      lastError = new Error(`Server error: ${response.statusText}`);
-      throw lastError;
-    } catch (error) {
-      lastError = error as Error;
-
-      // 재시도 여부 판단 (Q5: 타임아웃/네트워크 에러만)
-      const isRetryable =
-        error instanceof TypeError || // 네트워크 에러
-        (error instanceof Error && error.name === 'AbortError'); // 타임아웃
-
-      if (isRetryable && attempt < maxAttempts - 1) {
-        // 지수 백오프
-        const backoffMs = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
-        console.warn(
-          `[apiFetch] Attempt ${attempt + 1} failed, retrying in ${backoffMs}ms...`,
-          error,
-        );
-        await new Promise((resolve) => setTimeout(resolve, backoffMs));
-        continue;
-      }
-
-      // 재시도 불가능하면 에러 발생
-      if (lastError instanceof ApiError) {
+        // 5xx 에러 (재시도 가능)
+        lastError = new Error(`Server error: ${response.statusText}`);
         throw lastError;
+      } catch (error) {
+        lastError = error as Error;
+
+        // 재시도 여부 판단 (Q5: 타임아웃/네트워크 에러만)
+        const isRetryable =
+          error instanceof TypeError || // 네트워크 에러
+          (error instanceof Error && error.name === 'AbortError'); // 타임아웃
+
+        if (isRetryable && attempt < maxAttempts - 1) {
+          // 지수 백오프
+          const backoffMs = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+          console.warn(
+            `[apiFetch] Attempt ${attempt + 1} failed, retrying in ${backoffMs}ms...`,
+            error,
+          );
+          await new Promise((resolve) => setTimeout(resolve, backoffMs));
+          continue;
+        }
+
+        // 재시도 불가능하면 에러 발생
+        if (lastError instanceof ApiError) {
+          throw lastError;
+        }
+
+        throw new Error(
+          `Failed to fetch ${path} after ${maxAttempts} attempts: ${lastError?.message || 'Unknown error'}`,
+        );
       }
-
-      throw new Error(
-        `Failed to fetch ${path} after ${maxAttempts} attempts: ${lastError?.message || 'Unknown error'}`,
-      );
     }
-  }
 
-  throw lastError || new Error(`Failed to fetch ${path}`);
+    throw lastError || new Error(`Failed to fetch ${path}`);
+  } finally {
+    // 로딩 상태 항상 false로 설정
+    updateLoadingState(false);
+  }
 }
 
 export type { ApiResponse };

@@ -186,12 +186,20 @@ src/
 
 | 도구 | 버전 | 목적 |
 |------|---------|---------|
+| **npm install** | - | 모든 dependencies 및 devDependencies 설치 (필수 선행 작업) |
 | **Next.js Build** | 14.0+ | `npm run build` (TypeScript + ESLint validation) |
 | **ESLint** | Latest | Code quality & consistency |
 | **Prettier** | Latest | Code formatting |
 | **npm scripts** | - | `dev`, `build`, `start`, `lint`, `test` |
 
+**개발 환경 초기 설정**:
+```bash
+npm install                    # 의존성 설치 (package.json 기반)
+npm run dev                    # 개발 서버 시작 (localhost:3000)
+```
+
 **Build Constraints**:
+- `npm install` must complete before any npm scripts
 - `npm run build` must pass before commit
 - `npm run lint` must have no violations
 - TypeScript strict mode: no errors

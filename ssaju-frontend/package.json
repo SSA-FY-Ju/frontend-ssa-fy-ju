@@ -4,6 +4,7 @@
   "description": "SSAju 프론트엔드 - 사주 기반 커리어 컨설팅 플랫폼",
   "private": true,
   "scripts": {
+    "prepare": "cd ../.. && husky install ssaju-frontend/.husky || true",
     "dev": "next dev",
     "build": "tsc && next build",
     "start": "next start",
