@@ -3,13 +3,12 @@
 /**
  * AI 컨설팅 풀페이지 뷰 (T065)
  *
- * fullpage.js 방식 CSS transition 기반 풀페이지 스크롤:
- * - CSS `transition: transform 700ms ease` — 브라우저 최적화, rAF 루프 불필요
- * - 터치 드래그 중: transition: none (실시간 추적) → 손 뗌: transition 복구 후 스냅
- * - wheel(50px 임계값 + 80ms 디바운스) / touch(60px 스와이프) / keyboard(Arrow) 지원
- * - isNavigating lock + transitionend 이벤트로 중복 트리거 방지
- * - 마지막 섹션에 저장/초기화 버튼 포함
- * - 각 섹션 콘텐츠 수직 중앙 정렬
+ * CSS scroll-snap으로 fullpage.js 동일 UX 구현 (라이선스 없이 무료)
+ * - 각 섹션 = 100vh 독립 전체 화면 (scroll-snap-type: y mandatory)
+ * - IntersectionObserver로 활성 섹션 추적 → currentSectionIndex 동기화
+ * - container.scrollTo({ behavior: 'smooth' })로 프로그래매틱 이동
+ * - prefers-reduced-motion: behavior: 'instant' 즉시 전환
+ * - 모바일: 동일 동작 (CSS scroll-snap은 추가 설정 불필요)
  */
 
 import { useRef, useEffect, useCallback } from 'react';
@@ -36,279 +35,63 @@ const SECTION_LABELS = [
   '월별운세',
 ] as const;
 
-const SECTION_COUNT = SECTION_LABELS.length;
-/** fullpage.js 기본값과 동일한 애니메이션 설정 */
-const TRANSITION = 'transform 700ms ease';
-
 interface FullPageConsultationProps {
   data: ConsultationData;
   currentSectionIndex: number;
   onSectionChange: (index: number) => void;
   onFeedback?: () => void;
-  isLoggedIn?: boolean;
-  onReset?: () => void;
 }
 
 export function FullPageConsultation({
   data,
   currentSectionIndex,
   onSectionChange,
-  isLoggedIn,
-  onReset,
 }: FullPageConsultationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  /** 섹션 전체를 감싸는 슬라이딩 래퍼 */
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const isNavigating = useRef(false);
-  const currentIndexRef = useRef(currentSectionIndex);
+  const sectionRefs = useRef<(HTMLDivElement | null)[]>(Array(8).fill(null));
 
-  useEffect(() => {
-    currentIndexRef.current = currentSectionIndex;
-  }, [currentSectionIndex]);
-
-  /** 래퍼의 현재 translateY 값 읽기 (드래그 중 중간 위치에서 스냅 시작) */
-  const getCurrentY = (): number => {
-    const wrapper = wrapperRef.current;
-    if (!wrapper) return 0;
-    const match = wrapper.style.transform.match(/translateY\((-?\d+(?:\.\d+)?)px\)/);
-    return match ? parseFloat(match[1]) : 0;
-  };
-
-  /**
-   * 지정 섹션으로 CSS transition 슬라이드 (fullpage.js 방식).
-   * - CSS `transition: transform 700ms ease` → 브라우저 내장 최적화
-   * - transitionend 이벤트로 완료 감지 → isNavigating 해제
-   * - prefers-reduced-motion: transition none, 즉시 이동
-   */
-  const animateTo = useCallback(
-    (index: number) => {
-      const container = containerRef.current;
-      const wrapper = wrapperRef.current;
-      if (!container || !wrapper || isNavigating.current) return;
-
-      const clampedIndex = Math.max(0, Math.min(SECTION_COUNT - 1, index));
-      isNavigating.current = true;
-      onSectionChange(clampedIndex);
-
-      const prefersReducedMotion =
-        typeof window !== 'undefined' &&
-        typeof window.matchMedia === 'function' &&
-        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-      const vh = container.clientHeight || window.innerHeight;
-      const targetY = clampedIndex * -vh;
-
-      if (prefersReducedMotion) {
-        wrapper.style.transition = 'none';
-        wrapper.style.transform = `translateY(${targetY}px)`;
-        isNavigating.current = false;
-        return;
-      }
-
-      // CSS transition으로 애니메이션 — fullpage.js와 동일한 방식
-      wrapper.style.transition = TRANSITION;
-      wrapper.style.transform = `translateY(${targetY}px)`;
-
-      const onTransitionEnd = () => {
-        wrapper.removeEventListener('transitionend', onTransitionEnd);
-        setTimeout(() => {
-          isNavigating.current = false;
-        }, 50);
-      };
-      wrapper.addEventListener('transitionend', onTransitionEnd);
-    },
-    [onSectionChange]
-  );
-
-  /**
-   * 마우스 휠 / 트랙패드:
-   * - deltaMode 정규화: 마우스 휠은 deltaMode=1(라인 단위, deltaY≈3) → ×40으로 픽셀 환산
-   * - 디바운스 제거 → 첫 이벤트에 즉시 반응
-   * - isNavigating lock이 애니메이션 중 중복 트리거 방지
-   */
+  /** IntersectionObserver: 섹션이 50% 이상 보일 때 활성 섹션 업데이트 */
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      if (isNavigating.current) return;
+    const observers: IntersectionObserver[] = [];
 
-      // deltaMode === 1 (마우스 휠, 라인 단위): × 40px
-      // deltaMode === 0 (트랙패드, 픽셀 단위): 그대로 사용
-      const normalized = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaY;
-      if (Math.abs(normalized) < 15) return; // 미세 움직임 무시
+    sectionRefs.current.forEach((el, index) => {
+      if (!el) return;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              onSectionChange(index);
+            }
+          });
+        },
+        { root: container, threshold: 0.5 }
+      );
+      observer.observe(el);
+      observers.push(observer);
+    });
 
-      const direction = normalized > 0 ? 1 : -1;
-      const next = Math.max(0, Math.min(SECTION_COUNT - 1, currentIndexRef.current + direction));
-      if (next !== currentIndexRef.current) animateTo(next);
-    };
+    return () => observers.forEach((o) => o.disconnect());
+  }, [onSectionChange]);
 
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
-  }, [animateTo]);
-
-  /**
-   * 터치: 드래그하면 페이지가 손가락을 따라 실시간으로 이동,
-   * 손가락을 떼면 이동량에 따라 다음 섹션 또는 현재 섹션으로 스냅.
-   */
-  useEffect(() => {
+  /** 섹션 네비게이터 클릭 → 해당 섹션으로 스크롤 */
+  const handleNavigate = useCallback((index: number) => {
     const container = containerRef.current;
-    if (!container) return;
+    const section = sectionRefs.current[index];
+    if (!container || !section) return;
 
-    let touchStartY = 0;
-    let dragBaseY = 0; // 드래그 시작 시점의 래퍼 translateY
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    const handleTouchStart = (e: TouchEvent) => {
-      if (isNavigating.current) return;
-      touchStartY = e.touches[0].clientY;
-      dragBaseY = getCurrentY();
-      // 드래그 중 CSS transition 비활성화 → 손가락에 즉시 반응
-      const wrapper = wrapperRef.current;
-      if (wrapper) wrapper.style.transition = 'none';
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (isNavigating.current) return;
-      e.preventDefault(); // 브라우저 기본 스크롤 차단
-      const wrapper = wrapperRef.current;
-      if (!wrapper) return;
-
-      const deltaY = e.touches[0].clientY - touchStartY;
-      const vh = container.clientHeight || window.innerHeight;
-      const newY = dragBaseY + deltaY;
-
-      // 첫/마지막 섹션 경계에서 저항감 적용 (드래그 량의 25%만 반영)
-      const minY = -(SECTION_COUNT - 1) * vh;
-      let clampedY: number;
-      if (newY > 0) {
-        clampedY = newY * 0.25; // 첫 섹션 위로 당길 때
-      } else if (newY < minY) {
-        clampedY = minY + (newY - minY) * 0.25; // 마지막 섹션 아래로 당길 때
-      } else {
-        clampedY = newY;
-      }
-
-      wrapper.style.transform = `translateY(${clampedY}px)`;
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (isNavigating.current) return;
-      const delta = touchStartY - e.changedTouches[0].clientY;
-
-      // 60px 미만 이동 → 현재 섹션으로 스냅백
-      if (Math.abs(delta) < 60) {
-        animateTo(currentIndexRef.current);
-        return;
-      }
-
-      const direction = delta > 0 ? 1 : -1;
-      const next = Math.max(0, Math.min(SECTION_COUNT - 1, currentIndexRef.current + direction));
-      animateTo(next);
-    };
-
-    container.addEventListener('touchstart', handleTouchStart, { passive: true });
-    container.addEventListener('touchmove', handleTouchMove, { passive: false });
-    container.addEventListener('touchend', handleTouchEnd, { passive: true });
-    return () => {
-      container.removeEventListener('touchstart', handleTouchStart);
-      container.removeEventListener('touchmove', handleTouchMove);
-      container.removeEventListener('touchend', handleTouchEnd);
-    };
-  }, [animateTo]);
-
-  /**
-   * 마우스 드래그: 클릭 후 아래로 끌면 다음 페이지가 올라오고,
-   * 마우스를 떼면 이동량에 따라 섹션 스냅.
-   */
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    let isDragging = false;
-    let mouseStartY = 0;
-    let dragBaseY = 0;
-
-    const handleMouseDown = (e: MouseEvent) => {
-      if (isNavigating.current) return;
-      isDragging = true;
-      mouseStartY = e.clientY;
-      dragBaseY = getCurrentY();
-      const wrapper = wrapperRef.current;
-      if (wrapper) wrapper.style.transition = 'none';
-      // 드래그 중 텍스트 선택 방지
-      e.preventDefault();
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || isNavigating.current) return;
-      const wrapper = wrapperRef.current;
-      if (!wrapper) return;
-
-      const deltaY = e.clientY - mouseStartY;
-      const vh = container.clientHeight || window.innerHeight;
-      const newY = dragBaseY + deltaY;
-
-      const minY = -(SECTION_COUNT - 1) * vh;
-      let clampedY: number;
-      if (newY > 0) {
-        clampedY = newY * 0.25;
-      } else if (newY < minY) {
-        clampedY = minY + (newY - minY) * 0.25;
-      } else {
-        clampedY = newY;
-      }
-
-      wrapper.style.transform = `translateY(${clampedY}px)`;
-    };
-
-    const handleMouseUp = (e: MouseEvent) => {
-      if (!isDragging) return;
-      isDragging = false;
-
-      if (isNavigating.current) return;
-      const delta = mouseStartY - e.clientY;
-
-      if (Math.abs(delta) < 60) {
-        animateTo(currentIndexRef.current);
-        return;
-      }
-
-      const direction = delta > 0 ? 1 : -1;
-      const next = Math.max(0, Math.min(SECTION_COUNT - 1, currentIndexRef.current + direction));
-      animateTo(next);
-    };
-
-    // mouseup/mouseleave는 window에 등록 — 컨테이너 밖에서 마우스를 떼도 처리
-    container.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    return () => {
-      container.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [animateTo]);
-
-  /** 키보드: ArrowDown/PageDown → 다음, ArrowUp/PageUp → 이전 */
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (isNavigating.current) return;
-      const direction =
-        e.key === 'ArrowDown' || e.key === 'PageDown'
-          ? 1
-          : e.key === 'ArrowUp' || e.key === 'PageUp'
-          ? -1
-          : 0;
-      if (!direction) return;
-      const next = Math.max(0, Math.min(SECTION_COUNT - 1, currentIndexRef.current + direction));
-      if (next !== currentIndexRef.current) animateTo(next);
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [animateTo]);
-
-  const handleNavigate = useCallback((index: number) => animateTo(index), [animateTo]);
+    container.scrollTo({
+      top: section.offsetTop,
+      behavior: prefersReducedMotion ? 'instant' : 'smooth',
+    });
+  }, []);
 
   const sections = [
     <IndustriesTab key="industries" industries={data.recommendedIndustries} />,
@@ -323,64 +106,40 @@ export function FullPageConsultation({
 
   return (
     <div className="relative">
+      {/* 섹션 네비게이터 (데스크톱: 우측 플로팅, 모바일: 상단 고정) */}
       <SectionNavigator
         sections={[...SECTION_LABELS]}
         currentIndex={currentSectionIndex}
         onNavigate={handleNavigate}
       />
 
-      {/* overflow-hidden 창 — 래퍼가 translateY로 슬라이드 */}
-      {/* touch-action: none → 브라우저 네이티브 스크롤 선점 차단, touchmove 실시간 추적 보장 */}
-      {/* cursor: grab → 마우스 드래그 가능함을 시각적으로 표시 */}
+      {/* 풀페이지 스냅 스크롤 컨테이너 */}
       <div
         ref={containerRef}
-        className="h-screen overflow-hidden"
-        style={{ touchAction: 'none', cursor: 'grab' }}
+        className="h-screen overflow-y-scroll"
+        style={{ scrollSnapType: 'y mandatory' }}
         data-testid="fullpage-container"
       >
-        {/* 슬라이딩 래퍼: 8섹션을 수직으로 쌓아 GPU transform으로 이동 */}
-        <div
-          ref={wrapperRef}
-          className="will-change-transform"
-          style={{ transform: 'translateY(0px)', touchAction: 'none' }}
-          data-testid="fullpage-wrapper"
-        >
-          {SECTION_LABELS.map((label, index) => (
-            <div
-              key={label}
-              className="h-screen overflow-y-auto bg-night-900 flex flex-col justify-center"
-              data-testid={`fullpage-section-${index}`}
-            >
-              <div className="max-w-3xl mx-auto px-4 py-8 w-full">
-                <SectionTitle label={label} />
-                {sections[index]}
-
-                {index === SECTION_COUNT - 1 && (
-                  <div className="mt-8 flex flex-col items-center gap-4">
-                    <FeedbackButton feedbackType="CONSULTATION" />
-                    <div className="flex flex-col items-center gap-3 w-full pt-2 border-t border-night-700">
-                      {isLoggedIn ? (
-                        <button className="bg-star-500 hover:bg-star-400 text-night-900 font-bold px-6 py-3 rounded-lg shadow-lg transition-colors">
-                          이 결과 저장하기
-                        </button>
-                      ) : (
-                        <p className="text-star-300 text-sm bg-night-800 px-4 py-2 rounded-lg border border-night-700">
-                          결과를 저장하려면 로그인해주세요
-                        </p>
-                      )}
-                      <button
-                        onClick={onReset}
-                        className="border border-night-700 hover:border-star-500 text-star-300 text-xs px-4 py-2 rounded-lg transition-colors"
-                      >
-                        새 분석 시작하기
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
+        {SECTION_LABELS.map((label, index) => (
+          <div
+            key={label}
+            ref={(el) => { sectionRefs.current[index] = el; }}
+            className="h-screen overflow-y-auto bg-night-900"
+            style={{ scrollSnapAlign: 'start' }}
+            data-testid={`fullpage-section-${index}`}
+          >
+            <div className="max-w-3xl mx-auto px-4 py-10">
+              <SectionTitle label={label} />
+              {sections[index]}
+              {/* 마지막 섹션(월별운세)에 피드백 버튼 */}
+              {index === 7 && (
+                <div className="mt-8">
+                  <FeedbackButton feedbackType="CONSULTATION" />
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </div>
   );
