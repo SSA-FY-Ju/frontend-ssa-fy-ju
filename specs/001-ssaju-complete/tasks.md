@@ -32,6 +32,10 @@
 - [x] T002 TypeScript 설정 (`tsconfig.json` - strict: true 강제)
 - [x] T003 ESLint & Prettier 규칙 적용 (헌법 원칙 II: 한국어 주석 의무)
 - [x] T004 Next.js App Router 설정 (`layout.tsx` - 모든 페이지에 'use client' 적용)
+- [ ] T004b `app/page.tsx` - 홈페이지 구현
+  - `/career-timing`으로 자동 리다이렉트 또는 서비스 소개 랜딩 페이지
+  - 헤더(Header) + "관운 분석 시작하기" CTA 버튼 최소 구성
+  - 메타데이터 설정 (constitution XII: title, description, OG 태그)
 - [x] T004a 환경 변수 검증 로직 구현
   - `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_OAUTH_REDIRECT_URI` 필수 확인
   - 누락 시 개발 서버 시작 시 명확한 에러 메시지 표시
@@ -375,17 +379,17 @@
 
 ### 6.1 기업명 입력 및 자동 조회
 
-- [ ] T083 [US5] `components/forms/CompanyForm.tsx` - 기업명 입력 폼
+- [x] T083 [US5] `components/forms/CompanyForm.tsx` - 기업명 입력 폼
   - 텍스트 입력 + 검색 자동완성 (공공데이터 API 활용)
   - 설립일 자동 조회 시도
   - 설립시간 입력 (기본값 12:00)
-- [ ] T083b [US5] `components/forms/CompanyAutocomplete.tsx` - 기업명 자동완성 드롭다운
+- [x] T083b [US5] `components/forms/CompanyAutocomplete.tsx` - 기업명 자동완성 드롭다운
   - 기업명 입력 시 공공데이터 조회 결과를 드롭다운으로 표시
   - 입력 중 자동완성 후보 실시간 필터링 (debounce 300ms)
   - 드롭다운 항목 선택 시 CompanyForm의 기업명 필드 자동 채우기
   - 하단에 최대 10개 항목만 표시
   - 참고: CompanyForm에서 import하여 통합
-- [ ] T084 [US5] `hooks/useCompanyInfo.ts` - 기업 정보 조회 훅
+- [x] T084 [US5] `hooks/useCompanyInfo.ts` - 기업 정보 조회 훅
   - **우선순위** (FR-008):
     1. 기업명 제공 → 공공데이터 API 자동 조회
     2. 조회 성공 → 확인 모달에서 결과 표시
@@ -395,7 +399,7 @@
 
 ### 6.2 기업 조회 결과 확인 모달
 
-- [ ] T085 [US5] `components/modals/CompanyConfirmModal.tsx` - 기업 정보 확인 모달
+- [x] T085 [US5] `components/modals/CompanyConfirmModal.tsx` - 기업 정보 확인 모달
   - 조회 결과 표시: 기업명, 설립일, 설립시간
   - "확인" 버튼: 조회된 정보로 분석 진행
   - "수정" 버튼: 설립일/시간 수동 입력 폼 활성화
@@ -403,7 +407,7 @@
 
 ### 6.3 궁합 분석 API 호출
 
-- [ ] T086 [US5] `hooks/useCompatibility.ts` - 기업 궁합 분석 훅
+- [x] T086 [US5] `hooks/useCompatibility.ts` - 기업 궁합 분석 훅
   - POST /api/company/compatibility 호출 (타임아웃 5-8초)
   - sajuResultId를 sessionStore에 저장
   - 비로그인 시 analysisStore에 저장 (휘발성)
@@ -411,7 +415,7 @@
 
 ### 6.4 궁합 분석 결과 페이지
 
-- [ ] T087 [US5] `app/compatibility/page.tsx` - CompatibilityPage 페이지
+- [x] T087 [US5] `app/compatibility/page.tsx` - CompatibilityPage 페이지
   - InputForm + CompanyForm (생년월일/기업 입력)
   - DisclaimerOverlay (고지 문구, US3과 공유)
   - 종합 점수 (예: 78/100) + 신뢰도 (LOW/MEDIUM/HIGH) 표시
@@ -423,17 +427,17 @@
 
 ### 6.5 시각화
 
-- [ ] T088 [US5] `components/visualization/CompatibilityScore.tsx` - 궁합 점수 시각화
+- [x] T088 [US5] `components/visualization/CompatibilityScore.tsx` - 궁합 점수 시각화
   - 원형 진행 바 또는 게이지 차트 (Recharts)
   - 점수 (0-100) + 신뢰도 텍스트
-- [ ] T089 [US5] `components/visualization/JobMatchingCards.tsx` - 직무별 매칭도 카드
+- [x] T089 [US5] `components/visualization/JobMatchingCards.tsx` - 직무별 매칭도 카드
   - 직무명, 점수, 진행 바, 이유, 추천/주의 문구
 
 ### 6.6 테스트 (Jest, MSW)
 
-- [ ] T090 [US5] `__tests__/hooks/useCompanyInfo.test.ts` - 기업 조회(성공/실패), 수동 입력 폴백
-- [ ] T091 [US5] `__tests__/hooks/useCompatibility.test.ts` - 궁합 분석 API, 재시도
-- [ ] T092 [US5] `__tests__/components/CompatibilityResult.test.ts` - 결과 렌더링
+- [x] T090 [US5] `__tests__/hooks/useCompanyInfo.test.ts` - 기업 조회(성공/실패), 수동 입력 폴백
+- [x] T091 [US5] `__tests__/hooks/useCompatibility.test.ts` - 궁합 분석 API, 재시도
+- [x] T092 [US5] `__tests__/components/CompatibilityResult.test.ts` - 결과 렌더링
 
 ---
 
@@ -445,7 +449,7 @@
 
 ### 7.1 피드백 모달 UI
 
-- [ ] T093 [US6] `components/modals/FeedbackModal.tsx` - 피드백 제출 모달
+- [x] T093 [US6] `components/modals/FeedbackModal.tsx` - 피드백 제출 모달
   - 제목: "분석 결과 피드백"
   - 닫기(×) 버튼 (모달 닫힘, 입력 데이터 저장 안 함)
   - **만족도 선택** (필수): ○ 만족함, ○ 만족하지 않음 (라디오 버튼)
@@ -457,7 +461,7 @@
 
 ### 7.2 피드백 제출 로직
 
-- [ ] T094 [US6] `hooks/useFeedback.ts` - 피드백 제출 훅
+- [x] T094 [US6] `hooks/useFeedback.ts` - 피드백 제출 훅
   - submitFeedback(satisfactionStatus, feedbackContent)
   - POST /api/feedback/satisfaction 호출 (타임아웃 10초)
   - 요청 본문: sajuResultId (sessionStore), feedbackType (자동 결정), satisfactionStatus, feedbackContent
@@ -468,15 +472,15 @@
 
 ### 7.3 피드백 버튼 배치
 
-- [ ] T095 [US6] `components/results/FeedbackButton.tsx` - 피드백 버튼
+- [x] T095 [US6] `components/results/FeedbackButton.tsx` - 피드백 버튼
   - 분석 결과 페이지 하단 배치
   - "이 결과에 대해 의견을 알려주세요" 또는 "피드백하기"
   - 클릭 시 FeedbackModal 오픈
 
 ### 7.4 테스트 (Jest, MSW)
 
-- [ ] T096 [US6] `__tests__/hooks/useFeedback.test.ts` - 피드백 제출, 성공/실패 처리
-- [ ] T097 [US6] `__tests__/components/FeedbackModal.test.ts` - 모달 렌더링, 500자 제한, 카운터
+- [x] T096 [US6] `__tests__/hooks/useFeedback.test.ts` - 피드백 제출, 성공/실패 처리
+- [x] T097 [US6] `__tests__/components/FeedbackModal.test.ts` - 모달 렌더링, 500자 제한, 카운터
 
 ---
 

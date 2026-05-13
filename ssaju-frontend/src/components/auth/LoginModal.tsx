@@ -1,7 +1,5 @@
 'use client';
 
-import { useCallback } from 'react';
-
 interface LoginModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -22,12 +20,9 @@ export function LoginModal({
   isLoading = false,
   error = null,
 }: LoginModalProps) {
-  const handleBackdropClick = useCallback(
-    (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) onClose();
-    },
-    [onClose],
-  );
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) onClose();
+  };
 
   if (!isOpen) return null;
 

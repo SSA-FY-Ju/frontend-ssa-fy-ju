@@ -139,9 +139,9 @@ describe('submitFeedback', () => {
 
     const request = {
       sajuResultId: 'saju-001',
-      satisfactionScore: 5,
-      analysisType: 'CAREER_TIMING' as const,
-      comment: '매우 도움이 됐습니다.',
+      feedbackType: 'CAREER_TIMING' as const,
+      satisfactionStatus: 'SATISFIED' as const,
+      feedbackContent: '매우 도움이 됐습니다.',
     };
     const result = await submitFeedback(request);
 
@@ -158,8 +158,9 @@ describe('submitFeedback', () => {
 
     await expect(
       submitFeedback({
-        satisfactionScore: 3,
-        analysisType: 'CAREER_TIMING',
+        sajuResultId: 'saju-001',
+        feedbackType: 'CAREER_TIMING',
+        satisfactionStatus: 'UNSATISFIED',
       }),
     ).rejects.toThrow('피드백 제출 실패');
   });

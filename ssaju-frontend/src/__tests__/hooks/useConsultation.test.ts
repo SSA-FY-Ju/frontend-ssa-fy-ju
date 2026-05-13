@@ -12,10 +12,8 @@ import { mockConsultationData } from '@/mocks/data/career';
 jest.mock('@/lib/api/career', () => ({ fetchConsultation: jest.fn() }));
 
 // useDisclaimerTimer 모킹 — onComplete를 즉시 호출하도록
-let capturedOnComplete: (() => void) | null = null;
 jest.mock('@/hooks/useDisclaimerTimer', () => ({
   useDisclaimerTimer: ({ onComplete }: { onComplete: () => void }) => {
-    capturedOnComplete = onComplete;
     return {
       isVisible: false,
       isFading: false,
@@ -31,7 +29,6 @@ describe('useConsultation', () => {
   beforeEach(() => {
     useConsultationStore.getState().reset();
     jest.clearAllMocks();
-    capturedOnComplete = null;
   });
 
   it('초기 phase는 idle, consultation null', () => {

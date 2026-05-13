@@ -15,6 +15,7 @@ export function formatDateKo(dateStr: string): string {
     if (!isValid(date)) return dateStr;
     return format(date, 'yyyy년 M월 d일', { locale: ko });
   } catch {
+    // 파싱 실패 시 원본 문자열 그대로 반환 — UI 렌더링 차단 불필요
     return dateStr;
   }
 }
@@ -29,6 +30,7 @@ export function formatTimestamp(timestamp: number): string {
     if (!isValid(date)) return '';
     return format(date, 'yyyy-MM-dd HH:mm');
   } catch {
+    // 잘못된 타임스탬프 — 빈 문자열로 안전하게 폴백
     return '';
   }
 }
