@@ -55,5 +55,10 @@
   "engines": {
     "node": ">=18.17.0",
     "npm": ">=10.0.0"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }
