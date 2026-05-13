@@ -1,20 +1,17 @@
 'use client';
-// [Exception: Principle IV] fullpage.js 사용 — 스크롤 스냅 직접 구현 복잡도 과다, 사용자 명시 요청
 
 /**
  * AI 컨설팅 풀페이지 뷰 (T065)
  *
- * fullpage.js 전체화면 스냅 스크롤로 8개 분석 섹션 표시
- * - 각 섹션 = 100vh 독립 전체 화면
- * - scrollingSpeed: 700ms 스냅 전환
- * - responsiveWidth: 768 → 모바일에서 일반 스크롤로 폴백
- * - prefers-reduced-motion: scrollingSpeed: 0 (즉시 전환)
- * - SSR: 이 컴포넌트는 dynamic({ ssr: false })로 임포트할 것 (fullpage.js는 브라우저 전용)
+ * CSS scroll-snap으로 fullpage.js 동일 UX 구현 (라이선스 없이 무료)
+ * - 각 섹션 = 100vh 독립 전체 화면 (scroll-snap-type: y mandatory)
+ * - IntersectionObserver로 활성 섹션 추적 → currentSectionIndex 동기화
+ * - container.scrollTo({ behavior: 'smooth' })로 프로그래매틱 이동
+ * - prefers-reduced-motion: behavior: 'instant' 즉시 전환
+ * - 모바일: 동일 동작 (CSS scroll-snap은 추가 설정 불필요)
  */
 
-import { useRef } from 'react';
-import ReactFullpage from '@fullpage/react-fullpage';
-import type { fullpageApi } from '@fullpage/react-fullpage';
+import { useRef, useEffect, useCallback } from 'react';
 import type { ConsultationData } from '@/types/api';
 import { SectionNavigator } from './SectionNavigator';
 import { IndustriesTab } from './IndustriesTab';
@@ -50,12 +47,62 @@ export function FullPageConsultation({
   currentSectionIndex,
   onSectionChange,
 }: FullPageConsultationProps) {
-  const apiRef = useRef<fullpageApi | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const sectionRefs = useRef<(HTMLDivElement | null)[]>(Array(8).fill(null));
 
-  const handleNavigate = (index: number) => {
-    // fullpage.js moveTo는 1-based index 사용
-    apiRef.current?.moveTo(index + 1);
-  };
+  /** IntersectionObserver: 섹션이 50% 이상 보일 때 활성 섹션 업데이트 */
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const observers: IntersectionObserver[] = [];
+
+    sectionRefs.current.forEach((el, index) => {
+      if (!el) return;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              onSectionChange(index);
+            }
+          });
+        },
+        { root: container, threshold: 0.5 }
+      );
+      observer.observe(el);
+      observers.push(observer);
+    });
+
+    return () => observers.forEach((o) => o.disconnect());
+  }, [onSectionChange]);
+
+  /** 섹션 네비게이터 클릭 → 해당 섹션으로 스크롤 */
+  const handleNavigate = useCallback((index: number) => {
+    const container = containerRef.current;
+    const section = sectionRefs.current[index];
+    if (!container || !section) return;
+
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    container.scrollTo({
+      top: section.offsetTop,
+      behavior: prefersReducedMotion ? 'instant' : 'smooth',
+    });
+  }, []);
+
+  const sections = [
+    <IndustriesTab key="industries" industries={data.recommendedIndustries} />,
+    <InterviewTipsTab key="interview" tips={data.interviewTips} />,
+    <StrengthsTab key="strengths" strengths={data.strengths} />,
+    <SajuProfileTab key="saju" profile={data.sajuProfile} />,
+    <WealthStyleTab key="wealth" wealthStyle={data.wealthStyle} />,
+    <CareerRoadmapTab key="roadmap" roadmap={data.careerRoadmap} />,
+    <BrandingTab key="branding" branding={data.branding} />,
+    <MonthlyForecastTab key="monthly" forecasts={data.monthlyForecasts} />,
+  ];
 
   return (
     <div className="relative">
@@ -66,111 +113,38 @@ export function FullPageConsultation({
         onNavigate={handleNavigate}
       />
 
-      <ReactFullpage
-        licenseKey=""
-        credits={{ enabled: false }}
-        scrollingSpeed={700}
-        easing="easeInOutCubic"
-        scrollOverflow={true}
-        normalScrollElements=".feedback-modal"
-        responsiveWidth={768}
-        afterLoad={(_origin, destination) => {
-          // destination.index는 0-based
-          onSectionChange(destination.index);
-        }}
-        afterRender={() => {
-          // prefers-reduced-motion 활성 시 스냅 즉시 완료
-          if (
-            typeof window !== 'undefined' &&
-            typeof window.matchMedia === 'function' &&
-            window.matchMedia('(prefers-reduced-motion: reduce)').matches &&
-            apiRef.current
-          ) {
-            apiRef.current.setScrollingSpeed(0);
-          }
-        }}
-        render={({ fullpageApi: api }) => {
-          // render 호출마다 최신 api 참조 갱신
-          apiRef.current = api;
-
-          return (
-            <ReactFullpage.Wrapper>
-              {/* 섹션 1: 추천산업 */}
-              <div className="section bg-night-900">
-                <div className="max-w-3xl mx-auto px-4 py-10 h-full overflow-y-auto">
-                  <SectionTitle label="추천산업" />
-                  <IndustriesTab industries={data.recommendedIndustries} />
+      {/* 풀페이지 스냅 스크롤 컨테이너 */}
+      <div
+        ref={containerRef}
+        className="h-screen overflow-y-scroll"
+        style={{ scrollSnapType: 'y mandatory' }}
+        data-testid="fullpage-container"
+      >
+        {SECTION_LABELS.map((label, index) => (
+          <div
+            key={label}
+            ref={(el) => { sectionRefs.current[index] = el; }}
+            className="h-screen overflow-y-auto bg-night-900"
+            style={{ scrollSnapAlign: 'start' }}
+            data-testid={`fullpage-section-${index}`}
+          >
+            <div className="max-w-3xl mx-auto px-4 py-10">
+              <SectionTitle label={label} />
+              {sections[index]}
+              {/* 마지막 섹션(월별운세)에 피드백 버튼 */}
+              {index === 7 && (
+                <div className="mt-8">
+                  <FeedbackButton feedbackType="CONSULTATION" />
                 </div>
-              </div>
-
-              {/* 섹션 2: 면접팁 */}
-              <div className="section bg-night-900">
-                <div className="max-w-3xl mx-auto px-4 py-10 h-full overflow-y-auto">
-                  <SectionTitle label="면접팁" />
-                  <InterviewTipsTab tips={data.interviewTips} />
-                </div>
-              </div>
-
-              {/* 섹션 3: 강점 */}
-              <div className="section bg-night-900">
-                <div className="max-w-3xl mx-auto px-4 py-10 h-full overflow-y-auto">
-                  <SectionTitle label="강점" />
-                  <StrengthsTab strengths={data.strengths} />
-                </div>
-              </div>
-
-              {/* 섹션 4: 사주프로필 */}
-              <div className="section bg-night-900">
-                <div className="max-w-3xl mx-auto px-4 py-10 h-full overflow-y-auto">
-                  <SectionTitle label="사주프로필" />
-                  <SajuProfileTab profile={data.sajuProfile} />
-                </div>
-              </div>
-
-              {/* 섹션 5: 부의운 */}
-              <div className="section bg-night-900">
-                <div className="max-w-3xl mx-auto px-4 py-10 h-full overflow-y-auto">
-                  <SectionTitle label="부의운" />
-                  <WealthStyleTab wealthStyle={data.wealthStyle} />
-                </div>
-              </div>
-
-              {/* 섹션 6: 경력로드맵 */}
-              <div className="section bg-night-900">
-                <div className="max-w-3xl mx-auto px-4 py-10 h-full overflow-y-auto">
-                  <SectionTitle label="경력로드맵" />
-                  <CareerRoadmapTab roadmap={data.careerRoadmap} />
-                </div>
-              </div>
-
-              {/* 섹션 7: 브랜딩 */}
-              <div className="section bg-night-900">
-                <div className="max-w-3xl mx-auto px-4 py-10 h-full overflow-y-auto">
-                  <SectionTitle label="브랜딩" />
-                  <BrandingTab branding={data.branding} />
-                </div>
-              </div>
-
-              {/* 섹션 8: 월별운세 + 피드백 */}
-              <div className="section bg-night-900">
-                <div className="max-w-3xl mx-auto px-4 py-10 h-full overflow-y-auto">
-                  <SectionTitle label="월별운세" />
-                  <MonthlyForecastTab forecasts={data.monthlyForecasts} />
-                  {/* 마지막 섹션에서 피드백 버튼 표시 */}
-                  <div className="mt-8">
-                    <FeedbackButton feedbackType="CONSULTATION" />
-                  </div>
-                </div>
-              </div>
-            </ReactFullpage.Wrapper>
-          );
-        }}
-      />
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
-/** 섹션 제목 서브컴포넌트 */
 function SectionTitle({ label }: { label: string }) {
   return (
     <h2 className="text-star-400 text-xl font-bold mb-6 flex items-center gap-2">

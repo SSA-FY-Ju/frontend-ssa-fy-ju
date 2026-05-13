@@ -3,12 +3,11 @@
 /**
  * AI 커리어 컨설팅 페이지 (T079)
  *
- * 흐름: 입력 폼 → 고지 문구(1.5초) → AI 로딩(20초) → fullpage.js 8섹션 전체화면
+ * 흐름: 입력 폼 → 고지 문구(1.5초) → AI 로딩(20초) → CSS scroll-snap 8섹션 전체화면
  *
  * 2026-05-13 변경:
- * - ConsultationScrollView (IntersectionObserver) → FullPageConsultation (fullpage.js)
- * - fullpage.js는 브라우저 전용 → dynamic({ ssr: false })로 임포트
- * - SectionNavigator가 FullPageConsultation 내부에서 fullpageApi와 연동
+ * - ConsultationScrollView (IntersectionObserver 애니메이션) → FullPageConsultation (CSS scroll-snap)
+ * - IntersectionObserver + window.matchMedia 접근 → dynamic({ ssr: false })로 클라이언트 전용 렌더
  */
 
 import dynamic from 'next/dynamic';

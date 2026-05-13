@@ -14,7 +14,6 @@
     "test:watch": "jest --watch"
   },
   "dependencies": {
-    "@fullpage/react-fullpage": "^0.1.49",
     "@types/react-datepicker": "^6.2.0",
     "axios": "^1.6.0",
     "date-fns": "^2.30.0",
