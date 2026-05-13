@@ -41,7 +41,7 @@ export function SectionNavigator({ sections, currentIndex, onNavigate }: Section
                   'text-xs font-medium whitespace-nowrap transition-colors duration-200 text-right',
                   isActive
                     ? 'text-star-400'
-                    : 'text-night-200 group-hover:text-star-300',
+                    : 'text-white/50 group-hover:text-star-300',
                 ].join(' ')}
               >
                 {label}
@@ -53,7 +53,7 @@ export function SectionNavigator({ sections, currentIndex, onNavigate }: Section
                   'flex-shrink-0 rounded-full transition-all duration-200',
                   isActive
                     ? 'w-3 h-3 bg-star-500 ring-2 ring-star-500/40'
-                    : 'w-2 h-2 bg-night-600 group-hover:bg-star-400',
+                    : 'w-2 h-2 bg-white/25 group-hover:bg-star-400',
                 ].join(' ')}
               />
             </button>
@@ -77,7 +77,7 @@ export function SectionNavigator({ sections, currentIndex, onNavigate }: Section
                 className={[
                   'relative px-3 py-3 text-xs font-medium whitespace-nowrap transition-colors duration-200',
                   'min-h-[44px] flex items-center',
-                  isActive ? 'text-star-400' : 'text-night-200 hover:text-star-300',
+                  isActive ? 'text-star-400' : 'text-white/50 hover:text-star-300',
                 ].join(' ')}
               >
                 {label}

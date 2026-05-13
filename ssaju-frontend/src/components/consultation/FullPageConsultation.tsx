@@ -283,7 +283,7 @@ export function FullPageConsultation({
         <div
           ref={wrapperRef}
           className="will-change-transform"
-          style={{ transform: 'translateY(0px)' }}
+          style={{ transform: 'translateY(0px)', touchAction: 'none' }}
           data-testid="fullpage-wrapper"
         >
           {SECTION_LABELS.map((label, index) => (
