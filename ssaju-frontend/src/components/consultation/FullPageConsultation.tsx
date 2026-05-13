@@ -124,11 +124,11 @@ export function FullPageConsultation({
           <div
             key={label}
             ref={(el) => { sectionRefs.current[index] = el; }}
-            className="h-screen overflow-y-auto bg-night-900"
+            className="h-screen overflow-y-auto bg-night-900 flex flex-col justify-center"
             style={{ scrollSnapAlign: 'start' }}
             data-testid={`fullpage-section-${index}`}
           >
-            <div className="max-w-3xl mx-auto px-4 py-10">
+            <div className="max-w-3xl mx-auto px-4 py-8 w-full">
               <SectionTitle label={label} />
               {sections[index]}
               {/* 마지막 섹션(월별운세)에 피드백 버튼 */}
