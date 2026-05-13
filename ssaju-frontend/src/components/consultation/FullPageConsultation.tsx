@@ -120,36 +120,32 @@ export function FullPageConsultation({
     [onSectionChange]
   );
 
-  /** 마우스 휠: deltaY 누적 50px 초과 + 80ms 디바운스 후 섹션 전환 */
+  /**
+   * 마우스 휠 / 트랙패드:
+   * - deltaMode 정규화: 마우스 휠은 deltaMode=1(라인 단위, deltaY≈3) → ×40으로 픽셀 환산
+   * - 디바운스 제거 → 첫 이벤트에 즉시 반응
+   * - isNavigating lock이 애니메이션 중 중복 트리거 방지
+   */
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-
-    let accumulated = 0;
-    let timer: ReturnType<typeof setTimeout> | null = null;
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       if (isNavigating.current) return;
 
-      accumulated += e.deltaY;
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        const delta = accumulated;
-        accumulated = 0;
-        if (Math.abs(delta) < 50) return;
+      // deltaMode === 1 (마우스 휠, 라인 단위): × 40px
+      // deltaMode === 0 (트랙패드, 픽셀 단위): 그대로 사용
+      const normalized = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaY;
+      if (Math.abs(normalized) < 15) return; // 미세 움직임 무시
 
-        const direction = delta > 0 ? 1 : -1;
-        const next = Math.max(0, Math.min(SECTION_COUNT - 1, currentIndexRef.current + direction));
-        if (next !== currentIndexRef.current) animateTo(next);
-      }, 80);
+      const direction = normalized > 0 ? 1 : -1;
+      const next = Math.max(0, Math.min(SECTION_COUNT - 1, currentIndexRef.current + direction));
+      if (next !== currentIndexRef.current) animateTo(next);
     };
 
     container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => {
-      container.removeEventListener('wheel', handleWheel);
-      if (timer) clearTimeout(timer);
-    };
+    return () => container.removeEventListener('wheel', handleWheel);
   }, [animateTo]);
 
   /**
