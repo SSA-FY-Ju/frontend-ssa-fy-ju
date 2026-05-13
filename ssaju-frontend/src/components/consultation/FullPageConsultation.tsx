@@ -70,9 +70,18 @@ export function FullPageConsultation({
   const easeInOutCubic = (t: number): number =>
     t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
+  /** 래퍼의 현재 translateY 값 읽기 (드래그 중 중간 위치에서 스냅 시작) */
+  const getCurrentY = (): number => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return 0;
+    const match = wrapper.style.transform.match(/translateY\((-?\d+(?:\.\d+)?)px\)/);
+    return match ? parseFloat(match[1]) : 0;
+  };
+
   /**
    * 지정 섹션으로 700ms translateY 슬라이드 애니메이션.
-   * wrapperRef를 GPU-가속 transform으로 이동 → 슬라이딩 모션 보장.
+   * - 드래그 중 호출 시 현재 래퍼 위치에서 스냅 시작 (자연스러운 연속 모션)
+   * - GPU-가속 transform → 슬라이딩 모션 보장
    */
   const animateTo = useCallback(
     (index: number) => {
@@ -90,7 +99,8 @@ export function FullPageConsultation({
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       const vh = container.clientHeight || window.innerHeight;
-      const startY = currentIndexRef.current * -vh;
+      // 현재 래퍼 위치에서 시작 (드래그 후 손가락을 뗐을 때 그 위치부터 스냅)
+      const startY = getCurrentY();
       const targetY = clampedIndex * -vh;
       const distance = targetY - startY;
 
@@ -156,28 +166,68 @@ export function FullPageConsultation({
     };
   }, [animateTo]);
 
-  /** 터치 스와이프: 60px 이상 이동 시 섹션 전환 */
+  /**
+   * 터치: 드래그하면 페이지가 손가락을 따라 실시간으로 이동,
+   * 손가락을 떼면 이동량에 따라 다음 섹션 또는 현재 섹션으로 스냅.
+   */
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
     let touchStartY = 0;
+    let dragBaseY = 0; // 드래그 시작 시점의 래퍼 translateY
+
     const handleTouchStart = (e: TouchEvent) => {
+      if (isNavigating.current) return;
       touchStartY = e.touches[0].clientY;
+      dragBaseY = getCurrentY();
     };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isNavigating.current) return;
+      e.preventDefault(); // 브라우저 기본 스크롤 차단
+      const wrapper = wrapperRef.current;
+      if (!wrapper) return;
+
+      const deltaY = e.touches[0].clientY - touchStartY;
+      const vh = container.clientHeight || window.innerHeight;
+      const newY = dragBaseY + deltaY;
+
+      // 첫/마지막 섹션 경계에서 저항감 적용 (드래그 량의 25%만 반영)
+      const minY = -(SECTION_COUNT - 1) * vh;
+      let clampedY: number;
+      if (newY > 0) {
+        clampedY = newY * 0.25; // 첫 섹션 위로 당길 때
+      } else if (newY < minY) {
+        clampedY = minY + (newY - minY) * 0.25; // 마지막 섹션 아래로 당길 때
+      } else {
+        clampedY = newY;
+      }
+
+      wrapper.style.transform = `translateY(${clampedY}px)`;
+    };
+
     const handleTouchEnd = (e: TouchEvent) => {
       if (isNavigating.current) return;
       const delta = touchStartY - e.changedTouches[0].clientY;
-      if (Math.abs(delta) < 60) return;
+
+      // 60px 미만 이동 → 현재 섹션으로 스냅백
+      if (Math.abs(delta) < 60) {
+        animateTo(currentIndexRef.current);
+        return;
+      }
+
       const direction = delta > 0 ? 1 : -1;
       const next = Math.max(0, Math.min(SECTION_COUNT - 1, currentIndexRef.current + direction));
-      if (next !== currentIndexRef.current) animateTo(next);
+      animateTo(next);
     };
 
     container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
     container.addEventListener('touchend', handleTouchEnd, { passive: true });
     return () => {
       container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchmove', handleTouchMove);
       container.removeEventListener('touchend', handleTouchEnd);
     };
   }, [animateTo]);
