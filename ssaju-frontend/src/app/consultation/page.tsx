@@ -47,33 +47,13 @@ export default function ConsultationPage() {
 
       {/* 결과 페이지: fullpage.js가 전체 화면 차지 → 감싸는 컨테이너 없음 */}
       {phase === 'result' && consultation ? (
-        <>
-          <FullPageConsultation
-            data={consultation}
-            currentSectionIndex={currentSectionIndex}
-            onSectionChange={handleSectionChange}
-            onFeedback={() => {/* 피드백 모달은 FeedbackButton 내부에서 관리 */}}
-          />
-
-          {/* 저장 / 로그인 유도 (fullpage 위에 플로팅) */}
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3">
-            {isLoggedIn ? (
-              <button className="bg-star-500 hover:bg-star-400 text-night-900 font-bold px-6 py-3 rounded-lg shadow-lg transition-colors">
-                이 결과 저장하기
-              </button>
-            ) : (
-              <p className="text-star-300 text-sm bg-night-900/80 px-4 py-2 rounded-lg backdrop-blur-sm">
-                결과를 저장하려면 로그인해주세요
-              </p>
-            )}
-            <button
-              onClick={reset}
-              className="border border-night-700 hover:border-star-500 text-star-300 text-xs px-4 py-2 rounded-lg bg-night-900/80 backdrop-blur-sm transition-colors"
-            >
-              새 분석 시작하기
-            </button>
-          </div>
-        </>
+        <FullPageConsultation
+          data={consultation}
+          currentSectionIndex={currentSectionIndex}
+          onSectionChange={handleSectionChange}
+          isLoggedIn={isLoggedIn}
+          onReset={reset}
+        />
       ) : (
         <div className="max-w-3xl mx-auto px-4 py-12">
           <h1 className="text-star-500 text-3xl font-bold text-center mb-2">AI 커리어 컨설팅</h1>

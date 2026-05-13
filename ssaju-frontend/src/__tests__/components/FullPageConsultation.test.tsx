@@ -1,15 +1,17 @@
 /**
  * FullPageConsultation 컴포넌트 테스트 (T081)
  *
- * CSS scroll-snap 기반 풀페이지 뷰 검증:
+ * transform: translateY 기반 풀페이지 스크롤 뷰 검증:
  * - 8개 섹션 컴포넌트 렌더링 확인
- * - IntersectionObserver → onSectionChange 호출 검증
- * - prefers-reduced-motion: behavior 'instant' 적용 검증
- * - handleNavigate → container.scrollTo 호출 검증
+ * - overflow-hidden 컨테이너 + will-change-transform 래퍼
+ * - 수직 중앙 정렬 (flex justify-center)
+ * - 마지막 섹션 저장/초기화 버튼
+ * - nav 버튼 클릭 → rAF 호출 (700ms 슬라이드 시작)
+ * - prefers-reduced-motion: 즉시 이동 (rAF 없음)
  */
 
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { mockConsultationData } from '@/mocks/data/career';
 
 // ─── window.matchMedia 모킹 ────────────────────────────────────────────────
@@ -28,39 +30,6 @@ const mockMatchMedia = (matches: boolean) => {
     }),
   });
 };
-
-// ─── IntersectionObserver 모킹 ─────────────────────────────────────────────
-type IOCallback = (entries: IntersectionObserverEntry[]) => void;
-const intersectionCallbacks: Map<Element, IOCallback> = new Map();
-
-class MockIntersectionObserver {
-  private callback: IOCallback;
-  constructor(callback: IOCallback) {
-    this.callback = callback;
-  }
-  observe(el: Element) {
-    intersectionCallbacks.set(el, this.callback);
-  }
-  unobserve(el: Element) {
-    intersectionCallbacks.delete(el);
-  }
-  disconnect() {
-    intersectionCallbacks.clear();
-  }
-}
-
-Object.defineProperty(window, 'IntersectionObserver', {
-  writable: true,
-  value: MockIntersectionObserver,
-});
-
-/** 특정 요소가 뷰포트에 진입했다고 시뮬레이션 */
-function triggerIntersection(el: Element, isIntersecting: boolean) {
-  const callback = intersectionCallbacks.get(el);
-  if (callback) {
-    callback([{ isIntersecting, target: el } as IntersectionObserverEntry]);
-  }
-}
 
 // ─── 섹션 컴포넌트 모킹 ────────────────────────────────────────────────────
 jest.mock('@/components/consultation/SectionNavigator', () => ({
@@ -116,7 +85,7 @@ const defaultProps = {
   onSectionChange: jest.fn(),
 };
 
-// ─── requestAnimationFrame 모킹 ───────────────────────────────────────────────
+// ─── requestAnimationFrame 모킹 ──────────────────────────────────────────
 const mockRaf = jest.fn((_cb: FrameRequestCallback) => 1);
 
 describe('FullPageConsultation', () => {
@@ -130,12 +99,10 @@ describe('FullPageConsultation', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    intersectionCallbacks.clear();
   });
 
   it('8개 섹션 컴포넌트가 모두 렌더링됨', () => {
     render(<FullPageConsultation {...defaultProps} />);
-
     expect(screen.getByTestId('section-industries')).toBeInTheDocument();
     expect(screen.getByTestId('section-interview')).toBeInTheDocument();
     expect(screen.getByTestId('section-strengths')).toBeInTheDocument();
@@ -153,20 +120,22 @@ describe('FullPageConsultation', () => {
     }
   });
 
+  it('컨테이너가 overflow-hidden, 래퍼가 will-change-transform 가짐', () => {
+    render(<FullPageConsultation {...defaultProps} />);
+    expect(screen.getByTestId('fullpage-container').classList.contains('overflow-hidden')).toBe(true);
+    expect(screen.getByTestId('fullpage-wrapper').classList.contains('will-change-transform')).toBe(true);
+  });
+
+  it('각 섹션이 flex justify-center 클래스 가짐 (수직 중앙 정렬)', () => {
+    render(<FullPageConsultation {...defaultProps} />);
+    const section0 = screen.getByTestId('fullpage-section-0');
+    expect(section0.classList.contains('flex')).toBe(true);
+    expect(section0.classList.contains('justify-center')).toBe(true);
+  });
+
   it('SectionNavigator가 currentSectionIndex와 함께 렌더링됨', () => {
     render(<FullPageConsultation {...defaultProps} currentSectionIndex={3} />);
     expect(screen.getByTestId('section-navigator')).toHaveAttribute('data-current-index', '3');
-  });
-
-  it('IntersectionObserver 진입 → onSectionChange(index) 호출', () => {
-    const onSectionChange = jest.fn();
-    render(<FullPageConsultation {...defaultProps} onSectionChange={onSectionChange} />);
-
-    // 4번째 섹션(index 3)이 뷰포트에 진입
-    const section3 = screen.getByTestId('fullpage-section-3');
-    triggerIntersection(section3, true);
-
-    expect(onSectionChange).toHaveBeenCalledWith(3);
   });
 
   it('마지막 섹션(index 7)에 피드백 버튼 표시', () => {
@@ -174,33 +143,38 @@ describe('FullPageConsultation', () => {
     expect(screen.getByTestId('feedback-button')).toBeInTheDocument();
   });
 
-  it('풀페이지 컨테이너에 scroll-snap-type: y mandatory 스타일 적용', () => {
-    render(<FullPageConsultation {...defaultProps} />);
-    const container = screen.getByTestId('fullpage-container');
-    expect(container.style.scrollSnapType).toBe('y mandatory');
+  it('isLoggedIn=true → 저장 버튼 표시', () => {
+    render(<FullPageConsultation {...defaultProps} isLoggedIn={true} />);
+    expect(screen.getByText('이 결과 저장하기')).toBeInTheDocument();
   });
 
-  it('각 섹션에 scroll-snap-align: start 스타일 적용', () => {
-    render(<FullPageConsultation {...defaultProps} />);
-    const section0 = screen.getByTestId('fullpage-section-0');
-    expect(section0.style.scrollSnapAlign).toBe('start');
+  it('isLoggedIn=false → 로그인 안내 표시', () => {
+    render(<FullPageConsultation {...defaultProps} isLoggedIn={false} />);
+    expect(screen.getByText(/결과를 저장하려면 로그인/)).toBeInTheDocument();
   });
 
-  it('nav 버튼 클릭 → requestAnimationFrame 호출 (700ms 애니메이션 시작)', () => {
+  it('"새 분석 시작하기" 버튼 클릭 → onReset 호출', () => {
+    const onReset = jest.fn();
+    render(<FullPageConsultation {...defaultProps} onReset={onReset} />);
+    fireEvent.click(screen.getByText('새 분석 시작하기'));
+    expect(onReset).toHaveBeenCalledTimes(1);
+  });
+
+  it('nav 버튼 클릭 → requestAnimationFrame 호출 (700ms 슬라이드 시작)', () => {
     render(<FullPageConsultation {...defaultProps} />);
-    // nav 버튼 클릭 (index 2)
-    const navBtn = screen.getByTestId('nav-btn-2');
-    navBtn.click();
+    screen.getByTestId('nav-btn-2').click();
     expect(mockRaf).toHaveBeenCalled();
   });
 
-  it('prefers-reduced-motion: true → requestAnimationFrame 호출 없이 즉시 스크롤', () => {
-    mockMatchMedia(true); // reduce motion ON
+  it('prefers-reduced-motion: true → rAF 없이 즉시 translateY 설정', () => {
+    mockMatchMedia(true);
     render(<FullPageConsultation {...defaultProps} />);
     mockRaf.mockClear();
-    const navBtn = screen.getByTestId('nav-btn-3');
-    navBtn.click();
+    screen.getByTestId('nav-btn-3').click();
     expect(mockRaf).not.toHaveBeenCalled();
-    mockMatchMedia(false); // 원복
+    // wrapper transform이 즉시 설정됨
+    const wrapper = screen.getByTestId('fullpage-wrapper');
+    expect(wrapper.style.transform).toContain('translateY');
+    mockMatchMedia(false);
   });
 });

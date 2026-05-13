@@ -3,12 +3,14 @@
 /**
  * AI 컨설팅 풀페이지 뷰 (T065)
  *
- * CSS scroll-snap으로 fullpage.js 동일 UX 구현 (라이선스 없이 무료)
- * - 각 섹션 = 100vh 독립 전체 화면 (scroll-snap-type: y mandatory)
- * - IntersectionObserver로 활성 섹션 추적 → currentSectionIndex 동기화
- * - container.scrollTo({ behavior: 'smooth' })로 프로그래매틱 이동
- * - prefers-reduced-motion: behavior: 'instant' 즉시 전환
- * - 모바일: 동일 동작 (CSS scroll-snap은 추가 설정 불필요)
+ * transform: translateY() 기반 풀페이지 스크롤:
+ * - overflow: hidden 컨테이너 안에서 섹션 래퍼를 translateY로 이동
+ * - GPU 가속 → 슬라이딩 모션 확실히 보임
+ * - 700ms easeInOutCubic rAF 애니메이션
+ * - wheel(50px 임계값 + 80ms 디바운스) / touch(60px) / keyboard(Arrow) 지원
+ * - isNavigating lock으로 중복 트리거 방지
+ * - 마지막 섹션에 저장/초기화 버튼 포함
+ * - 각 섹션 콘텐츠 수직 중앙 정렬
  */
 
 import { useRef, useEffect, useCallback } from 'react';
@@ -35,86 +37,170 @@ const SECTION_LABELS = [
   '월별운세',
 ] as const;
 
+const SECTION_COUNT = SECTION_LABELS.length;
+const ANIMATION_DURATION = 700;
+
 interface FullPageConsultationProps {
   data: ConsultationData;
   currentSectionIndex: number;
   onSectionChange: (index: number) => void;
   onFeedback?: () => void;
+  isLoggedIn?: boolean;
+  onReset?: () => void;
 }
 
 export function FullPageConsultation({
   data,
   currentSectionIndex,
   onSectionChange,
+  isLoggedIn,
+  onReset,
 }: FullPageConsultationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const sectionRefs = useRef<(HTMLDivElement | null)[]>(Array(8).fill(null));
+  /** 섹션 전체를 감싸는 슬라이딩 래퍼 */
+  const wrapperRef = useRef<HTMLDivElement>(null);
+  const isNavigating = useRef(false);
+  const currentIndexRef = useRef(currentSectionIndex);
 
-  /** IntersectionObserver: 섹션이 50% 이상 보일 때 활성 섹션 업데이트 */
+  useEffect(() => {
+    currentIndexRef.current = currentSectionIndex;
+  }, [currentSectionIndex]);
+
+  /** easeInOutCubic 타이밍 함수 */
+  const easeInOutCubic = (t: number): number =>
+    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+  /**
+   * 지정 섹션으로 700ms translateY 슬라이드 애니메이션.
+   * wrapperRef를 GPU-가속 transform으로 이동 → 슬라이딩 모션 보장.
+   */
+  const animateTo = useCallback(
+    (index: number) => {
+      const container = containerRef.current;
+      const wrapper = wrapperRef.current;
+      if (!container || !wrapper || isNavigating.current) return;
+
+      const clampedIndex = Math.max(0, Math.min(SECTION_COUNT - 1, index));
+      isNavigating.current = true;
+      onSectionChange(clampedIndex);
+
+      const prefersReducedMotion =
+        typeof window !== 'undefined' &&
+        typeof window.matchMedia === 'function' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      const vh = container.clientHeight || window.innerHeight;
+      const startY = currentIndexRef.current * -vh;
+      const targetY = clampedIndex * -vh;
+      const distance = targetY - startY;
+
+      const unlock = () => {
+        setTimeout(() => {
+          isNavigating.current = false;
+        }, 100);
+      };
+
+      if (prefersReducedMotion) {
+        wrapper.style.transform = `translateY(${targetY}px)`;
+        unlock();
+        return;
+      }
+
+      let startTime: number | null = null;
+      const animate = (currentTime: number) => {
+        if (startTime === null) startTime = currentTime;
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
+        const y = startY + distance * easeInOutCubic(progress);
+        wrapper.style.transform = `translateY(${y}px)`;
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          unlock();
+        }
+      };
+      requestAnimationFrame(animate);
+    },
+    [onSectionChange]
+  );
+
+  /** 마우스 휠: deltaY 누적 50px 초과 + 80ms 디바운스 후 섹션 전환 */
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    const observers: IntersectionObserver[] = [];
+    let accumulated = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
 
-    sectionRefs.current.forEach((el, index) => {
-      if (!el) return;
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              onSectionChange(index);
-            }
-          });
-        },
-        { root: container, threshold: 0.5 }
-      );
-      observer.observe(el);
-      observers.push(observer);
-    });
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (isNavigating.current) return;
 
-    return () => observers.forEach((o) => o.disconnect());
-  }, [onSectionChange]);
+      accumulated += e.deltaY;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        const delta = accumulated;
+        accumulated = 0;
+        if (Math.abs(delta) < 50) return;
 
-  /** easeInOutCubic 타이밍 함수 (t: 0→1) */
-  const easeInOutCubic = (t: number): number =>
-    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
-  /** 섹션 네비게이터 클릭 → 700ms easeInOutCubic 스크롤 */
-  const handleNavigate = useCallback((index: number) => {
-    const container = containerRef.current;
-    const section = sectionRefs.current[index];
-    if (!container || !section) return;
-
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    const startTop = container.scrollTop;
-    const targetTop = section.offsetTop;
-    const distance = targetTop - startTop;
-
-    if (prefersReducedMotion) {
-      container.scrollTop = targetTop;
-      return;
-    }
-
-    const duration = 700;
-    let startTime: number | null = null;
-
-    const animate = (currentTime: number) => {
-      if (startTime === null) startTime = currentTime;
-      const elapsed = currentTime - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      container.scrollTop = startTop + distance * easeInOutCubic(progress);
-      if (progress < 1) {
-        requestAnimationFrame(animate);
-      }
+        const direction = delta > 0 ? 1 : -1;
+        const next = Math.max(0, Math.min(SECTION_COUNT - 1, currentIndexRef.current + direction));
+        if (next !== currentIndexRef.current) animateTo(next);
+      }, 80);
     };
 
-    requestAnimationFrame(animate);
-  }, []);
+    container.addEventListener('wheel', handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener('wheel', handleWheel);
+      if (timer) clearTimeout(timer);
+    };
+  }, [animateTo]);
+
+  /** 터치 스와이프: 60px 이상 이동 시 섹션 전환 */
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let touchStartY = 0;
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (isNavigating.current) return;
+      const delta = touchStartY - e.changedTouches[0].clientY;
+      if (Math.abs(delta) < 60) return;
+      const direction = delta > 0 ? 1 : -1;
+      const next = Math.max(0, Math.min(SECTION_COUNT - 1, currentIndexRef.current + direction));
+      if (next !== currentIndexRef.current) animateTo(next);
+    };
+
+    container.addEventListener('touchstart', handleTouchStart, { passive: true });
+    container.addEventListener('touchend', handleTouchEnd, { passive: true });
+    return () => {
+      container.removeEventListener('touchstart', handleTouchStart);
+      container.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [animateTo]);
+
+  /** 키보드: ArrowDown/PageDown → 다음, ArrowUp/PageUp → 이전 */
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (isNavigating.current) return;
+      const direction =
+        e.key === 'ArrowDown' || e.key === 'PageDown'
+          ? 1
+          : e.key === 'ArrowUp' || e.key === 'PageUp'
+          ? -1
+          : 0;
+      if (!direction) return;
+      const next = Math.max(0, Math.min(SECTION_COUNT - 1, currentIndexRef.current + direction));
+      if (next !== currentIndexRef.current) animateTo(next);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [animateTo]);
+
+  const handleNavigate = useCallback((index: number) => animateTo(index), [animateTo]);
 
   const sections = [
     <IndustriesTab key="industries" industries={data.recommendedIndustries} />,
@@ -129,40 +215,61 @@ export function FullPageConsultation({
 
   return (
     <div className="relative">
-      {/* 섹션 네비게이터 (데스크톱: 우측 플로팅, 모바일: 상단 고정) */}
       <SectionNavigator
         sections={[...SECTION_LABELS]}
         currentIndex={currentSectionIndex}
         onNavigate={handleNavigate}
       />
 
-      {/* 풀페이지 스냅 스크롤 컨테이너 */}
+      {/* overflow-hidden 창 — 래퍼가 translateY로 슬라이드 */}
       <div
         ref={containerRef}
-        className="h-screen overflow-y-scroll"
-        style={{ scrollSnapType: 'y mandatory' }}
+        className="h-screen overflow-hidden"
         data-testid="fullpage-container"
       >
-        {SECTION_LABELS.map((label, index) => (
-          <div
-            key={label}
-            ref={(el) => { sectionRefs.current[index] = el; }}
-            className="h-screen overflow-y-auto bg-night-900"
-            style={{ scrollSnapAlign: 'start' }}
-            data-testid={`fullpage-section-${index}`}
-          >
-            <div className="max-w-3xl mx-auto px-4 py-10">
-              <SectionTitle label={label} />
-              {sections[index]}
-              {/* 마지막 섹션(월별운세)에 피드백 버튼 */}
-              {index === 7 && (
-                <div className="mt-8">
-                  <FeedbackButton feedbackType="CONSULTATION" />
-                </div>
-              )}
+        {/* 슬라이딩 래퍼: 8섹션을 수직으로 쌓아 GPU transform으로 이동 */}
+        <div
+          ref={wrapperRef}
+          className="will-change-transform"
+          style={{ transform: 'translateY(0px)' }}
+          data-testid="fullpage-wrapper"
+        >
+          {SECTION_LABELS.map((label, index) => (
+            <div
+              key={label}
+              className="h-screen overflow-y-auto bg-night-900 flex flex-col justify-center"
+              data-testid={`fullpage-section-${index}`}
+            >
+              <div className="max-w-3xl mx-auto px-4 py-8 w-full">
+                <SectionTitle label={label} />
+                {sections[index]}
+
+                {index === SECTION_COUNT - 1 && (
+                  <div className="mt-8 flex flex-col items-center gap-4">
+                    <FeedbackButton feedbackType="CONSULTATION" />
+                    <div className="flex flex-col items-center gap-3 w-full pt-2 border-t border-night-700">
+                      {isLoggedIn ? (
+                        <button className="bg-star-500 hover:bg-star-400 text-night-900 font-bold px-6 py-3 rounded-lg shadow-lg transition-colors">
+                          이 결과 저장하기
+                        </button>
+                      ) : (
+                        <p className="text-star-300 text-sm bg-night-800 px-4 py-2 rounded-lg border border-night-700">
+                          결과를 저장하려면 로그인해주세요
+                        </p>
+                      )}
+                      <button
+                        onClick={onReset}
+                        className="border border-night-700 hover:border-star-500 text-star-300 text-xs px-4 py-2 rounded-lg transition-colors"
+                      >
+                        새 분석 시작하기
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
