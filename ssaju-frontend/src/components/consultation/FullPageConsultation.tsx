@@ -221,6 +221,79 @@ export function FullPageConsultation({
     };
   }, [animateTo]);
 
+  /**
+   * 마우스 드래그: 클릭 후 아래로 끌면 다음 페이지가 올라오고,
+   * 마우스를 떼면 이동량에 따라 섹션 스냅.
+   */
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    let isDragging = false;
+    let mouseStartY = 0;
+    let dragBaseY = 0;
+
+    const handleMouseDown = (e: MouseEvent) => {
+      if (isNavigating.current) return;
+      isDragging = true;
+      mouseStartY = e.clientY;
+      dragBaseY = getCurrentY();
+      const wrapper = wrapperRef.current;
+      if (wrapper) wrapper.style.transition = 'none';
+      // 드래그 중 텍스트 선택 방지
+      e.preventDefault();
+    };
+
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || isNavigating.current) return;
+      const wrapper = wrapperRef.current;
+      if (!wrapper) return;
+
+      const deltaY = e.clientY - mouseStartY;
+      const vh = container.clientHeight || window.innerHeight;
+      const newY = dragBaseY + deltaY;
+
+      const minY = -(SECTION_COUNT - 1) * vh;
+      let clampedY: number;
+      if (newY > 0) {
+        clampedY = newY * 0.25;
+      } else if (newY < minY) {
+        clampedY = minY + (newY - minY) * 0.25;
+      } else {
+        clampedY = newY;
+      }
+
+      wrapper.style.transform = `translateY(${clampedY}px)`;
+    };
+
+    const handleMouseUp = (e: MouseEvent) => {
+      if (!isDragging) return;
+      isDragging = false;
+
+      if (isNavigating.current) return;
+      const delta = mouseStartY - e.clientY;
+
+      if (Math.abs(delta) < 60) {
+        animateTo(currentIndexRef.current);
+        return;
+      }
+
+      const direction = delta > 0 ? 1 : -1;
+      const next = Math.max(0, Math.min(SECTION_COUNT - 1, currentIndexRef.current + direction));
+      animateTo(next);
+    };
+
+    // mouseup/mouseleave는 window에 등록 — 컨테이너 밖에서 마우스를 떼도 처리
+    container.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      container.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [animateTo]);
+
   /** 키보드: ArrowDown/PageDown → 다음, ArrowUp/PageUp → 이전 */
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -262,10 +335,11 @@ export function FullPageConsultation({
 
       {/* overflow-hidden 창 — 래퍼가 translateY로 슬라이드 */}
       {/* touch-action: none → 브라우저 네이티브 스크롤 선점 차단, touchmove 실시간 추적 보장 */}
+      {/* cursor: grab → 마우스 드래그 가능함을 시각적으로 표시 */}
       <div
         ref={containerRef}
         className="h-screen overflow-hidden"
-        style={{ touchAction: 'none' }}
+        style={{ touchAction: 'none', cursor: 'grab' }}
         data-testid="fullpage-container"
       >
         {/* 슬라이딩 래퍼: 8섹션을 수직으로 쌓아 GPU transform으로 이동 */}
