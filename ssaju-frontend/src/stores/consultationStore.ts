@@ -22,12 +22,14 @@ interface ConsultationStore {
   lastFetchedId: string | null;
   isLoading: boolean;
   error: string | null;
+  currentSectionIndex: number; // fullpage.js 현재 섹션 (0-based)
 
   // Actions
   setConsultation: (data: ConsultationData, sajuResultId: string) => void;
   clearData: () => void;
   setIsLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setCurrentSectionIndex: (index: number) => void;
 
   // 캐시 유효성 검증
   isValid: (sajuResultId: string) => boolean;
@@ -39,6 +41,7 @@ const initialState = {
   lastFetchedId: null,
   isLoading: false,
   error: null,
+  currentSectionIndex: 0,
 };
 
 export const useConsultationStore = create<ConsultationStore>()((set, get) => ({
@@ -63,6 +66,10 @@ export const useConsultationStore = create<ConsultationStore>()((set, get) => ({
 
   setError: (error: string | null) => {
     set({ error });
+  },
+
+  setCurrentSectionIndex: (index: number) => {
+    set({ currentSectionIndex: index });
   },
 
   isValid: (sajuResultId: string) => {

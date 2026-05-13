@@ -85,8 +85,10 @@ export function ConsultationScrollView({ data }: ConsultationScrollViewProps) {
   return (
     <div className="relative">
       {/* 섹션 네비게이터 (데스크톱: 우측 플로팅, 모바일: 상단 고정) */}
+      {/* @deprecated — FullPageConsultation으로 대체됨 (2026-05-13) */}
       <SectionNavigator
-        activeSectionIndex={activeSectionIndex}
+        sections={['추천산업', '면접팁', '강점', '사주프로필', '부의운', '경력로드맵', '브랜딩', '월별운세']}
+        currentIndex={activeSectionIndex}
         onNavigate={scrollToSection}
       />
 

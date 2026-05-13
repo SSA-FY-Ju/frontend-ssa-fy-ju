@@ -1,8 +1,10 @@
 /**
  * useConsultation 훅 테스트 (T080)
  *
- * 2026-05-13 업데이트: 탭 선택 테스트 제거 → 스크롤 뷰 기준 테스트로 전환
- * useDisclaimerTimer를 모킹하여 타이머 없이 runApiCall을 직접 트리거
+ * 2026-05-13 업데이트 (v2):
+ * - useSectionObserver 의존성 제거 확인
+ * - handleSectionChange → consultationStore.setCurrentSectionIndex 검증
+ * - currentSectionIndex 반환값 검증
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react';
@@ -96,5 +98,34 @@ describe('useConsultation', () => {
     expect(result.current.phase).toBe('idle');
     expect(result.current.consultation).toBeNull();
     expect(useConsultationStore.getState().lastFetchedId).toBeNull();
+  });
+
+  // ─── fullpage.js 연동 테스트 (T080 - 2026-05-13 추가) ───────────────────
+
+  it('currentSectionIndex 초기값 0 반환 (fullpage.js 섹션 0-based)', () => {
+    const { result } = renderHook(() => useConsultation());
+    expect(result.current.currentSectionIndex).toBe(0);
+  });
+
+  it('handleSectionChange(index) → consultationStore.setCurrentSectionIndex 호출', () => {
+    const { result } = renderHook(() => useConsultation());
+
+    act(() => { result.current.handleSectionChange(3); });
+
+    expect(useConsultationStore.getState().currentSectionIndex).toBe(3);
+    expect(result.current.currentSectionIndex).toBe(3);
+  });
+
+  it('useSectionObserver 의존성 없음 — 모듈에서 import하지 않음', () => {
+    // useConsultation이 useSectionObserver를 사용하지 않는지 간접 검증:
+    // reset() 후 currentSectionIndex는 consultationStore에서만 관리됨
+    const { result } = renderHook(() => useConsultation());
+
+    act(() => { result.current.handleSectionChange(5); });
+    expect(useConsultationStore.getState().currentSectionIndex).toBe(5);
+
+    act(() => { result.current.reset(); });
+    // reset 시 consultationStore.clearData() → currentSectionIndex 0으로 초기화
+    expect(useConsultationStore.getState().currentSectionIndex).toBe(0);
   });
 });

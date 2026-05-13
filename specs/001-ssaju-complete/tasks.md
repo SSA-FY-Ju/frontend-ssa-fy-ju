@@ -289,12 +289,12 @@
 > ⚠️ 2026-05-13 변경: ConsultationScrollView (IntersectionObserver) → FullPageConsultation (fullpage.js)
 > Constitution IV 예외: `[Exception: Principle IV]` — 사용자 명시 요청, 직접 구현 복잡도 과다
 
-- [ ] T065a [US4] `package.json` - `@fullpage/react-fullpage` 패키지 설치
+- [x] T065a [US4] `package.json` - `@fullpage/react-fullpage` 패키지 설치
   - `npm install @fullpage/react-fullpage`
   - TypeScript 타입 포함 여부 확인 (`@types/fullpage.js` 또는 패키지 내 포함)
   - `npm run build` 로 설치 후 빌드 통과 확인
 
-- [ ] T065 [US4] `components/consultation/FullPageConsultation.tsx` - fullpage.js 전체화면 섹션 래퍼
+- [x] T065 [US4] `components/consultation/FullPageConsultation.tsx` - fullpage.js 전체화면 섹션 래퍼
   - 기존 ConsultationScrollView.tsx 대체 (기존 파일 삭제 또는 미사용 표시)
   - `@fullpage/react-fullpage`의 `ReactFullpage` 래퍼 사용
   - **파일 상단 주석**: `// [Exception: Principle IV] fullpage.js 사용 — 스크롤 스냅 직접 구현 복잡도 과다, 사용자 명시 요청`
@@ -311,13 +311,13 @@
   - fullpageApi ref를 SectionNavigator에 전달 (`fullpageApi.moveTo()` 사용)
   - 마지막 섹션(월별운세) 이후 피드백 버튼 표시
 
-- [ ] T065b [US4] `hooks/useConsultation.ts` 업데이트 - useSectionObserver 제거, fullpage.js 연동
+- [x] T065b [US4] `hooks/useConsultation.ts` 업데이트 - useSectionObserver 제거, fullpage.js 연동
   - 기존 useSectionObserver 훅 의존성 제거
   - consultationStore의 `currentSectionIndex` 읽기/쓰기
   - `handleSectionChange(index: number)` → `consultationStore.setCurrentSectionIndex(index)` 호출
   - 기존 IntersectionObserver 기반 로직 제거
 
-- [ ] T065c [P] [US4] `components/consultation/SectionNavigator.tsx` - 섹션 네비게이터 (fullpage.js API 연동)
+- [x] T065c [P] [US4] `components/consultation/SectionNavigator.tsx` - 섹션 네비게이터 (fullpage.js API 연동)
   - **데스크톱(≥1024px)**: 화면 우측 고정 플로팅 인디케이터
     - 8개 점(dot) 또는 섹션명 약자 표시
     - 활성 섹션: 금색(star-500) 강조 (`currentIndex` prop 기반)
@@ -330,7 +330,7 @@
 
 ### 5.2 컨설팅 데이터 캐싱
 
-- [ ] T066 [US4] `hooks/useConsultation.ts` - 컨설팅 데이터 로드 및 캐싱 (fullpage.js 연동 업데이트)
+- [x] T066 [US4] `hooks/useConsultation.ts` - 컨설팅 데이터 로드 및 캐싱 (fullpage.js 연동 업데이트)
   - **초기 로드**: POST /api/career/consultation 호출 시 8개 섹션 전체 수신 (lazy-load 아님)
   - **타임아웃**: 20초 (AI 분석, FR-027)
   - **Zustand 저장**: consultationStore.setConsultation() 호출 (메모리 캐싱)
@@ -380,7 +380,7 @@
 
 ### 5.6 컨설팅 결과 페이지 (fullpage.js로 업데이트)
 
-- [ ] T079 [US4] `app/consultation/page.tsx` - ConsultationPage fullpage.js 전환
+- [x] T079 [US4] `app/consultation/page.tsx` - ConsultationPage fullpage.js 전환
   - InputForm (생년월일/시간 입력)
   - DisclaimerOverlay (고지 문구, US3과 공유)
   - **FullPageConsultation** (ConsultationScrollView 대체 — fullpage.js 8섹션 전체화면)
@@ -392,17 +392,17 @@
 
 ### 5.7 테스트 (Jest, MSW)
 
-- [ ] T080 [US4] `__tests__/hooks/useConsultation.test.ts` - fullpage.js 연동 업데이트
+- [x] T080 [US4] `__tests__/hooks/useConsultation.test.ts` - fullpage.js 연동 업데이트
   - 8개 섹션 로드, Zustand 캐싱 유지
   - `handleSectionChange(index)` → `consultationStore.setCurrentSectionIndex(index)` 검증
   - useSectionObserver 의존성 제거 확인
-- [ ] T081 [US4] `__tests__/components/FullPageConsultation.test.tsx` - fullpage.js 래퍼 컴포넌트 테스트
+- [x] T081 [US4] `__tests__/components/FullPageConsultation.test.tsx` - fullpage.js 래퍼 컴포넌트 테스트
   - 기존 `useSectionObserver.test.ts` 및 `ConsultationScrollView.test.tsx` 대체
   - 8개 섹션 컴포넌트 렌더링 확인
   - `afterLoad` 콜백 → `onSectionChange` 호출 검증
   - `prefers-reduced-motion` 환경: `scrollingSpeed: 0` 적용 검증
   - `responsiveWidth: 768` 이하: fullpage.js 비활성 (일반 스크롤) 검증
-- [ ] T081b [P] [US4] `__tests__/components/SectionNavigator.test.tsx` - fullpageApi.moveTo() 연동 테스트
+- [x] T081b [P] [US4] `__tests__/components/SectionNavigator.test.tsx` - fullpageApi.moveTo() 연동 테스트
   - 8개 점 렌더링 + `currentIndex` 기반 활성 강조 확인
   - 클릭 시 `onNavigate(index)` 호출 검증
   - 모바일/데스크톱 레이아웃 전환 확인
