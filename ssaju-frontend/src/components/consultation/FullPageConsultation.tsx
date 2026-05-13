@@ -76,7 +76,11 @@ export function FullPageConsultation({
     return () => observers.forEach((o) => o.disconnect());
   }, [onSectionChange]);
 
-  /** 섹션 네비게이터 클릭 → 해당 섹션으로 스크롤 */
+  /** easeInOutCubic 타이밍 함수 (t: 0→1) */
+  const easeInOutCubic = (t: number): number =>
+    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+  /** 섹션 네비게이터 클릭 → 700ms easeInOutCubic 스크롤 */
   const handleNavigate = useCallback((index: number) => {
     const container = containerRef.current;
     const section = sectionRefs.current[index];
@@ -87,10 +91,29 @@ export function FullPageConsultation({
       typeof window.matchMedia === 'function' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    container.scrollTo({
-      top: section.offsetTop,
-      behavior: prefersReducedMotion ? 'instant' : 'smooth',
-    });
+    const startTop = container.scrollTop;
+    const targetTop = section.offsetTop;
+    const distance = targetTop - startTop;
+
+    if (prefersReducedMotion) {
+      container.scrollTop = targetTop;
+      return;
+    }
+
+    const duration = 700;
+    let startTime: number | null = null;
+
+    const animate = (currentTime: number) => {
+      if (startTime === null) startTime = currentTime;
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      container.scrollTop = startTop + distance * easeInOutCubic(progress);
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
   }, []);
 
   const sections = [

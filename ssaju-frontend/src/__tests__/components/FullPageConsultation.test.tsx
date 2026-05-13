@@ -116,9 +116,16 @@ const defaultProps = {
   onSectionChange: jest.fn(),
 };
 
+// ─── requestAnimationFrame 모킹 ───────────────────────────────────────────────
+const mockRaf = jest.fn((_cb: FrameRequestCallback) => 1);
+
 describe('FullPageConsultation', () => {
   beforeAll(() => {
     mockMatchMedia(false);
+    Object.defineProperty(window, 'requestAnimationFrame', {
+      writable: true,
+      value: mockRaf,
+    });
   });
 
   beforeEach(() => {
@@ -177,5 +184,23 @@ describe('FullPageConsultation', () => {
     render(<FullPageConsultation {...defaultProps} />);
     const section0 = screen.getByTestId('fullpage-section-0');
     expect(section0.style.scrollSnapAlign).toBe('start');
+  });
+
+  it('nav 버튼 클릭 → requestAnimationFrame 호출 (700ms 애니메이션 시작)', () => {
+    render(<FullPageConsultation {...defaultProps} />);
+    // nav 버튼 클릭 (index 2)
+    const navBtn = screen.getByTestId('nav-btn-2');
+    navBtn.click();
+    expect(mockRaf).toHaveBeenCalled();
+  });
+
+  it('prefers-reduced-motion: true → requestAnimationFrame 호출 없이 즉시 스크롤', () => {
+    mockMatchMedia(true); // reduce motion ON
+    render(<FullPageConsultation {...defaultProps} />);
+    mockRaf.mockClear();
+    const navBtn = screen.getByTestId('nav-btn-3');
+    navBtn.click();
+    expect(mockRaf).not.toHaveBeenCalled();
+    mockMatchMedia(false); // 원복
   });
 });
