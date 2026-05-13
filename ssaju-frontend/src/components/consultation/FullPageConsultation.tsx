@@ -272,9 +272,11 @@ export function FullPageConsultation({
       />
 
       {/* overflow-hidden 창 — 래퍼가 translateY로 슬라이드 */}
+      {/* touch-action: none → 브라우저 네이티브 스크롤 선점 차단, touchmove 실시간 추적 보장 */}
       <div
         ref={containerRef}
         className="h-screen overflow-hidden"
+        style={{ touchAction: 'none' }}
         data-testid="fullpage-container"
       >
         {/* 슬라이딩 래퍼: 8섹션을 수직으로 쌓아 GPU transform으로 이동 */}

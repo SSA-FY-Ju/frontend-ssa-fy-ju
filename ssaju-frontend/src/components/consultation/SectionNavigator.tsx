@@ -41,7 +41,7 @@ export function SectionNavigator({ sections, currentIndex, onNavigate }: Section
                   'text-xs font-medium whitespace-nowrap transition-colors duration-200 text-right',
                   isActive
                     ? 'text-star-400'
-                    : 'text-night-500 group-hover:text-star-300',
+                    : 'text-night-200 group-hover:text-star-300',
                 ].join(' ')}
               >
                 {label}
@@ -77,7 +77,7 @@ export function SectionNavigator({ sections, currentIndex, onNavigate }: Section
                 className={[
                   'relative px-3 py-3 text-xs font-medium whitespace-nowrap transition-colors duration-200',
                   'min-h-[44px] flex items-center',
-                  isActive ? 'text-star-400' : 'text-night-500 hover:text-star-300',
+                  isActive ? 'text-star-400' : 'text-night-200 hover:text-star-300',
                 ].join(' ')}
               >
                 {label}
