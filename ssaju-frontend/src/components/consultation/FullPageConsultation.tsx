@@ -3,12 +3,11 @@
 /**
  * AI 컨설팅 풀페이지 뷰 (T065)
  *
- * transform: translateY() 기반 풀페이지 스크롤:
- * - overflow: hidden 컨테이너 안에서 섹션 래퍼를 translateY로 이동
- * - GPU 가속 → 슬라이딩 모션 확실히 보임
- * - 700ms easeInOutCubic rAF 애니메이션
- * - wheel(50px 임계값 + 80ms 디바운스) / touch(60px) / keyboard(Arrow) 지원
- * - isNavigating lock으로 중복 트리거 방지
+ * fullpage.js 방식 CSS transition 기반 풀페이지 스크롤:
+ * - CSS `transition: transform 700ms ease` — 브라우저 최적화, rAF 루프 불필요
+ * - 터치 드래그 중: transition: none (실시간 추적) → 손 뗌: transition 복구 후 스냅
+ * - wheel(50px 임계값 + 80ms 디바운스) / touch(60px 스와이프) / keyboard(Arrow) 지원
+ * - isNavigating lock + transitionend 이벤트로 중복 트리거 방지
  * - 마지막 섹션에 저장/초기화 버튼 포함
  * - 각 섹션 콘텐츠 수직 중앙 정렬
  */
@@ -38,7 +37,8 @@ const SECTION_LABELS = [
 ] as const;
 
 const SECTION_COUNT = SECTION_LABELS.length;
-const ANIMATION_DURATION = 700;
+/** fullpage.js 기본값과 동일한 애니메이션 설정 */
+const TRANSITION = 'transform 700ms ease';
 
 interface FullPageConsultationProps {
   data: ConsultationData;
@@ -66,10 +66,6 @@ export function FullPageConsultation({
     currentIndexRef.current = currentSectionIndex;
   }, [currentSectionIndex]);
 
-  /** easeInOutCubic 타이밍 함수 */
-  const easeInOutCubic = (t: number): number =>
-    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-
   /** 래퍼의 현재 translateY 값 읽기 (드래그 중 중간 위치에서 스냅 시작) */
   const getCurrentY = (): number => {
     const wrapper = wrapperRef.current;
@@ -79,9 +75,10 @@ export function FullPageConsultation({
   };
 
   /**
-   * 지정 섹션으로 700ms translateY 슬라이드 애니메이션.
-   * - 드래그 중 호출 시 현재 래퍼 위치에서 스냅 시작 (자연스러운 연속 모션)
-   * - GPU-가속 transform → 슬라이딩 모션 보장
+   * 지정 섹션으로 CSS transition 슬라이드 (fullpage.js 방식).
+   * - CSS `transition: transform 700ms ease` → 브라우저 내장 최적화
+   * - transitionend 이벤트로 완료 감지 → isNavigating 해제
+   * - prefers-reduced-motion: transition none, 즉시 이동
    */
   const animateTo = useCallback(
     (index: number) => {
@@ -99,37 +96,26 @@ export function FullPageConsultation({
         window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       const vh = container.clientHeight || window.innerHeight;
-      // 현재 래퍼 위치에서 시작 (드래그 후 손가락을 뗐을 때 그 위치부터 스냅)
-      const startY = getCurrentY();
       const targetY = clampedIndex * -vh;
-      const distance = targetY - startY;
-
-      const unlock = () => {
-        setTimeout(() => {
-          isNavigating.current = false;
-        }, 100);
-      };
 
       if (prefersReducedMotion) {
+        wrapper.style.transition = 'none';
         wrapper.style.transform = `translateY(${targetY}px)`;
-        unlock();
+        isNavigating.current = false;
         return;
       }
 
-      let startTime: number | null = null;
-      const animate = (currentTime: number) => {
-        if (startTime === null) startTime = currentTime;
-        const elapsed = currentTime - startTime;
-        const progress = Math.min(elapsed / ANIMATION_DURATION, 1);
-        const y = startY + distance * easeInOutCubic(progress);
-        wrapper.style.transform = `translateY(${y}px)`;
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        } else {
-          unlock();
-        }
+      // CSS transition으로 애니메이션 — fullpage.js와 동일한 방식
+      wrapper.style.transition = TRANSITION;
+      wrapper.style.transform = `translateY(${targetY}px)`;
+
+      const onTransitionEnd = () => {
+        wrapper.removeEventListener('transitionend', onTransitionEnd);
+        setTimeout(() => {
+          isNavigating.current = false;
+        }, 50);
       };
-      requestAnimationFrame(animate);
+      wrapper.addEventListener('transitionend', onTransitionEnd);
     },
     [onSectionChange]
   );
@@ -181,6 +167,9 @@ export function FullPageConsultation({
       if (isNavigating.current) return;
       touchStartY = e.touches[0].clientY;
       dragBaseY = getCurrentY();
+      // 드래그 중 CSS transition 비활성화 → 손가락에 즉시 반응
+      const wrapper = wrapperRef.current;
+      if (wrapper) wrapper.style.transition = 'none';
     };
 
     const handleTouchMove = (e: TouchEvent) => {

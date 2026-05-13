@@ -1,13 +1,13 @@
 /**
  * FullPageConsultation 컴포넌트 테스트 (T081)
  *
- * transform: translateY 기반 풀페이지 스크롤 뷰 검증:
+ * CSS transition 기반 풀페이지 스크롤 뷰 검증 (fullpage.js 방식):
  * - 8개 섹션 컴포넌트 렌더링 확인
  * - overflow-hidden 컨테이너 + will-change-transform 래퍼
  * - 수직 중앙 정렬 (flex justify-center)
  * - 마지막 섹션 저장/초기화 버튼
- * - nav 버튼 클릭 → rAF 호출 (700ms 슬라이드 시작)
- * - prefers-reduced-motion: 즉시 이동 (rAF 없음)
+ * - nav 버튼 클릭 → wrapper transition 설정 + transform 변경
+ * - prefers-reduced-motion: transition none, 즉시 transform 설정
  */
 
 import React from 'react';
@@ -85,16 +85,9 @@ const defaultProps = {
   onSectionChange: jest.fn(),
 };
 
-// ─── requestAnimationFrame 모킹 ──────────────────────────────────────────
-const mockRaf = jest.fn((_cb: FrameRequestCallback) => 1);
-
 describe('FullPageConsultation', () => {
   beforeAll(() => {
     mockMatchMedia(false);
-    Object.defineProperty(window, 'requestAnimationFrame', {
-      writable: true,
-      value: mockRaf,
-    });
   });
 
   beforeEach(() => {
@@ -160,20 +153,20 @@ describe('FullPageConsultation', () => {
     expect(onReset).toHaveBeenCalledTimes(1);
   });
 
-  it('nav 버튼 클릭 → requestAnimationFrame 호출 (700ms 슬라이드 시작)', () => {
+  it('nav 버튼 클릭 → wrapper에 CSS transition + translateY 설정 (fullpage.js 방식)', () => {
     render(<FullPageConsultation {...defaultProps} />);
     screen.getByTestId('nav-btn-2').click();
-    expect(mockRaf).toHaveBeenCalled();
+    const wrapper = screen.getByTestId('fullpage-wrapper');
+    expect(wrapper.style.transition).toContain('transform');
+    expect(wrapper.style.transform).toContain('translateY');
   });
 
-  it('prefers-reduced-motion: true → rAF 없이 즉시 translateY 설정', () => {
+  it('prefers-reduced-motion: true → transition none, 즉시 translateY 설정', () => {
     mockMatchMedia(true);
     render(<FullPageConsultation {...defaultProps} />);
-    mockRaf.mockClear();
     screen.getByTestId('nav-btn-3').click();
-    expect(mockRaf).not.toHaveBeenCalled();
-    // wrapper transform이 즉시 설정됨
     const wrapper = screen.getByTestId('fullpage-wrapper');
+    expect(wrapper.style.transition).toBe('none');
     expect(wrapper.style.transform).toContain('translateY');
     mockMatchMedia(false);
   });
