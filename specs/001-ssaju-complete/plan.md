@@ -1,7 +1,7 @@
 # Implementation Plan: SSAju 프론트엔드 완성 (001-ssaju-complete)
 
-**Branch**: `001-ssaju-complete` | **Date**: 2026-05-11 | **Spec**: [specs/001-ssaju-complete/spec.md](spec.md)  
-**Status**: Phase 1 (Design Complete) | **Next**: Phase 3 (Implementation)  
+**Branch**: `001-ssaju-complete` | **Date**: 2026-05-13 | **Spec**: [specs/001-ssaju-complete/spec.md](spec.md)  
+**Status**: Phase 1 (Design — fullpage.js 반영 업데이트) | **Next**: Phase 3 (Implementation)  
 **Input**: 6 user stories (P1: 3, P2: 3), 65+ functional requirements, 137 implementation tasks
 
 ---
@@ -22,20 +22,47 @@
   - 응답: `{ suggestions: string[] }`
   - 타임아웃: 5s (입력 시마다 호출)
 
+### Session 2026-05-13 (UI 변경)
+
+- Q6: AI 컨설팅 8개 섹션 표시 방식 → A: **fullpage.js 기반 전체화면 섹션 전환**
+  - 탭 기반 UI → 스크롤 + fullpage.js 섹션 방식으로 전환 (spec US4 2026-05-13 변경 반영)
+  - 각 분석 섹션이 화면 전체(100vh)를 차지하는 독립 페이지로 표시
+  - 스크롤 시 fullpage.js가 자동으로 다음/이전 섹션으로 전환 (스냅 스크롤)
+  - 세로 네비게이터(오른쪽 고정): 현재 섹션 표시 + 클릭 이동 지원
+  - `fullpage.js` 라이브러리 추가 (Constitution IV 예외 — 이유: 스크롤 스냅 구현 직접 작성 시 500+ 줄 + 브라우저 호환 이슈)
+
 ---
 
 ## Executive Summary
 
-SSAju 프론트엔드는 **사주 기반 커리어 컨설팅 플랫폼**의 완성된 구현입니다. 사용자는 생년월일/시간을 입력하여 관운 분석(H1/H2), AI 커리어 컨설팅(8개 탭), 기업 궁합 분석을 받고, 로그인하여 결과를 영구 저장할 수 있습니다. 
+SSAju 프론트엔드는 **사주 기반 커리어 컨설팅 플랫폼**의 완성된 구현입니다. 사용자는 생년월일/시간을 입력하여 관운 분석(H1/H2), AI 커리어 컨설팅(8개 fullpage.js 섹션), 기업 궁합 분석을 받고, 로그인하여 결과를 영구 저장할 수 있습니다.
 
 **핵심 가치**:
 - 소셜 로그인(카카오/구글) + 분석 결과 영구 저장
-- AI 기반 8탭 컨설팅 (0.2초 탭 전환)
+- **AI 기반 8섹션 컨설팅 (fullpage.js 전체화면 스크롤 전환)**
 - 1.5초 고지 문구 오버레이 애니메이션
 - 마이페이지 무한 스크롤 (threshold 0.5)
 - "별이 빛나는 밤" 테마 (night-900/800/700, star-500/400/300)
 
 **구현 규모**: ~40개 컴포넌트, ~15개 훅, 5개 Zustand 스토어, 137개 구현 작업, 80% 테스트 커버리지
+
+---
+
+## Constitution Check
+
+*GATE: fullpage.js 라이브러리 사용에 대한 Constitution 준수 여부 검토*
+
+| 원칙 | 상태 | 비고 |
+|------|------|------|
+| **I (파일 크기 100줄)** | ✅ PASS | FullPageConsultation은 섹션별 컴포넌트로 분리 |
+| **II (한국어 문서화)** | ✅ PASS | 모든 훅/컴포넌트 주석 한국어 |
+| **III (4계층 아키텍처)** | ✅ PASS | Page → FullPageConsultation → useConsultation → API |
+| **IV (외부 UI 라이브러리 제한)** | ⚠️ EXCEPTION | fullpage.js 사용 — 스크롤 스냅 직접 구현 시 500+ 줄, 크로스 브라우저 복잡도 높음. 사용자가 명시적으로 요청. `[Exception: Principle IV]` PR에 기록 필수 |
+| **V (타입 안전성)** | ✅ PASS | fullpage.js TypeScript 타입 정의 패키지 사용 |
+| **VI (빌드/테스트 관문)** | ✅ PASS | npm install 후 Jest + build 통과 확인 |
+| **VIII (조기 최적화 금지)** | ✅ PASS | useMemo/useCallback 사용 안 함 |
+
+**Exception 처리**: Constitution IV 위반 사항은 PR에 `[Exception: Principle IV]`로 명시, EXCEPTIONS.md에 기록.
 
 ---
 
@@ -58,6 +85,7 @@ SSAju 프론트엔드는 **사주 기반 커리어 컨설팅 플랫폼**의 완�
 | **Next.js** | 14.0+ | Framework (App Router) | API routes, middleware, deployment |
 | **React DOM** | 18.2+ | DOM rendering | `"use client"` for all pages (Phase 1) |
 | **TypeScript React** | 5.3+ | Type-safe JSX | `strict: true` in tsconfig |
+| **fullpage.js** | 4.0+ | 8섹션 전체화면 스크롤 전환 | React wrapper (`@fullpage/react-fullpage`) 사용. Constitution IV 예외 — 직접 구현 복잡도 과다 |
 
 ### 1.3 상태 관리 & 데이터 흐름
 
@@ -78,8 +106,9 @@ SSAju 프론트엔드는 **사주 기반 커리어 컨설팅 플랫폼**의 완�
 // analysisStore: 비로그인 사용자 분석 결과 (메모리만, 새로고침 시 초기화)
 { careerTiming, compatibility }
 
-// consultationStore: 8탭 전체 데이터 메모리 캐싱 전용 (persist 없음, FR-022 준수)
-{ consultation: ConsultationData | null, lastFetchedId, selectedTabIndex }
+// consultationStore: 8섹션 전체 데이터 메모리 캐싱 전용 (persist 없음, FR-022 준수)
+// 탭 인덱스 대신 섹션 인덱스로 관리 (fullpage.js 0-based index)
+{ consultation: ConsultationData | null, lastFetchedId, currentSectionIndex }
 
 // errorStore: 전역 에러 + 토스트
 { globalError, toastQueue: Toast[] }
@@ -91,7 +120,7 @@ SSAju 프론트엔드는 **사주 기반 커리어 컨설팅 플랫폼**의 완�
 |------|---------|---------------|
 | **Tailwind CSS** | 3.3+ | Utility-first CSS only (no CSS Modules, no styled-components) |
 | **Custom Colors** | - | night-900: #0a0e27, night-800: #1a1f3a, night-700: #2a3050, star-500: #ffd700, star-400: #ffed4e, star-300: #fff8a8 |
-| **Typography** | Pretendard Sans (body), Garamond Serif (headings) | Font sizes: desktop 16-32px, tablet 15-24px, mobile 14-20px |
+| **Typography** | Pretendard Sans (body), Garamond Serif (headings) | Font sizes: desktop 16-32px, tablet 14-20px |
 | **Responsive Breakpoints** | sm (640), md (768), lg (1024), xl (1280) | Mobile-first approach |
 
 **tailwind.config.ts** (Custom Configuration):
@@ -120,7 +149,6 @@ theme: {
 **Zod Schema Pattern**:
 ```typescript
 // All API types defined in lib/api/schemas.ts
-// FR-006 기준: birthDate, birthTime, solarType만 포함 (Phase 2 확장 시 spec 먼저 업데이트)
 const CareerTimingRequestSchema = z.object({
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   birthTime: z.string().optional().default('12:00'),
@@ -141,7 +169,7 @@ const CareerTimingRequestSchema = z.object({
 | 컴포넌트 | 버전 | 상세 |
 |-----------|---------|---------|
 | **Native Fetch API** | ES2020 | Wrapped in `lib/api/client.ts` with `apiFetch<T>()` |
-| **Custom Wrapper** | - | Error handling, auth token injection, Q5 retry policy |
+| **Custom Wrapper** | - | Error handling, auth token injection, retry policy |
 | **Environment Variable** | - | `NEXT_PUBLIC_API_BASE_URL` (e.g., `http://localhost:8080`) |
 
 **apiFetch Signature**:
@@ -189,7 +217,6 @@ src/
 | **npm install** | - | 모든 dependencies 및 devDependencies 설치 (필수 선행 작업) |
 | **Next.js Build** | 14.0+ | `npm run build` (TypeScript + ESLint validation) |
 | **ESLint** | Latest | Code quality & consistency |
-| **Prettier** | Latest | Code formatting |
 | **npm scripts** | - | `dev`, `build`, `start`, `lint`, `test` |
 
 **개발 환경 초기 설정**:
@@ -210,9 +237,9 @@ npm run dev                    # 개발 서버 시작 (localhost:3000)
 | 엔드포인트 | 메서드 | 타임아웃 | 목적 |
 |----------|--------|---------|---------|
 | `/api/career/timing` | POST | 10s | 관운 분석 |
-| `/api/career/consultation` | POST | 20s | AI 컨설팅 (OpenAI 호출, spec FR-027) |
+| `/api/career/consultation` | POST | 20s | AI 컨설팅 (OpenAI 호출) |
 | `/api/company/autocomplete` | POST | 5s | 회사명 자동완성 (Q2) |
-| `/api/company/compatibility` | POST | 8s | 기업 궁합 (spec FR-028) |
+| `/api/company/compatibility` | POST | 8s | 기업 궁합 |
 | `/api/analysis/{type}/save` | POST | 10s | 분석 결과 저장 |
 | `/api/analysis/records` | POST | 10s | 마이페이지 무한 스크롤 |
 | `/api/analysis/{recordId}` | POST | 5s | 상세 조회 |
@@ -275,87 +302,90 @@ interface ApiResponse<T> {
 ```
 src/
 ├── app/
-│   ├── page.tsx                      # Home page
+│   ├── page.tsx                          # Home page
 │   ├── career-timing/
-│   │   └── page.tsx                  # Career timing form + result
+│   │   └── page.tsx                      # Career timing form + result
 │   ├── consultation/
-│   │   └── page.tsx                  # 8-tab consultation
+│   │   └── page.tsx                      # 8섹션 fullpage.js 컨설팅
 │   ├── compatibility/
-│   │   └── page.tsx                  # Company compatibility
-│   ├── my-page/page.tsx              # My page + infinite scroll
-│   └── layout.tsx                    # Root layout (header, footer)
+│   │   └── page.tsx                      # Company compatibility
+│   ├── my-page/page.tsx                  # My page + infinite scroll
+│   └── layout.tsx                        # Root layout (header, footer)
 │
 ├── components/
-│   ├── LoginButton.tsx               # OAuth buttons
-│   ├── ProfileMenu.tsx               # Logged-in user menu
-│   ├── TimingForm.tsx                # Career timing input
-│   ├── DisclaimerOverlay.tsx         # 1.5s + 500ms animation
-│   ├── CareerTimingResult.tsx        # H1/H2 + confidence + save
-│   ├── ConsultationTabs.tsx          # 8-tab nav + content
-│   ├── ConsultationTabContent.tsx    # Single tab content
-│   ├── CompanyForm.tsx               # Company input + autocomplete
-│   ├── CompatibilityResult.tsx       # Score + job matching + calendar
-│   ├── AnalysisRecordCard.tsx        # My-page list item
-│   ├── MyPageTabs.tsx                # 3-tab my-page
-│   ├── LoadingSpinner.tsx            # Loading indicator
-│   ├── ErrorMessage.tsx              # Error + retry
-│   ├── FeedbackModal.tsx             # Satisfaction + comment
+│   ├── LoginButton.tsx                   # OAuth buttons
+│   ├── ProfileMenu.tsx                   # Logged-in user menu
+│   ├── TimingForm.tsx                    # Career timing input
+│   ├── DisclaimerOverlay.tsx             # 1.5s + 500ms animation
+│   ├── CareerTimingResult.tsx            # H1/H2 + confidence + save
+│   ├── consultation/
+│   │   ├── FullPageConsultation.tsx      # fullpage.js 래퍼 컴포넌트 (8섹션)
+│   │   ├── SectionNavigator.tsx          # 세로 네비게이터 (오른쪽 고정)
+│   │   ├── Section1Industries.tsx        # 섹션 1: 추천산업
+│   │   ├── Section2InterviewTips.tsx     # 섹션 2: 면접팁
+│   │   ├── Section3Strengths.tsx         # 섹션 3: 강점
+│   │   ├── Section4SajuProfile.tsx       # 섹션 4: 사주프로필
+│   │   ├── Section5Wealth.tsx            # 섹션 5: 부의운
+│   │   ├── Section6CareerRoadmap.tsx     # 섹션 6: 경력로드맵
+│   │   ├── Section7Branding.tsx          # 섹션 7: 브랜딩
+│   │   └── Section8MonthlyFortune.tsx    # 섹션 8: 월별운세 (캘린더)
+│   ├── CompanyForm.tsx                   # Company input + autocomplete
+│   ├── CompatibilityResult.tsx           # Score + job matching + calendar
+│   ├── AnalysisRecordCard.tsx            # My-page list item
+│   ├── MyPageTabs.tsx                    # 3-tab my-page
+│   ├── LoadingSpinner.tsx                # Loading indicator
+│   ├── ErrorMessage.tsx                  # Error + retry
+│   ├── FeedbackModal.tsx                 # Satisfaction + comment
 │   └── shared/
-│       ├── Header.tsx                # Navigation + login
-│       ├── Footer.tsx                # Footer links
-│       └── Toast.tsx                 # Sonner toast
+│       ├── Header.tsx                    # Navigation + login
+│       ├── Footer.tsx                    # Footer links
+│       └── Toast.tsx                     # Sonner toast
 │
 ├── hooks/
-│   ├── useCareerTiming.ts            # { data, loading, error, submit }
-│   ├── useConsultation.ts            # Tab switching + caching
-│   ├── useCompatibility.ts           # Company analysis
-│   ├── useMyPage.ts                  # My-page + infinite scroll (tasks T102)
-│   ├── usePageExitGuard.ts           # beforeunload + beforePopState
-│   ├── useDisclaimerTimer.ts         # 1.5s + 500ms animation (tasks T054)
-│   ├── useAuthStore.ts               # Auth state (Zustand)
-│   ├── useSessionStore.ts            # Session state (Zustand)
-│   ├── useAnalysisStore.ts           # Analysis results (Zustand)
-│   ├── useConsultationStore.ts       # Consultation cache (Zustand)
-│   └── useErrorStore.ts              # Global errors (Zustand)
+│   ├── useCareerTiming.ts                # { data, loading, error, submit }
+│   ├── useConsultation.ts                # 섹션 전환 + 캐싱 (fullpage.js 연동)
+│   ├── useCompatibility.ts               # Company analysis
+│   ├── useMyPage.ts                      # My-page + infinite scroll
+│   ├── usePageExitGuard.ts               # beforeunload + beforePopState
+│   ├── useDisclaimerTimer.ts             # 1.5s + 500ms animation
+│   ├── useAuthStore.ts                   # Auth state (Zustand)
+│   ├── useSessionStore.ts                # Session state (Zustand)
+│   ├── useAnalysisStore.ts               # Analysis results (Zustand)
+│   ├── useConsultationStore.ts           # Consultation cache (Zustand)
+│   └── useErrorStore.ts                  # Global errors (Zustand)
 │
 ├── lib/
 │   ├── api/
-│   │   ├── client.ts                 # apiFetch<T>() wrapper
-│   │   ├── career.ts                 # fetchCareerTiming, fetchConsultation
-│   │   ├── company.ts                # fetchCompatibility
-│   │   ├── mypage.ts                 # fetchAnalysisHistory, fetchAnalysisRecord, deleteAnalysisRecord (tasks T016)
-│   │   ├── feedback.ts               # submitFeedback
-│   │   ├── auth.ts                   # OAuth callback
-│   │   └── schemas.ts                # All Zod schemas
+│   │   ├── client.ts                     # apiFetch<T>() wrapper
+│   │   ├── career.ts                     # fetchCareerTiming, fetchConsultation
+│   │   ├── company.ts                    # fetchCompatibility
+│   │   ├── mypage.ts                     # fetchAnalysisHistory 등
+│   │   ├── feedback.ts                   # submitFeedback
+│   │   ├── auth.ts                       # OAuth callback
+│   │   └── schemas.ts                    # All Zod schemas
 │   │
-│   ├── stores/                       # (tasks 기준: src/stores/ 경로 사용)
-│   │   ├── authStore.ts              # authStore (Zustand)
-│   │   ├── sessionStore.ts           # sessionStore (Zustand, sajuResultId sessionStorage persist)
-│   │   ├── analysisStore.ts          # analysisStore (Zustand, 메모리 전용)
-│   │   ├── consultationStore.ts      # consultationStore (Zustand, 메모리 전용, persist 없음)
-│   │   └── errorStore.ts             # errorStore (Zustand)
-│   │
+│   ├── stores/
+│   │   ├── authStore.ts
+│   │   ├── sessionStore.ts               # sajuResultId sessionStorage persist
+│   │   ├── analysisStore.ts              # 메모리 전용
+│   │   ├── consultationStore.ts          # 메모리 전용, persist 없음
+│   │   └── errorStore.ts
 │
-├── services/                         # (tasks 기준 경로: src/services/)
+├── services/
 │   └── utils/
-│       ├── validation.ts             # Zod 스키마 및 입력 검증 (tasks T019)
-│       ├── formatters.ts             # 날짜/시간 파싱 및 표시 함수 (tasks T020)
-│       └── constants.ts              # APP_TIMEOUT, etc.
+│       ├── validation.ts
+│       ├── formatters.ts
+│       └── constants.ts
 │
 ├── types/
-│   ├── api.ts                        # ApiResponse<T>, request types
-│   ├── domain.ts                     # FavoredPeriod, SajuData, etc.
-│   └── component.ts                  # Component prop interfaces
+│   ├── api.ts
+│   ├── domain.ts
+│   └── component.ts
 │
-├── styles/
-│   └── globals.css                   # @tailwind directives only
-│
-├── __tests__/
-│   ├── unit/                         # Component, Hook tests
-│   ├── integration/                  # API flow tests (MSW)
-│   └── fixtures/                     # Mock data
-│
-└── jest.config.ts, tsconfig.json, tailwind.config.ts, etc.
+└── __tests__/
+    ├── unit/
+    ├── integration/
+    └── fixtures/
 ```
 
 ---
@@ -370,7 +400,7 @@ User (로그인/비로그인)
   ├─ sessionStore: { sajuResultId, currentAnalysisData }
   └─ Analysis (1...N)
       ├─ CareerTimingAnalysis { sajuResultId, favoredPeriod, confidenceScore }
-      ├─ ConsultationAnalysis { sajuResultId, tabs[8], selectedTabIndex }
+      ├─ ConsultationAnalysis { sajuResultId, sections[8], currentSectionIndex }
       └─ CompatibilityAnalysis { sajuResultId, companyName, compatibilityScore }
 ```
 
@@ -395,44 +425,52 @@ User (로그인/비로그인)
    └─ showLoginNudgeCard() if !isLoggedIn
    
 5. User clicks "로그인하기"
-   └─ OAuth popup (cakaotalk/google)
-   └─ authStore.setLogin(user, token)
-   └─ Q1: Auto-save analysis to backend
+   └─ OAuth popup (kakao/google)
+   └─ authStore.setLogin(user)
+   └─ Auto-save analysis to backend
    └─ Sonner toast: "분석 결과가 저장되었습니다"
-   
-6. User navigates to /my-page
-   └─ Hook: useMyPage('CAREER')
-   └─ API: POST /api/analysis/records
-   └─ Display saved record in list
 ```
 
-#### 여정 2: 컨설팅 8탭 전환 (Q4, 2026-05-12 업데이트)
+#### 여정 2: 컨설팅 8섹션 fullpage.js 전환
 
 ```
-1. User on consultation page
+1. User on consultation page (/consultation)
    └─ Hook: useConsultation(sajuResultId)
-   └─ consultationStore: { consultation, lastFetchedId, selectedTabIndex }
+   └─ consultationStore: { consultation, lastFetchedId, currentSectionIndex }
 
 2. 첫 진입 또는 새 분석 시
    └─ lastFetchedId !== sajuResultId → API 호출
-   └─ POST /api/career/consultation → 19개 필드 전체 수신 (단일 호출)
-   └─ consultationStore.setConsultation(data, sajuResultId) → Zustand 메모리 저장
+   └─ POST /api/career/consultation → 8개 섹션 데이터 전체 수신
+   └─ consultationStore.setConsultation(data, sajuResultId)
 
-3. Click Tab 1
-   └─ consultationStore.selectTab(1)
-   └─ consultationStore.consultation에서 즉시 조회 (<200ms, 재요청 없음)
-   └─ No loading spinner
+3. 데이터 로드 완료 → fullpage.js 렌더링
+   └─ FullPageConsultation 컴포넌트: @fullpage/react-fullpage 래퍼
+   └─ 8개 섹션이 각각 100vh 슬라이드로 렌더링
+   └─ 초기 섹션: Section 1 (추천산업)
 
-4. 탭 전환 반복
-   └─ 모든 탭: 메모리 조회만 (API 재호출 없음)
-   └─ 새 분석(다른 생년월일) 시에만 clearData() + 재요청
+4. 사용자 스크롤 다운 (또는 방향키)
+   └─ fullpage.js: 현재 섹션 → 다음 섹션으로 스냅 전환
+   └─ 전환 시간: 700ms ease (fullpage.js 기본값, 조정 가능)
+   └─ consultationStore.setCurrentSectionIndex(newIndex) 동기화
 
-5. 페이지 새로고침
+5. SectionNavigator (오른쪽 고정)
+   └─ 현재 섹션 강조 표시 (currentSectionIndex 기반)
+   └─ 클릭 시 fullpage.js API: fullpageApi.moveTo(sectionIndex + 1)
+   └─ 300ms 이내 해당 섹션으로 이동
+
+6. 마지막 섹션 (월별운세) 이후 스크롤
+   └─ 피드백 버튼 표시 → FeedbackModal 열림
+   └─ fullpage.js normalScrollElements 설정으로 모달 내 스크롤 허용
+
+7. 페이지 새로고침
    └─ Zustand 메모리 초기화 → consultation=null
-   └─ 재진입 시 API 재호출 (persist 없음, FR-022 localStorage 미사용)
+   └─ 재진입 시 API 재호출 (persist 없음)
+
+8. 접근성: prefers-reduced-motion
+   └─ fullpage.js scrollingSpeed: 0 (즉시 전환, 애니메이션 없음)
 ```
 
-#### 여정 3: 마이페이지 무한 스크롤 (Q3, threshold 0.5)
+#### 여정 3: 마이페이지 무한 스크롤 (threshold 0.5)
 
 ```
 1. User navigates to /my-page
@@ -452,72 +490,82 @@ User (로그인/비로그인)
    └─ Append 20 more records to list
    
 5. Repeat until hasMore=false
-   └─ No more records available
-   └─ Remove load more trigger
 ```
 
-### 3.3 저장소 전략 (Q1 명확화)
+### 3.3 저장소 전략
 
-| 데이터 | 저장소 | 범위 | 지속시간 | 보안 |
-|------|---------|-------|----------|------|
-| **authStore (로그인 토큰)** | HttpOnly Cookie (Q1) | Current session | Until logout | ✅ XSS 방지 |
-| **sessionStore (분석 상태)** | Zustand (memory) | Current session | Cleared on logout/page close | - |
-| **sajuResultId** | sessionStorage | Track analysis across refresh | Until page close | ⚠️ 비민감정보 |
-| **Consultation data** | consultationStore (memory only) | Current session | Cleared on logout/page refresh | - |
-| **Analysis results** | analysisStore (memory) | Current session | Memory only (no persist) | - |
-| **Current tab index** | Zustand (memory) | Current session | Memory only | - |
-
-**Q1 명확화**:
-- **로그인 토큰**: HttpOnly 쿠키 기반만 사용하여 XSS 방지. sessionStorage 토큰 저장 제거.
-- **sajuResultId**: 민감하지 않은 분석 추적 정보이므로 sessionStorage 사용 (페이지 새로고침 시 복원 필요).
-- **Authorization 헤더**: 개발 환경에서만 선택적 사용 (로깅/디버깅용, 인증에는 미사용).
+| 데이터 | 저장소 | 지속시간 | 보안 |
+|------|---------|----------|------|
+| **인증 토큰** | HttpOnly Cookie | Until logout | ✅ XSS 방지 |
+| **sajuResultId** | sessionStorage | Until page close | ⚠️ 비민감정보 |
+| **Consultation data** | consultationStore (memory) | Until page refresh | - |
+| **currentSectionIndex** | consultationStore (memory) | Current session | - |
+| **분석 기록** | 백엔드 DB | 영구 (로그인 시) | ✅ 서버 관리 |
 
 ---
 
 ## 4. 컴포넌트 계층 & Props 흐름
 
-### 4.1 페이지 컴포넌트
+### 4.1 컨설팅 페이지 컴포넌트 (fullpage.js)
 
 ```
-app/career-timing/page.tsx
-├─ useCareerTiming() hook
-├─ State: formData, showDisclaimer, showResult
+app/consultation/page.tsx
+├─ useConsultation(sajuResultId) hook
 └─ Components:
     ├─ Header (ProfileMenu or LoginButton)
-    ├─ DisclaimerOverlay (visible={showDisclaimer})
-    ├─ TimingForm (isLoading, onSubmit)
-    ├─ CareerTimingResult (analysis, isLoggedIn, onSave)
-    └─ FeedbackModal (visible, onSubmit)
+    ├─ LoadingSpinner (visible during API call)
+    ├─ ErrorMessage (visible on error)
+    └─ FullPageConsultation (visible when data loaded)
+        ├─ @fullpage/react-fullpage 래퍼
+        ├─ SectionNavigator (오른쪽 고정, currentSection 표시)
+        └─ 8 Section Components:
+            ├─ Section1Industries   (100vh, slide 1)
+            ├─ Section2InterviewTips (100vh, slide 2)
+            ├─ Section3Strengths    (100vh, slide 3)
+            ├─ Section4SajuProfile  (100vh, slide 4)
+            ├─ Section5Wealth       (100vh, slide 5)
+            ├─ Section6CareerRoadmap (100vh, slide 6)
+            ├─ Section7Branding     (100vh, slide 7)
+            └─ Section8MonthlyFortune (100vh, slide 8, 캘린더)
 ```
 
-### 4.2 Props 패턴
+### 4.2 fullpage.js 설정
 
 ```typescript
-// Component Props Interface
-interface TimingFormProps {
-  onSubmit: (formData: CareerTimingRequest) => Promise<void>;
-  isLoading?: boolean;
-  error?: string;
-  onError?: (error: string) => void;
+// components/consultation/FullPageConsultation.tsx
+// [Exception: Principle IV] — fullpage.js 사용. 이유: 스크롤 스냅 직접 구현 복잡도 과다
+const fullpageOptions = {
+  scrollingSpeed: 700,          // 섹션 전환 애니메이션 (ms)
+  easing: 'easeInOutCubic',     // 부드러운 전환
+  navigation: false,            // SectionNavigator 직접 구현
+  scrollOverflow: true,         // 섹션 내 콘텐츠 오버플로우 허용 (월별운세 캘린더)
+  normalScrollElements: '.modal, .feedback-modal', // 모달 내 스크롤 허용
+  responsiveWidth: 768,         // 768px 이하: 일반 스크롤 (모바일)
+  afterLoad: (origin, destination) => {
+    // consultationStore.setCurrentSectionIndex(destination.index) 동기화
+  },
+  afterRender: () => {
+    // 접근성: prefers-reduced-motion 감지 후 scrollingSpeed: 0 적용
+  }
+};
+```
+
+### 4.3 Props 패턴
+
+```typescript
+// FullPageConsultation Props
+interface FullPageConsultationProps {
+  data: ConsultationData;
+  currentSectionIndex: number;
+  onSectionChange: (index: number) => void;
+  onFeedback: () => void;
 }
 
-// Hook Return Pattern
-interface UseCareerTimingReturn {
-  data: CareerTimingAnalysis | null;
-  loading: boolean;
-  error: string | null;
-  submit: (formData: CareerTimingRequest) => Promise<void>;
-  reset: () => void;
-}
-
-// Zustand Store Pattern (Q1 명확화: 토큰은 HttpOnly 쿠키 전용, 클라이언트 상태 미저장)
-interface AuthStore {
-  isLoggedIn: boolean;
-  user: User | null;
-  provider: 'KAKAO' | 'GOOGLE' | null;
-  loginError: string | null;
-  setLogin: (user: User) => void;  // token 파라미터 없음 — HttpOnly 쿠키로 자동 처리
-  setLogout: () => void;
+// SectionNavigator Props
+interface SectionNavigatorProps {
+  sections: string[];           // 섹션 이름 배열 (8개)
+  currentIndex: number;
+  onNavigate: (index: number) => void;  // fullpageApi.moveTo() 호출
 }
 ```
 
@@ -525,34 +573,27 @@ interface AuthStore {
 
 ## 5. API 클라이언트 & 에러 처리
 
-### 5.1 Q5 재시도 정책이 있는 apiFetch 래퍼 (Q1 명확화)
+### 5.1 재시도 정책이 있는 apiFetch 래퍼
 
 ```typescript
 // lib/api/client.ts
-// Q1 결정: HttpOnly 쿠키 기반, sessionStorage 제거, Authorization 헤더 선택사항
+// Q1 결정: HttpOnly 쿠키 기반, sessionStorage 제거
 
 async function apiFetch<T>(
   path: string,
   options?: FetchOptions
 ): Promise<T> {
   const controller = new AbortController();
-  const timeoutMs = options?.timeout ?? 10000;  // 엔드포인트별 설정 (Consultation: 20000, Compatibility: 8000)
+  const timeoutMs = options?.timeout ?? 10000;
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   
-  let lastError: Error | null = null;
-  const maxAttempts = 3;
-  
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}${path}`,
         {
           method: options?.method || 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            // Q1: 인증은 HttpOnly 쿠키(credentials: 'include')에만 의존
-            // Authorization 헤더 불필요 — HttpOnly 쿠키는 JS로 읽을 수 없으므로 헤더에 삽입 불가
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: options?.body ? JSON.stringify(options.body) : undefined,
           signal: controller.signal,
           credentials: 'include'  // HttpOnly 쿠키 자동 전송
@@ -560,182 +601,70 @@ async function apiFetch<T>(
       );
       
       clearTimeout(timeoutId);
-      
       const json = await response.json();
-      
-      // Validate response with Zod
-      const validatedData = responseSchema.parse(json.data);
-      
-      if (!response.ok) {
-        throw new ApiError(json.error.code, json.error.message);
-      }
-      
-      return validatedData as T;
+      if (!response.ok) throw new ApiError(json.error.code, json.error.message);
+      return responseSchema.parse(json.data) as T;
       
     } catch (error) {
-      lastError = error;
-      
-      // Q5: Only retry on timeout or network error
-      const isRetryable = (
-        error instanceof TypeError ||  // Network error
-        (error as any).name === 'AbortError'  // Timeout
-      );
-      
-      if (!isRetryable || attempt === maxAttempts) {
-        clearTimeout(timeoutId);
-        throw lastError;
-      }
-      
-      // Exponential backoff: 1s, 2s, 4s
-      const backoffMs = 1000 * Math.pow(2, attempt - 1);
-      await new Promise(resolve => setTimeout(resolve, backoffMs));
+      const isRetryable = error instanceof TypeError || (error as any).name === 'AbortError';
+      if (!isRetryable || attempt === 3) { clearTimeout(timeoutId); throw error; }
+      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
     }
   }
-  
-  throw lastError || new Error('Unknown API error');
 }
-```
-
-**Q1 명확화 적용**:
-- **HttpOnly Cookie**: 백엔드가 설정, 브라우저 자동 포함 (`credentials: 'include'`)
-- **sessionStorage**: 제거 (XSS 위험성으로 인해 불필요)
-- **Authorization 헤더**: 개발 환경에서만 선택사항으로 제공 (로깅/디버깅)
-
-### 5.2 에러 처리 전략
-
-```typescript
-// Q5: Retry policy
-- Timeout (>10s): Retry up to 3 times (1s, 2s, 4s backoff)
-- Network error: Retry up to 3 times (same backoff)
-- 400/401/403/404/500: Fail immediately, no retry
-- Business logic error: Fail immediately, no retry
-
-// Error UI
-- Network/timeout: "네트워크 오류. 다시 시도해주세요." + Retry button
-- 401 Unauthorized: "로그인이 필요합니다. 다시 로그인해주세요."
-- 500 Server Error: "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
-- Generic error: "요청 처리 중 오류가 발생했습니다."
 ```
 
 ---
 
 ## 6. Zustand 스토어 아키텍처
 
-### 6.1 authStore (인증, Q1 명확화)
+### 6.1 consultationStore (섹션 캐싱 — fullpage.js 연동)
 
-```typescript
-// lib/stores/auth.ts
-// Q1 결정: HttpOnly 쿠키 기반, sessionStorage 제거
-
-interface User {
-  userId: string;
-  provider: 'KAKAO' | 'GOOGLE';
-  email: string;
-  nickname: string;
-  createdAt: string;
-}
-
-interface AuthStore {
-  // State
-  isLoggedIn: boolean;
-  user: User | null;
-  provider: 'KAKAO' | 'GOOGLE' | null;
-  loginError: string | null;
-  
-  // Actions
-  setLogin: (user: User) => void;  // token은 HttpOnly 쿠키에만 저장
-  setLogout: () => void;
-  setLoginError: (error: string) => void;
-  checkToken: () => Promise<boolean>;  // Validate token on app init
-}
-
-export const useAuthStore = create<AuthStore>((set) => ({
-  isLoggedIn: false,  // 페이지 로드 시 서버 검증 필요
-  user: null,
-  provider: null,
-  loginError: null,
-  
-  setLogin: (user) => {
-    // Token은 백엔드가 HttpOnly 쿠키로 설정 (자동)
-    set({ isLoggedIn: true, user });
-  },
-  
-  setLogout: () => {
-    set({ isLoggedIn: false, user: null, provider: null });
-  },
-  
-  // ... rest of actions
-}));
-```
-
-**Q1 명확화 적용**:
-- **HttpOnly Cookie**: 백엔드가 설정, 모든 요청에 자동 포함
-- **sessionStorage 제거**: accessToken 저장 불필요 (XSS 위험)
-- **setLogin()**: token 파라미터 제거 (저장 불필요)
-- **인증 확인**: 앱 초기화 시 서버에 검증 요청 (`/api/auth/check`)
-
-### 6.2 sessionStore (현재 세션)
-
-```typescript
-interface SessionStore {
-  // State
-  sajuResultId: string | null;
-  lastAnalysisType: 'CAREER' | 'CONSULTATION' | 'COMPANY' | null;
-  currentAnalysisData: CareerTimingData | ConsultationData | CompatibilityData | null;
-  isAnalyzing: boolean;
-  
-  // Actions
-  setSajuResultId: (id: string) => void;
-  setCurrentAnalysis: (data: CareerTimingData | ConsultationData | CompatibilityData) => void;
-  setIsAnalyzing: (loading: boolean) => void;
-  clearSession: () => void;
-}
-```
-
-### 6.3 consultationStore (Q4 캐싱, 2026-05-12 업데이트)
-
-**구현 기준**: API 응답 전체를 메모리에만 캐싱. localStorage/sessionStorage persist 없음 (FR-022 준수).
+**구현 기준**: API 응답 전체를 메모리에만 캐싱. localStorage/sessionStorage persist 없음.
 
 ```typescript
 interface ConsultationStore {
-  // State — 8탭 전체 데이터 메모리 캐싱 (탭 전환 0.2초 보증)
-  consultation: ConsultationData | null;  // 전체 응답 메모리 저장
-  lastFetchedId: string | null;           // 캐시 유효성 검증 (새 sajuResultId와 비교)
-  selectedTabIndex: number;
+  // State — 8섹션 전체 데이터 메모리 캐싱
+  consultation: ConsultationData | null;
+  lastFetchedId: string | null;
+  currentSectionIndex: number;     // fullpage.js afterLoad 콜백으로 동기화
   isLoading: boolean;
   error: string | null;
 
   // Actions
   setConsultation: (data: ConsultationData, sajuResultId: string) => void;
   clearData: () => void;
-  setSelectedTabIndex: (index: number) => void;
-  isValid: (sajuResultId: string) => boolean;  // lastFetchedId === sajuResultId
+  setCurrentSectionIndex: (index: number) => void;  // 0-based (fullpage.js destination.index)
+  isValid: (sajuResultId: string) => boolean;
   reset: () => void;
 }
-
-// persist 없음 — 페이지 새로고침 시 메모리 초기화, 재진입 시 API 재호출
 ```
 
-### 6.4 errorStore (전역 에러 & 토스트)
+### 6.2 authStore (인증)
 
 ```typescript
-interface Toast {
-  id: string;
-  message: string;
-  type: 'success' | 'error' | 'info' | 'warning';
-  duration?: number;
+interface AuthStore {
+  isLoggedIn: boolean;
+  user: User | null;
+  provider: 'KAKAO' | 'GOOGLE' | null;
+  loginError: string | null;
+  setLogin: (user: User) => void;   // token은 HttpOnly 쿠키에만 저장
+  setLogout: () => void;
+  checkToken: () => Promise<boolean>;
 }
+```
 
-interface ErrorStore {
-  // State
-  globalError: { message: string; code: string } | null;
-  toastQueue: Toast[];
-  
-  // Actions
-  setGlobalError: (error: { message: string; code: string }) => void;
-  clearError: () => void;
-  addToast: (toast: Omit<Toast, 'id'>) => void;
-  removeToast: (id: string) => void;
+### 6.3 sessionStore (현재 세션)
+
+```typescript
+interface SessionStore {
+  sajuResultId: string | null;
+  lastAnalysisType: 'CAREER' | 'CONSULTATION' | 'COMPANY' | null;
+  currentAnalysisData: CareerTimingData | ConsultationData | CompatibilityData | null;
+  isAnalyzing: boolean;
+  setSajuResultId: (id: string) => void;
+  setCurrentAnalysis: (data: any) => void;
+  clearSession: () => void;
 }
 ```
 
@@ -743,72 +672,53 @@ interface ErrorStore {
 
 ## 7. 애니메이션 & 타이밍 사양
 
-### 7.1 고지 문구 오버레이 (FR-048, FR-049, Q1)
+### 7.1 고지 문구 오버레이 (FR-048)
 
 ```
 Timeline:
   0ms    ─ Display overlay (fade-in starts)
-  0ms    ─ Opacity: 0 → 1 (CSS transition)
   ~50ms  ─ Fully opaque
   1500ms ─ Start fade-out (1.5s exact)
-  1500ms ─ Loading spinner fade-in starts (simultaneous)
   2000ms ─ Overlay fully transparent, removed from DOM
   2000ms ─ Loading spinner fully visible
 
 CSS:
-  .disclaimer-overlay {
-    opacity: 1;  // Rendered immediately
-    transition: opacity 500ms ease-in-out;
-  }
-  
-  .loading-spinner {
-    opacity: 0;  // Hidden initially
-    transition: opacity 500ms ease-in-out;
-    &.visible { opacity: 1; }
-  }
-
-Implementation (Hook: useDisclaimerTimer):
-  1. Set visible=true (render overlay, opacity: 1)
-  2. setTimeout 1500ms:
-     ├─ Set isFadingOut=true
-     ├─ CSS class added: trigger fade-out transition
-     └─ Simultaneous: show loading spinner (fade-in)
-  3. setTimeout 2000ms (total):
-     ├─ Remove overlay from DOM
-     └─ Fire onComplete() callback
-
-Rendering (Component: DisclaimerOverlay):
-  - Full-screen overlay (z-index: high)
-  - Dark background (opacity: 0.5)
-  - Centered white text: "본 사주는 재미로 보는 것이니 참고만 바랍니다"
-  - Font: responsive (desktop 28px, tablet 24px, mobile 20px)
-  - User input blocked: pointer-events: none
-  - Accessibility: role="alert", aria-live="assertive"
+  .disclaimer-overlay { transition: opacity 500ms ease-in-out; }
 ```
 
-### 7.2 탭 전환 (FR-018, Q4)
+### 7.2 fullpage.js 섹션 전환 (US4 — Q6 결정)
 
 ```
-Target: <200ms visual update (0.2s)
+기본 전환:
+  scrollingSpeed: 700ms
+  easing: 'easeInOutCubic'
+  방향: 수직 스크롤 (마우스 휠, 터치 스와이프, 방향키)
 
-Trigger: User clicks tab
-  ├─ Click handler: consultationStore.selectTab(index)
-  ├─ Update selectedTabIndex immediately (state change)
-  └─ Re-render component with new tab content
+SectionNavigator 직접 이동:
+  - fullpageApi.moveTo(sectionNumber)  // 1-based API
+  - 300ms 이내 해당 섹션 도달
 
-Cache Logic (단일 호출 전체 수신 방식, FR-007):
-  - consultationStore.consultation이 있고 lastFetchedId === sajuResultId → Cache HIT
-    └─ 탭 전환 시 메모리 조회만 (Time: <200ms, 네트워크 없음)
-  - consultationStore.consultation이 null 또는 다른 sajuResultId → Cache MISS
-    ├─ Show loading spinner
-    ├─ POST /api/career/consultation (20s timeout, 전체 19개 필드 한 번에 수신)
-    ├─ Cache result
-    └─ Display result (~1-2s)
+접근성 (prefers-reduced-motion):
+  - scrollingSpeed: 0 (즉시 전환, 애니메이션 없음)
+  - afterRender에서 matchMedia 감지 후 적용
 
-Measurement:
-  - Performance.now() at click
-  - Performance.now() when new content visible
-  - Assert: elapsed < 200ms (for cached tabs)
+모바일 (responsiveWidth: 768px 이하):
+  - fullpage.js 비활성화 → 일반 스크롤
+  - 각 섹션은 min-height: 100vh 유지
+
+섹션 내 오버플로우:
+  - scrollOverflow: true → Simplebar로 섹션 내 스크롤 가능
+  - 월별운세 캘린더(12개월 그리드) 등 콘텐츠 긴 섹션에 적용
+```
+
+### 7.3 섹션 진입 페이드인 (각 섹션 콘텐츠)
+
+```
+각 섹션 컴포넌트의 콘텐츠 등장 애니메이션:
+  - fullpage.js onLeave/afterLoad 이벤트 활용
+  - 섹션 진입 시: opacity 0 → 1 (350ms ease-out)
+  - transform: translateY(20px) → translateY(0) (350ms ease-out)
+  - prefers-reduced-motion: 애니메이션 없음 (즉시 표시)
 ```
 
 ---
@@ -817,150 +727,124 @@ Measurement:
 
 ### 8.1 US1: 인증 & 사용자 관리
 
-**Components**:
-- LoginButton (OAuth popup)
-- ProfileMenu (logged-in state)
-- LoginModal (alternative: modal instead of popup)
-
-**Hooks**:
-- useAuthStore (global state)
-
-**API**:
-- GET /api/auth/callback (OAuth)
-- POST /api/auth/logout
-
-**Success Criteria**:
-- OAuth popup opens (not redirect)
-- Token saved in httpOnly Cookie + sessionStorage
-- Header changes based on isLoggedIn
-- Auto-save on login (Q1)
+**컴포넌트**: LoginButton, ProfileMenu  
+**훅**: useAuthStore  
+**API**: GET /api/auth/callback, POST /api/auth/logout  
+**성공 기준**: OAuth 팝업 → HttpOnly 쿠키 → 헤더 변경 → 분석 결과 자동 저장
 
 ---
 
 ### 8.2 US2: 마이페이지 & 히스토리
 
-**컴포넌트**:
-- MyPageTabs (3 tabs)
-- AnalysisRecordCard (list item)
-- DeleteConfirmModal
-
-**Hooks**:
-- useMyPage (pagination + infinite scroll)
-
-**API**:
-- POST /api/analysis/records (pagination)
-- POST /api/analysis/{recordId} (detail)
-- DELETE /api/analysis/{recordId}
-
-**Success Criteria**:
-- 3 tabs load independently
-- Infinite scroll (threshold 0.5)
-- 0.1s instant replay of saved results
-- Delete with confirmation
+**컴포넌트**: MyPageTabs, AnalysisRecordCard, DeleteConfirmModal  
+**훅**: useMyPage (pagination + infinite scroll, threshold 0.5)  
+**API**: POST /api/analysis/records, DELETE /api/analysis/{recordId}  
+**성공 기준**: 3 탭, 무한 스크롤, 0.1s 즉시 재현, 삭제 확인
 
 ---
 
 ### 8.3 US3: 관운 분석
 
-**컴포넌트**:
-- TimingForm (date + time picker)
-- DisclaimerOverlay (1.5s + 500ms)
-- CareerTimingResult (H1/H2 + progress bar)
-
-**Hooks**:
-- useCareerTiming
-- useDisclaimerTimer (Q1)
-
-**API**:
-- POST /api/career/timing (10s timeout)
-
-**Success Criteria**:
-- Disclaimer 1.5s auto-display
-- 500ms fade transition
-- H1/H2 with confidence score
-- Auto-save on login (Q1)
+**컴포넌트**: TimingForm, DisclaimerOverlay, CareerTimingResult  
+**훅**: useCareerTiming, useDisclaimerTimer  
+**API**: POST /api/career/timing (10s timeout)  
+**성공 기준**: 1.5s 자동 고지 문구 → H1/H2 + 신뢰도 점수 → 로그인 자동 저장
 
 ---
 
-### 8.4 US4: AI 컨설팅 (8개 탭, Q4)
+### 8.4 US4: AI 컨설팅 (8섹션 fullpage.js — Q6)
 
 **컴포넌트**:
-- ConsultationTabs (8 tabs)
-- ConsultationTabContent (single tab)
-- MonthlyCalendar (for月別运势)
+- `FullPageConsultation` — `@fullpage/react-fullpage` 래퍼, 8섹션 조립
+- `SectionNavigator` — 오른쪽 고정, 현재 섹션 강조 + 클릭 이동
+- `Section1Industries` ~ `Section8MonthlyFortune` — 각 분석 섹션 UI
+- `MonthlyCalendar` — 섹션 8 캘린더 (월별 점수, 행운/주의)
 
-**Hooks**:
-- useConsultation (caching + 0.2s switching)
+**훅**:
+- `useConsultation` — API 호출, consultationStore 캐싱, fullpage.js 섹션 동기화
 
-**API**:
-- POST /api/career/consultation (20s timeout)
+**API**: POST /api/career/consultation (20s timeout, 8개 섹션 전체 단일 수신)
 
-**Success Criteria**:
-- All 8 tabs loaded (cached)
-- <200ms tab switching (Q4)
-- Input value persistence (Q4)
-- Page refresh restores state
+**fullpage.js 설정**:
+```typescript
+// FullPageConsultation.tsx
+// [Exception: Principle IV] — 사용자 명시 요청, 직접 구현 복잡도 과다
+import ReactFullpage from '@fullpage/react-fullpage';
+
+<ReactFullpage
+  scrollingSpeed={700}
+  scrollOverflow={true}
+  normalScrollElements=".feedback-modal"
+  responsiveWidth={768}
+  afterLoad={(origin, destination) =>
+    onSectionChange(destination.index)  // consultationStore 동기화
+  }
+  render={({ fullpageApi }) => (
+    <ReactFullpage.Wrapper>
+      {sections.map((section, i) => (
+        <div className="section" key={i}>
+          <SectionComponent data={section} />
+        </div>
+      ))}
+    </ReactFullpage.Wrapper>
+  )}
+/>
+```
+
+**성공 기준**:
+- 8개 섹션 각각 100vh 전체화면 표시
+- 스크롤 시 fullpage.js 스냅 전환 (700ms)
+- SectionNavigator 클릭 → 300ms 이내 해당 섹션 이동
+- 모바일(768px 이하): 일반 스크롤 (fullpage.js 비활성)
+- prefers-reduced-motion: 즉시 전환
+- 마지막 섹션에서 피드백 버튼 표시
 
 ---
 
-### 8.5 US5: 기업 궁합 (Q2 명확화)
+### 8.5 US5: 기업 궁합
 
-**컴포넌트**:
-- CompanyForm (input + autocomplete)
-- CompatibilityResult (score + job cards + calendar)
-
-**Hooks**:
-- useCompatibility
-- useCompanyAutocomplete (Q2: 백엔드 의존)
-
-**API** (Q2: 백엔드 `/api/company/autocomplete` 사용):
-- POST `/api/company/autocomplete` (5s timeout)
-  - Request: `{ query: string }`
-  - Response: `{ suggestions: string[] }`
-- POST `/api/company/compatibility` (8s timeout)
-
-**Success Criteria**:
-- 사용자 입력 시 자동완성 목록 표시 (5s 타임아웃)
-- Score + job matching 표시
-- Calendar layout 반응형
-- 자동완성 API 실패 시 수동 입력 폴백
+**컴포넌트**: CompanyForm, CompatibilityResult  
+**훅**: useCompatibility, useCompanyAutocomplete  
+**API**: POST /api/company/autocomplete (5s), POST /api/company/compatibility (8s)  
+**성공 기준**: 자동완성, 점수 + 직무 카드 + 캘린더, 폴백 수동 입력
 
 ---
 
 ### 8.6 US6: 피드백 모달
 
-**컴포넌트**:
-- FeedbackModal (satisfaction + comment)
-
-**Hooks**:
-- useFeedback
-
-**API**:
-- POST /api/feedback/satisfaction (5s timeout)
-
-**Success Criteria**:
-- Modal appears on all result screens
-- Satisfaction selection (radio)
-- Character counter (max 500)
-- Submit success message
+**컴포넌트**: FeedbackModal  
+**훅**: useFeedback  
+**API**: POST /api/feedback/satisfaction (5s)  
+**성공 기준**: 만족도 라디오, 글자 수 카운터(500자), 제출 성공 메시지
 
 ---
 
 ## 9. 구현 단계 (9개 단계, 137개 작업)
 
-| 단계 | 목표 | 작업 | 예상시간 | 차단 |
-|-------|------|-------|----------|----------|
-| Phase 1 | Setup & Infrastructure | T001-T010 | 1-2 days | Everything |
-| Phase 2 | Foundation (Zustand, API, Validation) | T011-T036 | 2-3 days | US1-US6 |
-| Phase 3 | US1: Authentication | T037-T050 | 1-2 days | US2, US6 |
-| Phase 4 | US3: Career Timing | T051-T070 | 2-3 days | US4, US5, US6 |
-| Phase 5 | US5: Company Compatibility | T071-T085 | 1-2 days | (independent) |
-| Phase 6 | US4: Consultation (8 tabs) | T086-T100 | 3-4 days | US3 (depends sajuResultId) |
-| Phase 7 | US2: My Page | T101-T112 | 2-3 days | US1, US3, US5, US6 |
-| Phase 8 | US6: Feedback & Error Handling | T113-T120 | 1 day | All result screens |
-| Phase 9 | Responsive, A11y, Testing, Polish | T121-T137 | 2-3 days | All |
+| 단계 | 목표 | 작업 | 차단 |
+|-------|------|-------|----------|
+| Phase 1 | Setup & Infrastructure | T001-T010 | Everything |
+| Phase 2 | Foundation (Zustand, API, Validation) | T011-T036 | US1-US6 |
+| Phase 3 | US1: Authentication | T037-T050 | US2, US6 |
+| Phase 4 | US3: Career Timing | T051-T070 | US4, US5, US6 |
+| Phase 5 | US5: Company Compatibility | T071-T085 | (independent) |
+| Phase 6 | US4: Consultation (8섹션 fullpage.js) | T086-T100 | US3 (sajuResultId) |
+| Phase 7 | US2: My Page | T101-T112 | US1, US3, US5, US6 |
+| Phase 8 | US6: Feedback & Error Handling | T113-T120 | All result screens |
+| Phase 9 | Responsive, A11y, Testing, Polish | T121-T137 | All |
 
-**중요 경로**: 단계 1 → 단계 2 → 단계 3 → 단계 4 → 단계 6 → 단계 7 → 단계 8 → 단계 9
+**Phase 6 추가 작업 (fullpage.js 전환)**:
+- `npm install @fullpage/react-fullpage` + TypeScript 타입 설정
+- `FullPageConsultation` 컴포넌트 작성 (Constitution IV 예외 주석 필수)
+- `SectionNavigator` 컴포넌트 작성
+- `useConsultation` 훅 업데이트 (tabIndex → sectionIndex)
+- `consultationStore` 업데이트 (selectedTabIndex → currentSectionIndex)
+- 8개 섹션 컴포넌트 작성 (Section1 ~ Section8)
+- 모바일 responsive 처리 (768px 이하 일반 스크롤)
+- prefers-reduced-motion 접근성 처리
+- Jest 테스트: FullPageConsultation, SectionNavigator, Section 컴포넌트
+
+**중요 경로**: 단계 1 → 2 → 3 → 4 → 6 → 7 → 8 → 9
 
 ---
 
@@ -969,136 +853,57 @@ Measurement:
 ### 10.1 단위 테스트
 
 ```
-Coverage Target: 80% (src/)
+Coverage Target: 80%
 
 Components:
-  - TimingForm: input validation, submit handler
-  - DisclaimerOverlay: timing (1.5s + 500ms)
-  - ConsultationTabs: tab switching, caching
-  - AnalysisRecordCard: click, delete
-  - LoginButton: OAuth flow
+  - FullPageConsultation: 섹션 렌더링, onSectionChange 콜백
+  - SectionNavigator: 현재 섹션 강조, 클릭 이동
+  - Section1~8: 데이터 렌더링, 엣지 케이스
+  - TimingForm, DisclaimerOverlay, FeedbackModal
 
 Hooks:
-  - useCareerTiming: submit, error handling, reset
-  - useConsultation: tab selection, cache restore
-  - useMyPage: pagination, infinite scroll
-  - Zustand stores: state updates, persist
-
-API Functions:
-  - apiFetch: success, error, timeout, retry (Q5)
-  - fetchCareerTiming, etc.: response validation (Zod)
+  - useConsultation: API 호출, 캐시, sectionIndex 동기화
+  - useCareerTiming, useMyPage, Zustand stores
 ```
 
 ### 10.2 통합 테스트 (MSW)
 
 ```
 Scenarios:
-  1. Full login flow (OAuth callback)
-  2. Career timing analysis + auto-save on login (Q1)
-  3. Consultation tab switching + caching (Q4)
-  4. My-page pagination + infinite scroll (Q3)
-  5. Company compatibility + fallback
-  6. API retry policy (Q5): timeout, network, success
-  7. Feedback submission
-  8. Page exit guard (beforeunload, beforePopState)
-
-MSW Setup:
-  - Mock all POST endpoints
-  - Simulate timing (3-5s for analysis)
-  - Simulate failures (timeout, 500 error)
-  - Test error recovery paths
+  1. Full login flow
+  2. Career timing + auto-save
+  3. Consultation 8섹션 fullpage.js (MSW mock API)
+  4. My-page 무한 스크롤
+  5. API retry policy
+  6. Feedback submission
 ```
 
 ### 10.3 E2E 테스트 (Playwright)
 
 ```
 Critical Paths:
-  1. DisclaimerOverlay timing (1.5s exact ±50ms, 500ms fade)
-  2. Tab switching performance (<200ms cached)
-  3. Infinite scroll threshold (50% visible)
-  4. beforeunload modal for unsaved data
-  5. Full user journey (login → analysis → save → my-page)
-
-Measurements:
-  - Performance.now() for timing assertions
-  - Visual regression testing
-  - Accessibility (axe-core)
+  1. DisclaimerOverlay timing (1.5s ±50ms)
+  2. fullpage.js 섹션 전환 (<700ms)
+  3. SectionNavigator 클릭 이동 (<300ms)
+  4. 무한 스크롤 (threshold 0.5)
+  5. prefers-reduced-motion: 즉시 전환
 ```
 
 ---
 
-## 11. 성능 최적화
-
-### 11.1 번들 크기
-
-| 목표 | 현재 (예상) | 최적화 |
-|--------|---------------------|--------------|
-| Initial JS | <100KB | Code splitting (dynamic imports) |
-| CSS | <50KB | Tailwind purge (unused styles) |
-| Fonts | <100KB | Pretendard + Garamond (web fonts) |
-| Total | <250KB | gzip compression |
-
-### 11.2 렌더링 성능
+## 11. 성능 목표
 
 | 지표 | 목표 | 접근 방식 |
 |--------|--------|----------|
-| **LCP** (Largest Contentful Paint) | <3s | Lazy load images, critical CSS inline |
-| **FID** (First Input Delay) | <100ms | Debounce handlers, async API calls |
-| **CLS** (Cumulative Layout Shift) | <0.1 | Fixed heights for images, skeletons |
-| **Tab Switching** | <200ms | Zustand cache (in-memory) |
-
-### 11.3 캐싱 전략
-
-```
-캐시 계층:
-  1. Browser cache: HTTP 304 (my-page detail)
-  2. Zustand persist: localStorage (consultation inputs)
-  3. sessionStorage: sajuResultId across page refresh
-  4. Memory cache: analysisStore (current session)
-```
+| **LCP** | <3s | fullpage.js 동적 import |
+| **FID** | <100ms | Debounce handlers |
+| **CLS** | <0.1 | 100vh 고정 섹션 크기 |
+| **섹션 전환** | 700ms | fullpage.js scrollingSpeed |
+| **초기 번들** | <200KB | Code splitting |
 
 ---
 
-## 12. 보안 & 개인정보 보호
-
-### 12.1 인증
-
-- **HttpOnly Cookie**: Server validation (CSRF protection)
-- **sessionStorage Token**: Frontend logic only (XSS exposure, but mitigated by httpOnly)
-- **Q2 Decision**: OAuth popup (not redirect)
-- **Token Refresh**: Q5 retry policy on timeout/network only
-
-### 12.2 입력 검증
-
-- **Frontend**: Zod schemas (UX feedback)
-- **Backend**: Double validation (security)
-- **Sanitization**: No HTML in feedback text (max 500 chars)
-
-### 12.3 데이터 개인정보 보호
-
-- **Non-logged-in Analysis**: sessionMemory only (volatile)
-- **Logged-in Analysis**: Backend persistent (user-owned)
-- **PII**: Birth date stored (required), no SSN
-- **Feedback**: Anonymous OK (no user ID required)
-
----
-
-## 13. 위험 관리 & 대응책
-
-| 위험 | 확률 | 영향 | 완화책 |
-|------|-------------|--------|-----------|
-| **OAuth failure** | Medium | High | Fallback to email login (Phase 2) |
-| **API timeout** | Medium | Medium | Q5 retry policy (3 attempts) |
-| **Large dataset (my-page)** | Low | Medium | Pagination + infinite scroll |
-| **Browser back button** | High | Medium | beforePopState guard (US6) |
-| **Disclaimer timing drift** | Low | Medium | setTimeout ±50ms, E2E test |
-| **Zustand persist corruption** | Low | Low | Clear localStorage fallback |
-
----
-
-## 14. 의존성 & 서드파티 통합
-
-### 14.1 NPM 의존성
+## 12. 의존성 (NPM)
 
 ```json
 {
@@ -1109,106 +914,45 @@ Measurements:
     "zod": "^3.22.0",
     "recharts": "^2.10.0",
     "sonner": "^1.0.0",
-    "react-intersection-observer": "^9.5.0"
+    "react-intersection-observer": "^9.5.0",
+    "@fullpage/react-fullpage": "^0.1.x"
   },
   "devDependencies": {
     "typescript": "^5.3.0",
     "jest": "^29.0.0",
-    "react-testing-library": "^14.0.0",
+    "@testing-library/react": "^14.0.0",
     "msw": "^1.3.0",
     "@playwright/test": "^1.40.0"
   }
 }
 ```
 
-### 14.2 백엔드 API (Spring Boot)
-
-- **Base URL**: `http://localhost:8080` (dev), TBD (production)
-- **All endpoints**: POST, return `ApiResponse<T>`
-- **Authentication**: HttpOnly Cookie + Authorization header (optional)
-- **CORS**: Enable localhost:3000 (dev), configure production origin
-
-### 14.3 OAuth 제공자
-
-- **Kakao Login API**: OAuth 2.0, popup flow
-- **Google Login API**: OAuth 2.0, popup flow
-- **Callback Handler**: `/api/auth/callback?code=X&state=Y`
+**fullpage.js 라이선스**:
+- 오픈 소스 (GPL v3) — 상업용은 유료 라이선스 필요
+- 프로젝트가 비상업적이거나 오픈 소스라면 GPL 허용
+- 상업 배포 시 `fullpage.js` 유료 라이선스 또는 대안 (`@fullpage/react-fullpage` GPL 조건 확인) 검토 필요
 
 ---
 
-## 15. 배포 & 릴리스 전략
+## 13. 위험 관리
 
-### 15.1 사전 릴리스 체크리스트
-
-```
-코드 품질:
-  ☐ npm run build (0 errors)
-  ☐ npm run lint (0 violations)
-  ☐ npm test -- --coverage (≥80%)
-  ☐ TypeScript strict mode (0 errors)
-  
-Testing:
-  ☐ Unit tests pass
-  ☐ Integration tests (MSW) pass
-  ☐ E2E tests (critical paths) pass
-  ☐ Manual testing: all 6 user stories
-  
-Performance:
-  ☐ Lighthouse score ≥80
-  ☐ Bundle size <250KB (gzip)
-  ☐ LCP <3s, FID <100ms, CLS <0.1
-  
-Accessibility:
-  ☐ axe-core audit: no critical issues
-  ☐ Screen reader testing
-  ☐ Keyboard navigation working
-  
-Documentation:
-  ☐ README.md updated
-  ☐ API contract documented
-  ☐ Component storybook (nice-to-have)
-  ☐ Git commit messages follow convention
-```
-
-### 15.2 CI/CD 파이프라인
-
-```yaml
-# .github/workflows/build-and-test.yml
-on: [push, pull_request]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - npm install
-      - npm run lint
-      - npm run build
-      - npm test -- --coverage
-      - npx playwright test  # E2E
-```
-
-### 15.3 프로덕션 배포
-
-1. **Build**: `npm run build`
-2. **Deploy**: Next.js to Vercel / AWS Amplify / custom server
-3. **Environment**: Set `NEXT_PUBLIC_API_BASE_URL=https://api.production.com`
-4. **Health Check**: Verify OAuth, API endpoints, database connectivity
-5. **Monitoring**: Sentry (error tracking), Datadog (performance)
+| 위험 | 확률 | 완화책 |
+|------|-------------|--------|
+| **fullpage.js Next.js SSR 호환** | Medium | `"use client"` 지시문 + dynamic import (SSR 비활성) |
+| **fullpage.js 모바일 터치** | Low | responsiveWidth: 768 → 모바일 일반 스크롤 |
+| **월별운세 섹션 내 오버플로우** | Medium | scrollOverflow: true + simplebar |
+| **OAuth failure** | Medium | 비로그인 계속 허용 |
+| **API timeout** | Medium | 재시도 정책 (3회) |
+| **Disclaimer timing drift** | Low | setTimeout ±50ms, E2E 테스트 |
 
 ---
 
-## 16. 용어사전 & 용어
+## 14. 보안 & 개인정보 보호
 
-| 용어 | 정의 | 약어 |
-|------|-----------|------------------|
-| **Saju** (사주) | Korean astrology based on birth date/time | - |
-| **Timing (관운)** | Favorable/unfavorable career periods (H1/H2) | Career Timing |
-| **Consultation (컨설팅)** | 8-tab AI-powered career advice | Consultation |
-| **Compatibility (궁합)** | Company-user astrological matching | Compatibility |
-| **Disclaimer** | Legal notice: "재미로만 참고" (for entertainment only) | - |
-| **Zustand** | State management library | Store, Global State |
-| **MSW** | Mock Service Worker (API mocking) | API Mock |
-| **E2E** | End-to-End testing | Integration Test |
-| **Q1-Q5** | 5 clarification sessions (2026-05-11) | Clarification |
+- **HttpOnly Cookie**: 인증 토큰 (XSS 방지)
+- **Zod**: 모든 API 응답 런타임 검증
+- **XSS**: HTML 자동 이스케이프 (React 기본 + Tailwind)
+- **입력 검증**: 생년월일 YYYY-MM-DD, 시간 HH:mm, 기업명 최대 길이
 
 ---
 
@@ -1218,18 +962,17 @@ jobs:
 - **137개 작업** (9개 단계)
 - **6개 사용자 스토리** (P1: 3, P2: 3)
 - **65개 이상의 기능 요구사항**
-- **5개 Zustand 스토어** (명확한 상태 관리)
-- **Q1-Q5 명확화** (전체에 통합됨)
-- **80% 테스트 커버리지** (성공 기준)
-- **성능 목표**: <3s LCP, <200ms 탭 전환, <0.1 CLS
+- **5개 Zustand 스토어** (consultationStore는 sectionIndex 기반으로 업데이트)
+- **fullpage.js** AI 컨설팅 8섹션 전체화면 스크롤 전환 (Constitution IV 예외)
+- **80% 테스트 커버리지**
+- **성능 목표**: <3s LCP, 700ms 섹션 전환, <0.1 CLS
 - **보안**: HttpOnly 쿠키 + Zod 검증
-- **접근성**: WCAG 2.1 AA (axa-core)
+- **접근성**: prefers-reduced-motion 준수
 
-**다음 단계**: 단계 3 구현 (US1: 인증)
+**다음 단계**: `/speckit-tasks`로 tasks.md 업데이트 (Phase 6 fullpage.js 태스크 반영)
 
 ---
 
-**생성됨**: 2026-05-11  
-**버전**: 1.0  
-**총 줄 수**: 1,047  
+**업데이트**: 2026-05-13 (fullpage.js 섹션 전환 반영)  
+**버전**: 1.1  
 **상태**: 구현 준비 완료
