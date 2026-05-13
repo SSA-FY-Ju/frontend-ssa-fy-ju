@@ -76,7 +76,7 @@ interface ApiResponse<T> {
 
 ## Constraints (Phase 1 — hard rules)
 
-- **No** Zustand, Redux, or any global state library — use `useState` + props lifting
+- **전역 상태**: Zustand 사용 (Constitution IV — Redux/Recoil 금지, `useState` + props lifting은 로컬 상태용)
 - **No** axios, React Query, or SWR — use the `apiFetch` wrapper in `lib/api/client.ts`
 - **No** shadcn/ui, MUI, or any component library — build components directly
 - **Styling**: Tailwind CSS only — no CSS Modules
