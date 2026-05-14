@@ -25,7 +25,7 @@ export function Header() {
 
         <nav className="flex items-center gap-4">
           <Link
-            href="/career"
+            href="/career-timing"
             className="hidden text-sm text-gray-300 hover:text-white sm:block transition-colors"
           >
             관운 분석

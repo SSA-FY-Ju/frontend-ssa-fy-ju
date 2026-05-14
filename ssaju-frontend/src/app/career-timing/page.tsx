@@ -9,6 +9,8 @@
 
 import { useCareerTiming } from '@/hooks/useCareerTiming';
 import { useAuth } from '@/hooks/useAuth';
+import { useSave } from '@/hooks/useSave';
+import { useAuthStore } from '@/stores/authStore';
 import { InputForm } from '@/components/forms/InputForm';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { LoadingProgress } from '@/components/results/LoadingProgress';
@@ -21,6 +23,8 @@ export default function CareerTimingPage() {
   const { phase, result, error, disclaimerVisible, disclaimerFading, submitAnalysis, reset } =
     useCareerTiming();
   const { isLoggedIn } = useAuth();
+  const { save } = useSave('CAREER_TIMING');
+  const openLoginModal = useAuthStore((s) => s.openLoginModal);
   const { getDisplayMessage } = useErrorHandler();
 
   return (
@@ -62,8 +66,8 @@ export default function CareerTimingPage() {
             <CareerTimingResult
               result={result}
               isLoggedIn={isLoggedIn}
-              onSave={() => {/* TODO: Phase 8 저장 연동 */}}
-              onLoginToSave={() => {/* TODO: 로그인 모달 열기 */}}
+              onSave={save}
+              onLoginToSave={openLoginModal}
             />
             <div className="mt-4">
               <FeedbackButton feedbackType="CAREER_TIMING" />
