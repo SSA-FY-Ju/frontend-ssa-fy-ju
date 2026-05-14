@@ -17,7 +17,7 @@ import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { ConsultationLoading } from '@/components/results/ConsultationLoading';
 import { ErrorMessage } from '@/components/errors/ErrorMessage';
 
-// fullpage.js는 브라우저 전용 — SSR 비활성화 필수
+// Swiper.js는 브라우저 전용 — SSR 비활성화 필수
 const FullPageConsultation = dynamic(
   () =>
     import('@/components/consultation/FullPageConsultation').then(
@@ -49,7 +49,6 @@ export default function ConsultationPage() {
             data={consultation}
             currentSectionIndex={currentSectionIndex}
             onSectionChange={handleSectionChange}
-            onFeedback={() => {/* 피드백 모달은 FeedbackButton 내부에서 관리 */}}
           />
 
           {/* 새 분석 시작하기 (우하단 플로팅) */}

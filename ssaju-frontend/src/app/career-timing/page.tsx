@@ -9,10 +9,13 @@
 
 import { useCareerTiming } from '@/hooks/useCareerTiming';
 import { useAuth } from '@/hooks/useAuth';
+import { useSave } from '@/hooks/useSave';
+import { useAuthStore } from '@/stores/authStore';
 import { InputForm } from '@/components/forms/InputForm';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { LoadingProgress } from '@/components/results/LoadingProgress';
 import { CareerTimingResult } from '@/components/results/CareerTimingResult';
+import { FeedbackButton } from '@/components/results/FeedbackButton';
 import { ErrorMessage } from '@/components/errors/ErrorMessage';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
@@ -20,6 +23,8 @@ export default function CareerTimingPage() {
   const { phase, result, error, disclaimerVisible, disclaimerFading, submitAnalysis, reset } =
     useCareerTiming();
   const { isLoggedIn } = useAuth();
+  const { save } = useSave('CAREER_TIMING');
+  const openLoginModal = useAuthStore((s) => s.openLoginModal);
   const { getDisplayMessage } = useErrorHandler();
 
   return (
@@ -57,13 +62,17 @@ export default function CareerTimingPage() {
 
         {/* 결과 */}
         {phase === 'result' && result && (
-          <CareerTimingResult
-            result={result}
-            isLoggedIn={isLoggedIn}
-            onSave={() => {/* TODO: Phase 8 저장 연동 */}}
-            onFeedback={() => {/* TODO: Phase 7 피드백 연동 */}}
-            onLoginToSave={() => {/* TODO: 로그인 모달 열기 */}}
-          />
+          <>
+            <CareerTimingResult
+              result={result}
+              isLoggedIn={isLoggedIn}
+              onSave={save}
+              onLoginToSave={openLoginModal}
+            />
+            <div className="mt-4">
+              <FeedbackButton feedbackType="CAREER_TIMING" />
+            </div>
+          </>
         )}
       </div>
     </main>

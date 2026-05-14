@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 /**
  * 홈페이지 (/)
  *
@@ -24,9 +26,9 @@ export default function HomePage(): React.ReactElement {
         </p>
 
         <div className="flex gap-4 justify-center flex-col sm:flex-row">
-          <button className="btn-primary">
+          <Link href="/career-timing" className="btn-primary">
             관운 분석 시작하기
-          </button>
+          </Link>
           <button className="btn-secondary">
             자세히 알아보기
           </button>

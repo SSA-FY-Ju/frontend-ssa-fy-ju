@@ -25,6 +25,7 @@ interface AuthStore {
   user: User | null;
   loginError: string | null;
   isLoading: boolean;
+  isLoginModalOpen: boolean;
 
   // Actions
   setUser: (user: User) => void;
@@ -33,6 +34,8 @@ interface AuthStore {
   setIsLoading: (isLoading: boolean) => void;
   logout: () => void;
   reset: () => void;
+  openLoginModal: () => void;
+  closeLoginModal: () => void;
 }
 
 export const useAuthStore = create<AuthStore>((set) => ({
@@ -41,6 +44,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
   user: null,
   loginError: null,
   isLoading: false,
+  isLoginModalOpen: false,
 
   // Actions
   setUser: (user: User) => {
@@ -79,4 +83,6 @@ export const useAuthStore = create<AuthStore>((set) => ({
       isLoading: false,
     });
   },
+  openLoginModal: () => set({ isLoginModalOpen: true }),
+  closeLoginModal: () => set({ isLoginModalOpen: false }),
 }));

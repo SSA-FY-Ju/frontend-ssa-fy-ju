@@ -131,10 +131,11 @@
 
 ### User Story 4 - AI 기반 커리어 컨설팅 (Priority: P1)
 
-사용자가 관운 분석과 동일한 생년월일/시간을 기반으로, 대규모의 AI 커리어 컨설팅(8개 섹션)을 **fullpage.js 풀페이지 스냅 스크롤 방식**으로 확인하는 경험. 각 섹션은 독립된 전체 화면 뷰포트(100vh)로 표시되며, 스크롤 시 700ms 스냅 전환으로 이동한다.
+사용자가 관운 분석과 동일한 생년월일/시간을 기반으로, 대규모의 AI 커리어 컨설팅(8개 섹션)을 **Swiper.js 수직 슬라이드 방식**으로 확인하는 경험. 각 섹션은 독립된 전체 화면 뷰포트(100vh)로 표시되며, 스크롤 시 700ms 전환으로 이동한다.
 
 > **2026-05-13 변경 (v1)**: 탭 기반 UI → 스크롤 + 섹션 진입 애니메이션 방식으로 전환.
-> **2026-05-13 변경 (v2)**: 스크롤 + IntersectionObserver 방식 → **fullpage.js 풀페이지 스냅 스크롤** 방식으로 전환. 각 섹션이 100vh 독립 페이지로 표시, 700ms 스냅 전환.
+> **2026-05-13 변경 (v2)**: 스크롤 + IntersectionObserver 방식 → fullpage.js 풀페이지 스냅 스크롤 방식으로 전환. 각 섹션이 100vh 독립 페이지로 표시, 700ms 스냅 전환.
+> **2026-05-14 변경 (v3)**: fullpage.js(GPL v3 유료) → **Swiper.js v12 수직 슬라이드** 방식으로 교체. MIT 라이선스, React 공식 지원, Mousewheel 모듈로 자연스러운 트랙패드 UX 제공. `[Exception: Principle IV]` 적용.
 
 **Why this priority**:
 - 추천 산업, 면접 팁, 사주 프로필, 월별 운세 등 사용자의 커리어 의사결정에 직접 영향
@@ -142,8 +143,8 @@
 - P1: 관운 분석 후 자연스러운 다음 스텝
 - 스크롤 방식으로 전체 섹션 완독률 향상 기대
 
-**Independent Test** (Phase 1 - 8개 섹션 fullpage.js 스냅 스크롤):
-사용자가 생년월일/시간을 입력하고 "AI 컨설팅 받기" 클릭 후, 15-20초의 로딩 메시지("AI 분석 중입니다...")를 본 뒤, 8개 섹션이 각각 100vh 전체 화면으로 표시되고, 스크롤 시 700ms 스냅 전환으로 섹션 간 이동하는지 확인:
+**Independent Test** (Phase 1 - 8개 섹션 Swiper.js 수직 슬라이드):
+사용자가 생년월일/시간을 입력하고 "AI 컨설팅 받기" 클릭 후, 15-20초의 로딩 메시지("AI 분석 중입니다...")를 본 뒤, 8개 섹션이 각각 100vh 전체 화면으로 표시되고, 마우스 휠/트랙패드 스와이프로 700ms 전환되어 섹션 간 이동하는지 확인:
 1. 추천산업
 2. 면접팁
 3. 강점
@@ -171,9 +172,9 @@
 
    > **Phase 2 추가 섹션**: 정신 관리 (스트레스 관리, 재충전 방법, 마인드셋), 직장 환경 (업무 환경 적응, 업무 스타일, 관계 전략)
 
-3. **Given** 결과 페이지가 표시된 상태 **When** 사용자가 아래로 스크롤 **Then** fullpage.js 스냅 스크롤(700ms)로 다음 섹션(100vh)으로 전환되며, 각 섹션이 독립된 전체 화면으로 표시됨. 모바일(768px 미만)에서는 일반 스크롤로 폴백
+3. **Given** 결과 페이지가 표시된 상태 **When** 사용자가 마우스 휠 또는 트랙패드로 스크롤 **Then** Swiper.js Mousewheel 모듈이 700ms 속도로 다음 섹션(100vh)으로 전환되며, 각 섹션이 독립된 전체 화면으로 표시됨. 모바일(768px 미만)에서는 터치 스와이프로 전환
 
-4. **Given** 스크롤 페이지 **When** 화면 우측(데스크톱) 또는 상단(모바일)의 섹션 네비게이터 클릭 **Then** fullpage.js `moveTo(섹션번호)` API로 해당 섹션으로 700ms 스냅 이동하며 네비게이터에서 현재 섹션 강조 표시
+4. **Given** 스크롤 페이지 **When** 화면 우측(데스크톱) 또는 상단(모바일)의 섹션 네비게이터 클릭 **Then** `swiperRef.current?.slideTo(index)` 호출로 해당 섹션으로 700ms 전환되며 네비게이터에서 현재 섹션 강조 표시
 
 5. **Given** 월별운세 섹션 도달 **When** 화면에 표시됨 **Then** 캘린더 형식으로 다음과 같이 표시:
    - 데스크톱: 12개월이 가로로 배치되어 한눈에 조회 가능
@@ -334,7 +335,7 @@
 
 - **FR-006**: 관운 분석 API 호출 시 요청 본문은 `{ "birthDate": "1990-10-10", "birthTime": "14:30", "solarType": "SOLAR" }` 형식. (`solarType`: 양력/음력 구분, 기본값 "SOLAR"). 응답은 `sajuResultId`, `h1Period`, `h2Period`, `h1Confidence` (0-100), `h2Confidence` (0-100), `recommendation` (문자열) 포함
 
-- **FR-007**: AI 커리어 컨설팅 API는 **한 번의 POST 호출로 8개 섹션 데이터를 모두 수신** (Q5 결정 — Phase 1 MVP). 예상 응답 시간은 15-20초. 이 시간 동안 로딩 진행 바 표시. 응답 수신 후 **fullpage.js 풀페이지 스냅 스크롤**로 8개 섹션이 각각 100vh 전체 화면으로 표시되며, 스크롤 시 700ms 스냅 전환으로 섹션 간 이동.
+- **FR-007**: AI 커리어 컨설팅 API는 **한 번의 POST 호출로 8개 섹션 데이터를 모두 수신** (Q5 결정 — Phase 1 MVP). 예상 응답 시간은 15-20초. 이 시간 동안 로딩 진행 바 표시. 응답 수신 후 **Swiper.js 수직 슬라이드**로 8개 섹션이 각각 100vh 전체 화면으로 표시되며, 마우스 휠/트랙패드 스와이프로 700ms 전환되어 섹션 간 이동. (`[Exception: Principle IV]` — MIT 라이선스, 사용자 명시 요청)
   - **Phase 1 섹션 (8개)**: 추천산업, 면접팁, 강점, 사주프로필, 부의운, 경력로드맵, 브랜딩, 월별운세
   - **Phase 2 추가 섹션**: 정신관리(`mentalCare`), 직장환경(`environmentFit`, `workStyle`, `relationshipStrategy`)
 
@@ -480,16 +481,16 @@
   - **모달 (중요 확인)**: 가운데 배치, 반투명 검정 오버레이 (opacity: 0.6), 배경 흐림 처리 (blur)
     - 예: 페이지 이탈 확인, 기록 삭제 확인, 로그인 모달 등
 
-- **FR-064**: **컨설팅 결과 섹션 네비게이터 스타일** (2026-05-13 탭→스크롤 전환 → fullpage.js 적용)
+- **FR-064**: **컨설팅 결과 섹션 네비게이터 스타일** (2026-05-13 탭→스크롤 전환 → 2026-05-14 Swiper.js 적용)
   - **데스크톱(1024px+)**: 화면 우측 플로팅 인디케이터 (8개 점 또는 섹션명 약자)
-    - 현재 섹션을 금색으로 강조 (fullpage.js `afterLoad` 콜백으로 동기화)
-    - 클릭 시 `fullpageApi.moveTo(섹션번호)` 호출 → 700ms 스냅 이동
+    - 현재 섹션을 금색으로 강조 (Swiper.js `onSlideChange` 콜백으로 동기화)
+    - 클릭 시 `swiperRef.current?.slideTo(index)` 호출 → 700ms 전환
   - **태블릿/모바일(~1023px)**: 상단 고정 섹션 점프 바 (8개 섹션명 가로 스크롤)
     - 현재 섹션 금색 강조
-    - 클릭 시 `fullpageApi.moveTo(섹션번호)` 호출
-  - **fullpage.js 스냅 전환**: `scrollingSpeed: 700` (ms), 섹션 간 슬라이드 전환
-  - **모바일 폴백**: `responsiveWidth: 768` → 768px 미만에서 fullpage.js 비활성화, 일반 스크롤
-  - **접근성**: `prefers-reduced-motion` 활성화 시 `scrollingSpeed: 0` 적용 (즉시 전환)
+    - 클릭 시 `swiperRef.current?.slideTo(index)` 호출
+  - **Swiper.js 수직 전환**: `speed: 700` (ms), Mousewheel 모듈 사용, `thresholdDelta: 50` (트랙패드 관성 스크롤 무시)
+  - **모바일**: Swiper 기본 터치 스와이프 지원 (별도 폴백 불필요)
+  - **접근성**: `prefers-reduced-motion` 활성화 시 `speed: 0` 적용 (즉시 전환)
 
 - **FR-065**: **타이포그래피 및 폰트 체계**
   - **기본 폰트**: Pretendard 또는 Noto Sans KR (별이 빛나는 밤 테마와 조화)
@@ -505,7 +506,7 @@
 
 #### 7. UI/UX 상호작용 및 반응형 설계
 
-- **FR-030**: 컨설팅 결과 섹션 네비게이터(플로팅 인디케이터)에서 섹션 클릭 시 `fullpageApi.moveTo(섹션번호)` 호출로 700ms 스냅 이동. 섹션 데이터는 이미 메모리에 로드돼 있어 추가 대기 없음. 현재 섹션은 fullpage.js `afterLoad` 콜백을 통해 Zustand `currentSectionIndex`와 동기화
+- **FR-030**: 컨설팅 결과 섹션 네비게이터(플로팅 인디케이터)에서 섹션 클릭 시 `swiperRef.current?.slideTo(index)` 호출로 700ms 전환. 섹션 데이터는 이미 메모리에 로드돼 있어 추가 대기 없음. 현재 섹션은 Swiper.js `onSlideChange` 콜백을 통해 Zustand `currentSectionIndex`(0-based)와 동기화
 
 - **FR-031**: 피드백 모달 내 텍스트 영역은 실시간 글자 수 카운터 표시 (예: "120 / 500"). 500자 도달 시 추가 입력 방지
 
@@ -608,12 +609,14 @@
     - **기업 정보 미발견** (COMPANY_NOT_FOUND): "설립일을 수동으로 입력해주세요"라는 안내와 함께 **설립일/시간 입력 폼이 자동으로 활성화**
   - 모든 에러 상태는 **ErrorMessage 컴포넌트 규격**을 따르며, 사용자의 다음 행동을 유도하는 버튼(`onClick` 핸들러 포함) 포함
 
-- **FR-060**: **컨설팅 결과 fullpage.js 풀페이지 뷰 및 데이터 지속성**
+- **FR-060**: **컨설팅 결과 Swiper.js 수직 슬라이드 뷰 및 데이터 지속성** (2026-05-14 변경: fullpage.js → Swiper.js)
   - AI 커리어 컨설팅의 8개 섹션 데이터는 **Zustand 전역 상태 관리**로 메모리에 보관
-  - **풀페이지 스냅 스크롤**: `@fullpage/react-fullpage` 라이브러리 사용. 각 섹션이 100vh 독립 화면으로 표시, 탭 UI 없음
-  - **섹션 전환**: `scrollingSpeed: 700`ms 스냅 전환. 현재 섹션 인덱스는 `afterLoad` 콜백에서 Zustand `currentSectionIndex`(0-based) 업데이트
-  - **모바일 폴백**: `responsiveWidth: 768` → 768px 미만에서 fullpage.js 비활성화, 일반 스크롤로 전환
-  - **접근성**: `prefers-reduced-motion` 활성화 시 `scrollingSpeed: 0` (즉시 전환)
+  - **수직 슬라이드**: `swiper@12` 라이브러리 사용 (`[Exception: Principle IV]`). 각 섹션이 100vh 독립 화면으로 표시, 탭 UI 없음
+  - **섹션 전환**: `speed: 700`ms 전환. 현재 섹션 인덱스는 `onSlideChange` 콜백에서 Zustand `currentSectionIndex`(0-based) 업데이트
+  - **마우스/트랙패드**: Mousewheel 모듈(`thresholdDelta: 50`)으로 자연스러운 스크롤 UX 제공
+  - **키보드**: Keyboard 모듈로 Arrow↑↓ 섹션 이동 지원
+  - **모바일**: 터치 스와이프 기본 지원 (별도 폴백 설정 불필요)
+  - **접근성**: A11y 모듈 + `prefers-reduced-motion` 활성화 시 `speed: 0` (즉시 전환)
   - **SSR 호환**: Next.js에서 `dynamic(() => import('...'), { ssr: false })`로 클라이언트 전용 렌더링
   - **데이터 유지**: 한 번 로드된 분석 결과는 메모리에 유지되어 다른 페이지 이동 후 복귀 시에도 재호출 없이 즉시 표시
   - **초기화 조건**: 새로운 분석(다른 생년월일 입력) 시작 시에만 상태 초기화, 로그인/로그아웃 시 초기화
@@ -729,7 +732,7 @@
 
 - **UX-011**: **빠른 에러 복구**: API 에러 발생 시 "다시 시도" 버튼이나 "수동 입력" 폼이 즉시 나타나 사용자가 한 번의 클릭으로 다음 행동 수행 가능
 
-- **UX-012**: **풀페이지 스냅 스크롤 탐색**: AI 컨설팅 8개 섹션을 탭 클릭 없이 fullpage.js 스냅 스크롤로 탐색. 각 섹션이 100vh 전체 화면으로 표시되어 콘텐츠에 집중. 섹션 전환이 700ms 내 완료되어 끊김 없는 탐색 경험 제공
+- **UX-012**: **Swiper.js 수직 슬라이드 탐색**: AI 컨설팅 8개 섹션을 탭 클릭 없이 Swiper.js 수직 슬라이드로 탐색. 각 섹션이 100vh 전체 화면으로 표시되어 콘텐츠에 집중. 마우스 휠/트랙패드/터치 스와이프로 섹션 전환이 700ms 내 완료되어 끊김 없는 탐색 경험 제공 (2026-05-14 변경: fullpage.js → Swiper.js)
 
 - **UX-013**: **세션 지속성**: 메뉴 이동 후 복귀 시에도 분석 결과가 메모리에서 즉시 로드되어 재분석 없이 이전 섹션 위치(currentSectionIndex) 복원
 
@@ -765,7 +768,7 @@
 
 - **S-016**: 저장된 분석 결과 재현 **0.1초 이내** (로딩 없이 즉시 표시)
 
-- **S-017**: AI 커리어 컨설팅 fullpage.js 섹션 전환 **700ms 이내** 완료 (`scrollingSpeed: 700`). 섹션 네비게이터 클릭 시 `moveTo()` 호출 후 **700ms 이내** 이동 완료
+- **S-017**: AI 커리어 컨설팅 Swiper.js 섹션 전환 **700ms 이내** 완료 (`speed: 700`). 섹션 네비게이터 클릭 시 `slideTo()` 호출 후 **700ms 이내** 이동 완료 (2026-05-14 변경: fullpage.js → Swiper.js)
 
 - **S-018**: 로딩 UX 최소화 (진행 바만 표시, 시간 텍스트 제외)하여 UI 청결도 유지
 
@@ -1173,7 +1176,7 @@
 
 ### Session 2026-05-13 (Clarification - fullpage.js 도입 및 문서 일관성 통일)
 
-- **Q: 컨설팅 결과 8개 섹션 표시 방식** → **결정: fullpage.js 풀페이지 스냅 스크롤**
+- **Q: 컨설팅 결과 8개 섹션 표시 방식** → **결정: fullpage.js 풀페이지 스냅 스크롤** *(2026-05-14에 Swiper.js로 재변경)*
   - **변경 전**: IntersectionObserver + 페이드인/슬라이드업 애니메이션(350ms ease-out) 기반 세로 스크롤
   - **변경 후**: `@fullpage/react-fullpage` 풀페이지 스냅 스크롤 (700ms), 각 섹션 = 100vh 독립 화면
   - **근거**: 사용자 요청 — 1개 분석 결과당 1개 전체 페이지로 표시, 직접 구현 대비 코드량 최소화 (500+ lines → library)
@@ -1186,7 +1189,25 @@
     - 모바일 폴백: `responsiveWidth: 768` (768px 미만 일반 스크롤)
     - 접근성: `prefers-reduced-motion` → `scrollingSpeed: 0`
     - 네비게이터: `fullpageApi.moveTo(index+1)` (1-based API)
-    - Constitution IV 예외: GPL v3 라이선스 확인 필요
+    - Constitution IV 예외: GPL v3 라이선스 문제 → 2026-05-14에 Swiper.js로 교체로 해소
+
+### Session 2026-05-14 (Swiper.js 마이그레이션)
+
+- **Q: fullpage.js GPL v3 라이선스 및 트랙패드 UX 문제** → **결정: Swiper.js v12 수직 슬라이드로 교체**
+  - **변경 전**: `@fullpage/react-fullpage` (GPL v3 유료 라이선스, CSS scroll-snap 수동 wheel 처리 부자연스러운 UX)
+  - **변경 후**: `swiper@12` MIT 라이선스, React 공식 지원, Mousewheel 모듈로 자연스러운 트랙패드 UX
+  - **근거**: 사용자 명시 요청, 라이선스 문제 해소, 마우스/트랙패드 스크롤 UX 개선
+  - **영향 범위**:
+    - **spec.md**: US4 설명, Acceptance Scenarios 3/4, FR-007, FR-030, FR-060, FR-064, UX-012, S-017 Swiper.js 기준으로 업데이트
+    - **plan.md**: Phase 10 추가 (T130~T135), 기술 스택 Swiper.js 항목 추가
+    - **tasks.md**: Phase 10 추가, 의존성 그래프 Phase 5→Phase 10 명시
+    - **EXCEPTIONS.md**: Exception #001 (Swiper.js) 공식 등록
+  - **기술 결정 사항**:
+    - SSR 비활성화: 동일 (`dynamic(..., { ssr: false })`)
+    - 모바일: 터치 스와이프 기본 지원 (별도 폴백 불필요)
+    - 접근성: `prefers-reduced-motion` → `speed: 0`
+    - 네비게이터: `swiperRef.current?.slideTo(index)` (0-based API)
+    - `[Exception: Principle IV]` 모든 관련 PR에 명시 필수
 
 ---
 
