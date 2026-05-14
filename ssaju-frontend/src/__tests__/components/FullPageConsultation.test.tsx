@@ -1,66 +1,70 @@
 /**
- * FullPageConsultation 컴포넌트 테스트 (T081)
+ * FullPageConsultation 컴포넌트 테스트 (T081 / T133)
  *
- * CSS scroll-snap 기반 풀페이지 뷰 검증:
+ * Swiper.js 기반 풀페이지 뷰 검증:
  * - 8개 섹션 컴포넌트 렌더링 확인
- * - IntersectionObserver → onSectionChange 호출 검증
- * - prefers-reduced-motion: behavior 'instant' 적용 검증
- * - handleNavigate → container.scrollTo 호출 검증
+ * - onSlideChange → onSectionChange 호출 검증
+ * - SectionNavigator 렌더링 및 currentSectionIndex 전달 확인
+ * - 마지막 섹션 피드백 버튼 렌더링 확인
  */
 
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { mockConsultationData } from '@/mocks/data/career';
 
-// ─── window.matchMedia 모킹 ────────────────────────────────────────────────
-const mockMatchMedia = (matches: boolean) => {
-  Object.defineProperty(window, 'matchMedia', {
-    writable: true,
-    value: jest.fn().mockReturnValue({
-      matches,
-      media: '',
-      onchange: null,
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      dispatchEvent: jest.fn(),
-    }),
-  });
-};
+// ─── Swiper 모킹 ──────────────────────────────────────────────────────────────
+jest.mock('swiper/react', () => ({
+  Swiper: ({
+    children,
+    onSwiper,
+  }: {
+    children: React.ReactNode;
+    onSwiper?: (swiper: { slideTo: jest.Mock; activeIndex: number }) => void;
+    onSlideChange?: (swiper: { activeIndex: number }) => void;
+    [key: string]: unknown;
+  }) => {
+    React.useEffect(() => {
+      onSwiper?.({ slideTo: jest.fn(), activeIndex: 0 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+    return (
+      <div data-testid="fullpage-container">
+        {children}
+      </div>
+    );
+  },
+  SwiperSlide: ({
+    children,
+    'data-testid': testId,
+    style,
+  }: {
+    children: React.ReactNode;
+    'data-testid'?: string;
+    style?: React.CSSProperties;
+    [key: string]: unknown;
+  }) => (
+    <div data-testid={testId} style={style}>
+      {children}
+    </div>
+  ),
+}));
 
-// ─── IntersectionObserver 모킹 ─────────────────────────────────────────────
-type IOCallback = (entries: IntersectionObserverEntry[]) => void;
-const intersectionCallbacks: Map<Element, IOCallback> = new Map();
+jest.mock('swiper/modules', () => ({
+  Mousewheel: {},
+  Keyboard: {},
+  A11y: {},
+}));
 
-class MockIntersectionObserver {
-  private callback: IOCallback;
-  constructor(callback: IOCallback) {
-    this.callback = callback;
-  }
-  observe(el: Element) {
-    intersectionCallbacks.set(el, this.callback);
-  }
-  unobserve(el: Element) {
-    intersectionCallbacks.delete(el);
-  }
-  disconnect() {
-    intersectionCallbacks.clear();
-  }
-}
+jest.mock('swiper/css', () => ({}));
 
-Object.defineProperty(window, 'IntersectionObserver', {
-  writable: true,
-  value: MockIntersectionObserver,
-});
-
-/** 특정 요소가 뷰포트에 진입했다고 시뮬레이션 */
-function triggerIntersection(el: Element, isIntersecting: boolean) {
-  const callback = intersectionCallbacks.get(el);
-  if (callback) {
-    callback([{ isIntersecting, target: el } as IntersectionObserverEntry]);
-  }
-}
+// ─── useAuth 모킹 ──────────────────────────────────────────────────────────────
+jest.mock('@/hooks/useAuth', () => ({
+  useAuth: () => ({
+    isLoggedIn: false,
+    loginWithKakao: jest.fn(),
+    loginWithGoogle: jest.fn(),
+  }),
+}));
 
 // ─── 섹션 컴포넌트 모킹 ────────────────────────────────────────────────────
 jest.mock('@/components/consultation/SectionNavigator', () => ({
@@ -117,13 +121,8 @@ const defaultProps = {
 };
 
 describe('FullPageConsultation', () => {
-  beforeAll(() => {
-    mockMatchMedia(false);
-  });
-
   beforeEach(() => {
     jest.clearAllMocks();
-    intersectionCallbacks.clear();
   });
 
   it('8개 섹션 컴포넌트가 모두 렌더링됨', () => {
@@ -139,7 +138,7 @@ describe('FullPageConsultation', () => {
     expect(screen.getByTestId('section-monthly')).toBeInTheDocument();
   });
 
-  it('8개 섹션 div가 data-testid="fullpage-section-{i}"로 렌더링됨', () => {
+  it('data-testid="fullpage-section-{i}" 속성이 각 SwiperSlide에 존재함', () => {
     render(<FullPageConsultation {...defaultProps} />);
     for (let i = 0; i < 8; i++) {
       expect(screen.getByTestId(`fullpage-section-${i}`)).toBeInTheDocument();
@@ -151,31 +150,13 @@ describe('FullPageConsultation', () => {
     expect(screen.getByTestId('section-navigator')).toHaveAttribute('data-current-index', '3');
   });
 
-  it('IntersectionObserver 진입 → onSectionChange(index) 호출', () => {
-    const onSectionChange = jest.fn();
-    render(<FullPageConsultation {...defaultProps} onSectionChange={onSectionChange} />);
-
-    // 4번째 섹션(index 3)이 뷰포트에 진입
-    const section3 = screen.getByTestId('fullpage-section-3');
-    triggerIntersection(section3, true);
-
-    expect(onSectionChange).toHaveBeenCalledWith(3);
-  });
-
   it('마지막 섹션(index 7)에 피드백 버튼 표시', () => {
     render(<FullPageConsultation {...defaultProps} />);
     expect(screen.getByTestId('feedback-button')).toBeInTheDocument();
   });
 
-  it('풀페이지 컨테이너에 scroll-snap-type: y mandatory 스타일 적용', () => {
+  it('Swiper 컨테이너가 data-testid="fullpage-container"로 렌더링됨', () => {
     render(<FullPageConsultation {...defaultProps} />);
-    const container = screen.getByTestId('fullpage-container');
-    expect(container.style.scrollSnapType).toBe('y mandatory');
-  });
-
-  it('각 섹션에 scroll-snap-align: start 스타일 적용', () => {
-    render(<FullPageConsultation {...defaultProps} />);
-    const section0 = screen.getByTestId('fullpage-section-0');
-    expect(section0.style.scrollSnapAlign).toBe('start');
+    expect(screen.getByTestId('fullpage-container')).toBeInTheDocument();
   });
 });

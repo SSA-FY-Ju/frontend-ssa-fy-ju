@@ -5,7 +5,7 @@
 **Plan**: `/specs/001-ssaju-complete/plan.md`  
 **Constitution**: `/.specify/memory/constitution.md`  
 **Status**: Ready for Implementation  
-**Generated**: 2026-05-11 | **Updated**: 2026-05-13 (fullpage.js 전환 반영)
+**Generated**: 2026-05-11 | **Updated**: 2026-05-14 (Swiper.js 마이그레이션 Phase 10 추가)
 
 ---
 
@@ -20,7 +20,8 @@
 7. [Phase 7: US6 - 만족도 피드백](#phase-7-us6---만족도-피드백)
 8. [Phase 8: US2 - 마이페이지 및 분석 히스토리](#phase-8-us2---마이페이지-및-분석-히스토리-조회)
 9. [Phase 9: Polish & Cross-cutting](#phase-9-polish--cross-cutting-concerns)
-10. [Dependencies & Parallel Execution](#dependencies--parallel-execution)
+10. [Phase 10: Swiper.js 마이그레이션](#phase-10-swiperjs-마이그레이션---ai-컨설팅-풀페이지-스크롤)
+11. [Dependencies & Parallel Execution](#dependencies--parallel-execution)
 
 ---
 
@@ -790,6 +791,104 @@ Phase 9: Polish [depends on: Phase 3-8 모두 완료]
 
 ---
 
+---
+
+## Phase 10: Swiper.js 마이그레이션 — AI 컨설팅 풀페이지 스크롤
+
+**목표**: CSS scroll-snap + 수동 wheel 이벤트 방식을 Swiper.js v12 수직 슬라이드로 교체해 자연스러운 마우스/트랙패드 스크롤 UX 제공.  
+**영향 파일**: `package.json`, `app/globals.css`, `FullPageConsultation.tsx`, `FullPageConsultation.test.tsx`  
+**Constitution 예외**: Principle IV — 사용자 명시 요청, PR에 `[Exception: Principle IV]` 명시 필수
+
+### 10.1 패키지 설치
+
+- [X] T130 `swiper@12` 패키지 설치
+  - `npm install swiper` 실행
+  - `package.json` dependencies에 `"swiper": "^12.x.x"` 추가 확인
+  - 설치 후 `npm run build` 빌드 통과 확인
+
+### 10.2 CSS 전역 Import
+
+- [X] T131 `app/globals.css`에 Swiper 기본 CSS import 추가
+  - 파일: `ssaju-frontend/src/app/globals.css`
+  - 파일 최상단에 `@import 'swiper/css';` 추가
+  - Next.js App Router에서 클라이언트 컴포넌트 내 CSS import 이슈 방지를 위해 globals.css 사용
+
+### 10.3 핵심 컴포넌트 교체
+
+- [X] T132 `FullPageConsultation.tsx` Swiper.js 기반으로 재작성
+  - 파일: `ssaju-frontend/src/components/consultation/FullPageConsultation.tsx`
+  - **제거**:
+    - `containerRef`, `sectionRefs` (DOM ref 방식)
+    - `IntersectionObserver` useEffect (섹션 추적)
+    - `scrollLocked` ref + `SCROLL_LOCK_MS` 상수
+    - `handleWheel` useEffect (수동 wheel 핸들러)
+    - CSS `scrollSnapType: 'y mandatory'` / `scrollSnapAlign: 'start'`
+    - `className="h-screen overflow-y-scroll"`
+  - **추가**:
+    ```tsx
+    import { Swiper, SwiperSlide } from 'swiper/react';
+    import { Mousewheel, Keyboard, A11y } from 'swiper/modules';
+    import type { Swiper as SwiperInstance } from 'swiper';
+    ```
+    - `swiperRef = useRef<SwiperInstance | null>(null)`
+    - `<Swiper direction="vertical" speed={700} mousewheel={{ sensitivity: 1, thresholdDelta: 50 }} keyboard={{ enabled: true }} a11y={{ enabled: true }} modules={[Mousewheel, Keyboard, A11y]} onSwiper={(s) => { swiperRef.current = s; }} onSlideChange={(s) => onSectionChange(s.activeIndex)} className="h-screen">`
+    - `handleNavigate`: `swiperRef.current?.slideTo(index)`로 변경
+    - `prefers-reduced-motion` 감지 → Swiper `speed` prop에 0 전달
+  - **유지**:
+    - `currentIndexRef` + 마지막 섹션 도달 → `SignupPromptModal` 트리거 로직
+    - `SectionNavigator` (onNavigate prop 인터페이스 동일)
+    - 8개 섹션 컴포넌트 배열
+    - `FeedbackButton` (마지막 SwiperSlide)
+    - `SectionTitle` 컴포넌트
+
+### 10.4 테스트 업데이트
+
+- [X] T133 `FullPageConsultation.test.tsx` Swiper mock으로 업데이트
+  - 파일: `ssaju-frontend/src/__tests__/components/FullPageConsultation.test.tsx`
+  - Swiper import mock 추가:
+    ```tsx
+    jest.mock('swiper/react', () => ({
+      Swiper: ({ children, onSwiper, onSlideChange }: {
+        children: React.ReactNode;
+        onSwiper?: (swiper: { slideTo: jest.Mock; activeIndex: number }) => void;
+        onSlideChange?: (swiper: { activeIndex: number }) => void;
+      }) => {
+        React.useEffect(() => {
+          onSwiper?.({ slideTo: jest.fn(), activeIndex: 0 });
+        }, []);
+        return <div data-testid="fullpage-container">{children}</div>;
+      },
+      SwiperSlide: ({ children }: { children: React.ReactNode }) => (
+        <div data-testid="swiper-slide">{children}</div>
+      ),
+    }));
+    jest.mock('swiper/modules', () => ({
+      Mousewheel: {},
+      Keyboard: {},
+      A11y: {},
+    }));
+    ```
+  - 기존 `IntersectionObserver` mock 제거
+  - `container.scrollTo` mock 제거
+  - 섹션 렌더링 확인 (`data-testid="swiper-slide"` 8개 존재)
+  - `onSlideChange` 콜백 → `onSectionChange` 호출 검증
+
+### 10.5 빌드 및 검증
+
+- [X] T134 `npm run build` 최종 검증
+  - TypeScript 타입 오류 없음 확인
+  - ESLint 경고 없음 확인
+  - 번들 사이즈 확인 (Swiper CSS ~3KB gzip 추가 허용 범위 내)
+- [ ] T135 수동 테스트 체크리스트
+  - 마우스 휠: 1노치 = 정확히 1섹션 이동, 자연스러운 700ms 전환
+  - 트랙패드: 빠른 스와이프에서 다중 섹션 스킵 없음
+  - 네비게이터 클릭: 해당 섹션으로 즉시 이동
+  - 마지막 섹션: 비로그인 시 회원가입 모달 표시
+  - 키보드(Arrow↑↓): 섹션 이동 동작
+  - 모바일 터치: 스와이프로 섹션 전환
+
+---
+
 ## 성공 기준 (Success Criteria)
 
 ### 기능적 완성도
@@ -806,8 +905,8 @@ Phase 9: Polish [depends on: Phase 3-8 모두 완료]
 
 ### 사용자 경험
 - ✅ 고지 문구 정확히 1.5초 노출, 500ms 애니메이션 부드러운 전환
-- ✅ 8개 섹션 fullpage.js 스냅 전환 700ms (2026-05-13 변경)
-- ✅ SectionNavigator 클릭 → fullpage.js moveTo() 300ms 이내
+- ✅ 8개 섹션 Swiper.js 수직 슬라이드 전환 700ms (2026-05-14 변경: CSS scroll-snap → Swiper.js)
+- ✅ SectionNavigator 클릭 → `swiperRef.slideTo()` 즉시 이동
 - ✅ 마이페이지 기록 재현 0.1초 이내
 - ✅ API 재시도 정책 (타임아웃/네트워크만, 1s-2s-4s)
 
@@ -819,7 +918,7 @@ Phase 9: Polish [depends on: Phase 3-8 모두 완료]
 
 ---
 
-**총 작업 수**: 129개 Task  
+**총 작업 수**: 135개 Task (129 + Phase 10: 6개)  
 **예상 기간**: Phase별 2-3주 (총 4-6주)  
 **팀 규모**: 1-2명 (병렬 기회 활용 시 효율 증대)  
 **최종 산출물**: Production-ready Next.js 앱 (Node 배포 가능)

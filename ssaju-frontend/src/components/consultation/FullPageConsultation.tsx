@@ -3,15 +3,18 @@
 /**
  * AI 컨설팅 풀페이지 뷰 (T065)
  *
- * CSS scroll-snap으로 fullpage.js 동일 UX 구현 (라이선스 없이 무료)
- * - 각 섹션 = 100vh 독립 전체 화면 (scroll-snap-type: y mandatory)
- * - IntersectionObserver로 활성 섹션 추적 → currentSectionIndex 동기화
- * - 마우스 휠: e.preventDefault() + 700ms 락으로 한 번에 한 섹션씩 이동
- * - 네비게이터 클릭: scrollTo({ behavior: 'smooth' })
+ * Swiper.js v12으로 fullpage.js 동일 UX 구현
+ * - 각 섹션 = 100vh 독립 전체 화면 (direction: "vertical")
+ * - Mousewheel 모듈: 트랙패드/마우스 휠 자동 정규화, 한 번에 한 섹션씩 이동
+ * - Keyboard 모듈: 위/아래 화살표 키 지원
+ * - navigator 클릭: swiperRef.current?.slideTo(index)
  * - 마지막 섹션 최초 도달 시 비로그인 사용자에게 회원가입 모달 표시
  */
 
-import { useRef, useEffect, useCallback, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Mousewheel, Keyboard, A11y } from 'swiper/modules';
+import type { Swiper as SwiperType } from 'swiper';
 import type { ConsultationData } from '@/types/api';
 import { useAuth } from '@/hooks/useAuth';
 import { SectionNavigator } from './SectionNavigator';
@@ -39,7 +42,6 @@ const SECTION_LABELS = [
 
 const SECTION_COUNT = SECTION_LABELS.length;
 const LAST_SECTION = SECTION_COUNT - 1;
-const SCROLL_LOCK_MS = 700;
 
 interface FullPageConsultationProps {
   data: ConsultationData;
@@ -53,111 +55,32 @@ export function FullPageConsultation({
   currentSectionIndex,
   onSectionChange,
 }: FullPageConsultationProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const sectionRefs = useRef<(HTMLDivElement | null)[]>(Array(SECTION_COUNT).fill(null));
-  const currentIndexRef = useRef(currentSectionIndex);
-  const scrollLocked = useRef(false);
+  const swiperRef = useRef<SwiperType | null>(null);
 
   const { isLoggedIn, loginWithKakao, loginWithGoogle } = useAuth();
   const [showSignupModal, setShowSignupModal] = useState(false);
   /** 세션 중 모달을 이미 보여줬으면 다시 보여주지 않음 */
   const modalShownRef = useRef(false);
 
-  /** currentSectionIndex가 바뀔 때 ref 동기화 + 마지막 섹션 도달 감지 */
+  /** currentSectionIndex가 바뀔 때 마지막 섹션 도달 감지 */
   useEffect(() => {
-    currentIndexRef.current = currentSectionIndex;
-
     if (
       currentSectionIndex === LAST_SECTION &&
       !isLoggedIn &&
       !modalShownRef.current
     ) {
       modalShownRef.current = true;
-      // 섹션 전환 애니메이션이 끝난 후 모달 표시
       const timer = setTimeout(() => setShowSignupModal(true), 600);
       return () => clearTimeout(timer);
     }
   }, [currentSectionIndex, isLoggedIn]);
 
-  /** IntersectionObserver: 섹션이 50% 이상 보일 때 활성 섹션 업데이트 */
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  /** 네비게이터 클릭 → Swiper 슬라이드 이동 */
+  const handleNavigate = (index: number) => {
+    swiperRef.current?.slideTo(index);
+  };
 
-    const observers: IntersectionObserver[] = [];
-
-    sectionRefs.current.forEach((el, index) => {
-      if (!el) return;
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              onSectionChange(index);
-            }
-          });
-        },
-        { root: container, threshold: 0.5 }
-      );
-      observer.observe(el);
-      observers.push(observer);
-    });
-
-    return () => observers.forEach((o) => o.disconnect());
-  }, [onSectionChange]);
-
-  /** 섹션으로 스크롤 (nav 클릭 + 휠 공용) */
-  const handleNavigate = useCallback((index: number) => {
-    const container = containerRef.current;
-    const section = sectionRefs.current[index];
-    if (!container || !section) return;
-
-    const prefersReducedMotion =
-      typeof window !== 'undefined' &&
-      typeof window.matchMedia === 'function' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-    container.scrollTo({
-      top: section.offsetTop,
-      behavior: prefersReducedMotion ? 'instant' : 'smooth',
-    });
-  }, []);
-
-  /**
-   * 마우스 휠 핸들러
-   * - e.preventDefault()로 브라우저 기본 스크롤 차단
-   * - SCROLL_LOCK_MS 동안 락을 걸어 한 번에 한 섹션씩만 이동
-   * - deltaMode 정규화: line(1) → ×40, page(2) → ×800
-   * - |dy| < 20 이하의 트랙패드 관성 스크롤은 무시
-   */
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      e.preventDefault();
-
-      if (scrollLocked.current) return;
-
-      let dy = e.deltaY;
-      if (e.deltaMode === 1) dy *= 40;
-      if (e.deltaMode === 2) dy *= 800;
-
-      if (Math.abs(dy) < 20) return;
-
-      const direction = dy > 0 ? 1 : -1;
-      const next = Math.max(0, Math.min(LAST_SECTION, currentIndexRef.current + direction));
-      if (next === currentIndexRef.current) return;
-
-      scrollLocked.current = true;
-      handleNavigate(next);
-      setTimeout(() => { scrollLocked.current = false; }, SCROLL_LOCK_MS);
-    };
-
-    container.addEventListener('wheel', handleWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleWheel);
-  }, [handleNavigate]);
-
-  const sections = [
+  const slides = [
     <IndustriesTab key="industries" industries={data.recommendedIndustries} />,
     <InterviewTipsTab key="interview" tips={data.interviewTips} />,
     <StrengthsTab key="strengths" strengths={data.strengths} />,
@@ -177,34 +100,41 @@ export function FullPageConsultation({
         onNavigate={handleNavigate}
       />
 
-      {/* 풀페이지 스냅 스크롤 컨테이너 */}
-      <div
-        ref={containerRef}
-        className="h-screen overflow-y-scroll"
-        style={{ scrollSnapType: 'y mandatory' }}
+      {/* Swiper 풀페이지 수직 슬라이더 */}
+      <Swiper
+        direction="vertical"
+        slidesPerView={1}
+        speed={600}
+        modules={[Mousewheel, Keyboard, A11y]}
+        mousewheel={{ thresholdDelta: 20, forceToAxis: true }}
+        keyboard={{ enabled: true }}
+        a11y={{ enabled: true }}
+        onSwiper={(swiper) => { swiperRef.current = swiper; }}
+        onSlideChange={(swiper) => onSectionChange(swiper.activeIndex)}
+        style={{ height: '100vh' }}
         data-testid="fullpage-container"
       >
         {SECTION_LABELS.map((label, index) => (
-          <div
+          <SwiperSlide
             key={label}
-            ref={(el) => { sectionRefs.current[index] = el; }}
-            className="h-screen overflow-y-auto bg-night-900 flex flex-col justify-center"
-            style={{ scrollSnapAlign: 'start' }}
+            style={{ height: '100vh', overflowY: 'auto' }}
             data-testid={`fullpage-section-${index}`}
           >
-            <div className="max-w-3xl mx-auto px-4 py-8 w-full">
-              <SectionTitle label={label} />
-              {sections[index]}
-              {/* 마지막 섹션(월별운세)에 피드백 버튼 */}
-              {index === LAST_SECTION && (
-                <div className="mt-8">
-                  <FeedbackButton feedbackType="CONSULTATION" />
-                </div>
-              )}
+            <div className="bg-night-900 min-h-full flex flex-col justify-center">
+              <div className="max-w-3xl mx-auto px-4 py-8 w-full">
+                <SectionTitle label={label} />
+                {slides[index]}
+                {/* 마지막 섹션(월별운세)에 피드백 버튼 */}
+                {index === LAST_SECTION && (
+                  <div className="mt-8">
+                    <FeedbackButton feedbackType="CONSULTATION" />
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          </SwiperSlide>
         ))}
-      </div>
+      </Swiper>
 
       {/* 회원가입 유도 모달 */}
       {showSignupModal && (
