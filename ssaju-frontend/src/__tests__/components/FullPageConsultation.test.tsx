@@ -108,8 +108,12 @@ jest.mock('@/components/consultation/BrandingTab', () => ({
 jest.mock('@/components/consultation/MonthlyForecastTab', () => ({
   MonthlyForecastTab: () => <div data-testid="section-monthly">월별운세</div>,
 }));
-jest.mock('@/components/results/FeedbackButton', () => ({
-  FeedbackButton: () => <button data-testid="feedback-button">피드백</button>,
+jest.mock('@/components/consultation/FeedbackPromptCard', () => ({
+  FeedbackPromptCard: ({ onClose }: { onClose: () => void }) => (
+    <div data-testid="feedback-prompt-card">
+      <button data-testid="feedback-prompt-close" onClick={onClose}>닫기</button>
+    </div>
+  ),
 }));
 
 import { FullPageConsultation } from '@/components/consultation/FullPageConsultation';
@@ -150,9 +154,9 @@ describe('FullPageConsultation', () => {
     expect(screen.getByTestId('section-navigator')).toHaveAttribute('data-current-index', '3');
   });
 
-  it('마지막 섹션(index 7)에 피드백 버튼 표시', () => {
+  it('마지막 섹션(index 7)에 피드백 버튼이 정적으로 표시되지 않음 (카드로 대체)', () => {
     render(<FullPageConsultation {...defaultProps} />);
-    expect(screen.getByTestId('feedback-button')).toBeInTheDocument();
+    expect(screen.queryByTestId('feedback-button')).not.toBeInTheDocument();
   });
 
   it('Swiper 컨테이너가 data-testid="fullpage-container"로 렌더링됨', () => {

@@ -12,7 +12,6 @@
 
 import dynamic from 'next/dynamic';
 import { useConsultation } from '@/hooks/useConsultation';
-import { useAuth } from '@/hooks/useAuth';
 import { InputForm } from '@/components/forms/InputForm';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { ConsultationLoading } from '@/components/results/ConsultationLoading';
@@ -39,8 +38,6 @@ export default function ConsultationPage() {
     submitConsultation,
     reset,
   } = useConsultation();
-  const { isLoggedIn } = useAuth();
-
   return (
     <main className="min-h-screen bg-night-900 text-white">
       <DisclaimerOverlay isVisible={disclaimerVisible} isFading={disclaimerFading} />
@@ -55,24 +52,13 @@ export default function ConsultationPage() {
             onFeedback={() => {/* 피드백 모달은 FeedbackButton 내부에서 관리 */}}
           />
 
-          {/* 저장 / 로그인 유도 (fullpage 위에 플로팅) */}
-          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3">
-            {isLoggedIn ? (
-              <button className="bg-star-500 hover:bg-star-400 text-night-900 font-bold px-6 py-3 rounded-lg shadow-lg transition-colors">
-                이 결과 저장하기
-              </button>
-            ) : (
-              <p className="text-star-300 text-sm bg-night-900/80 px-4 py-2 rounded-lg backdrop-blur-sm">
-                결과를 저장하려면 로그인해주세요
-              </p>
-            )}
-            <button
-              onClick={reset}
-              className="border border-night-700 hover:border-star-500 text-star-300 text-xs px-4 py-2 rounded-lg bg-night-900/80 backdrop-blur-sm transition-colors"
-            >
-              새 분석 시작하기
-            </button>
-          </div>
+          {/* 새 분석 시작하기 (우하단 플로팅) */}
+          <button
+            onClick={reset}
+            className="fixed bottom-6 right-6 z-50 border border-night-700 hover:border-star-500 text-star-300 text-xs px-4 py-2 rounded-lg bg-night-900/80 backdrop-blur-sm transition-colors"
+          >
+            새 분석 시작하기
+          </button>
         </>
       ) : (
         <div className="max-w-3xl mx-auto px-4 py-12">

@@ -42,16 +42,14 @@ export function SectionNavigator({ sections, currentIndex, onNavigate }: Section
                   isActive ? 'opacity-100' : 'opacity-0',
                 ].join(' ')}
               >
-                ☽
+                🌙
               </span>
 
               {/* 레이블 */}
               <span
                 className={[
                   'text-xs font-medium whitespace-nowrap transition-colors duration-200 text-right',
-                  isActive
-                    ? 'text-star-400'
-                    : 'text-night-400 group-hover:text-star-300',
+                  isActive ? 'text-star-400' : 'text-night-400 group-hover:text-star-300',
                 ].join(' ')}
               >
                 {label}

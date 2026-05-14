@@ -19,6 +19,7 @@ import type { ConsultationData } from '@/types/api';
 import { useAuth } from '@/hooks/useAuth';
 import { SectionNavigator } from './SectionNavigator';
 import { SignupPromptModal } from './SignupPromptModal';
+import { FeedbackPromptCard } from './FeedbackPromptCard';
 import { IndustriesTab } from './IndustriesTab';
 import { InterviewTipsTab } from './InterviewTipsTab';
 import { StrengthsTab } from './StrengthsTab';
@@ -27,7 +28,6 @@ import { WealthStyleTab } from './WealthStyleTab';
 import { CareerRoadmapTab } from './CareerRoadmapTab';
 import { BrandingTab } from './BrandingTab';
 import { MonthlyForecastTab } from './MonthlyForecastTab';
-import { FeedbackButton } from '@/components/results/FeedbackButton';
 
 const SECTION_LABELS = [
   '추천산업',
@@ -59,19 +59,27 @@ export function FullPageConsultation({
 
   const { isLoggedIn, loginWithKakao, loginWithGoogle } = useAuth();
   const [showSignupModal, setShowSignupModal] = useState(false);
-  /** 세션 중 모달을 이미 보여줬으면 다시 보여주지 않음 */
-  const modalShownRef = useRef(false);
+  const [showFeedbackPrompt, setShowFeedbackPrompt] = useState(false);
+  /** 세션 중 모달/카드를 이미 보여줬으면 다시 보여주지 않음 */
+  const signupShownRef = useRef(false);
+  const feedbackShownRef = useRef(false);
 
   /** currentSectionIndex가 바뀔 때 마지막 섹션 도달 감지 */
   useEffect(() => {
-    if (
-      currentSectionIndex === LAST_SECTION &&
-      !isLoggedIn &&
-      !modalShownRef.current
-    ) {
-      modalShownRef.current = true;
-      const timer = setTimeout(() => setShowSignupModal(true), 600);
-      return () => clearTimeout(timer);
+    if (currentSectionIndex !== LAST_SECTION) return;
+
+    // 비로그인 사용자 → 회원가입 모달 (600ms 딜레이)
+    if (!isLoggedIn && !signupShownRef.current) {
+      signupShownRef.current = true;
+      const t = setTimeout(() => setShowSignupModal(true), 600);
+      return () => clearTimeout(t);
+    }
+
+    // 모든 사용자 → 피드백 카드 (800ms 딜레이)
+    if (!feedbackShownRef.current) {
+      feedbackShownRef.current = true;
+      const t = setTimeout(() => setShowFeedbackPrompt(true), 800);
+      return () => clearTimeout(t);
     }
   }, [currentSectionIndex, isLoggedIn]);
 
@@ -106,10 +114,12 @@ export function FullPageConsultation({
         slidesPerView={1}
         speed={600}
         modules={[Mousewheel, Keyboard, A11y]}
-        mousewheel={{ thresholdDelta: 20, forceToAxis: true }}
+        mousewheel={{ thresholdDelta: 10, forceToAxis: true }}
         keyboard={{ enabled: true }}
         a11y={{ enabled: true }}
-        onSwiper={(swiper) => { swiperRef.current = swiper; }}
+        onSwiper={(swiper) => {
+          swiperRef.current = swiper;
+        }}
         onSlideChange={(swiper) => onSectionChange(swiper.activeIndex)}
         style={{ height: '100vh' }}
         data-testid="fullpage-container"
@@ -124,25 +134,24 @@ export function FullPageConsultation({
               <div className="max-w-3xl mx-auto px-4 py-8 w-full">
                 <SectionTitle label={label} />
                 {slides[index]}
-                {/* 마지막 섹션(월별운세)에 피드백 버튼 */}
-                {index === LAST_SECTION && (
-                  <div className="mt-8">
-                    <FeedbackButton feedbackType="CONSULTATION" />
-                  </div>
-                )}
               </div>
             </div>
           </SwiperSlide>
         ))}
       </Swiper>
 
-      {/* 회원가입 유도 모달 */}
+      {/* 회원가입 유도 모달 (비로그인 사용자, 마지막 섹션 도달 시) */}
       {showSignupModal && (
         <SignupPromptModal
           onKakao={() => { setShowSignupModal(false); loginWithKakao(); }}
           onGoogle={() => { setShowSignupModal(false); loginWithGoogle(); }}
           onClose={() => setShowSignupModal(false)}
         />
+      )}
+
+      {/* 피드백 유도 카드 (마지막 섹션 도달 시 슬라이드업) */}
+      {showFeedbackPrompt && (
+        <FeedbackPromptCard onClose={() => setShowFeedbackPrompt(false)} />
       )}
     </div>
   );
