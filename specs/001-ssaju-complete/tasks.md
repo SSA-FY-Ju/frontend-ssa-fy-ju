@@ -623,19 +623,19 @@
 
 ### 9.1 비로그인 사용자 휘발성 데이터 경고 및 이탈 방지
 
-- [ ] T112 분석 결과 페이지 하단 LoginNudgeCard (FR-024)
+- [x] T112 분석 결과 페이지 하단 LoginNudgeCard (FR-024)
   - react-intersection-observer로 하단 노출 감지
   - "로그인하지 않으면 이 결과는 페이지를 나갈 때 사라집니다" 메시지
   - 카카오/구글 로그인 버튼
   - 배경색 강조 (주황/노랑)
-- [ ] T113 페이지 이탈 방지 컨펌 모달 (FR-025)
+- [x] T113 페이지 이탈 방지 컨펌 모달 (FR-025)
   - 비로그인 사용자만 적용
   - beforeunload 또는 라우터 beforeRouteLeave 이벤트
   - "지금 나가시면 분석 결과가 삭제됩니다. 정말 나가시겠습니까?"
   - "지금 로그인하기" (로그인 후 같은 페이지로 복귀, 자동 저장)
   - "그냥 나가기" (분석 결과 폐기)
   - "계속 보기" (모달 닫고 현재 페이지 유지)
-- [ ] T113b [P] [US6] 라우터 이벤트 인터셉팅 (beforePopState) in hooks/usePageExitGuard.ts
+- [x] T113b [P] [US6] 라우터 이벤트 인터셉팅 (beforePopState) in hooks/usePageExitGuard.ts
   - Next.js App Router의 beforePopState 이벤트 리스너 설정
   - 브라우저 뒤로가기, 히스토리 변경 감지
   - 비로그인 + 미저장 분석 결과 존재 시 페이지 이탈 방지 컨펌 발동
@@ -664,7 +664,7 @@
   - 모달: role="dialog" aria-modal="true" aria-labelledby
   - 버튼: aria-label, aria-pressed (토글)
   - 폼: label과 input 연결, aria-describedby (에러 메시지)
-- [ ] T118 [P] SEO 메타데이터 설정 (Next.js Metadata API)
+- [x] T118 [P] SEO 메타데이터 설정 (Next.js Metadata API)
   - 각 페이지별 title, description, keywords, og:image, og:url, twitter:card 설정
   - robots, viewport, charset 메타데이터
 - [ ] T119 Lighthouse 성능 점수 검증
@@ -673,11 +673,11 @@
 
 ### 9.4 에러 바운더리 및 전역 에러 처리
 
-- [ ] T120 [P] ErrorBoundary 통합
+- [x] T120 [P] ErrorBoundary 통합
   - React Error Boundary HOC 구현
   - errorStore와 연결
   - 사용자 친화적 에러 UI + 복구 버튼 ("다시 시도", "홈으로")
-- [ ] T121 [P] 글로벌 에러 핸들러
+- [x] T121 [P] 글로벌 에러 핸들러
   - window.onerror, window.onunhandledrejection 캐치
   - Sentry 또는 유사 모니터링 (선택사항)
 
@@ -694,7 +694,7 @@
 
 ### 9.6 통합 E2E 테스트 및 수동 검증
 
-- [ ] T124 [P] MSW 완전 테스트 데이터 준비
+- [x] T124 [P] MSW 완전 테스트 데이터 준비
   - 성공 시나리오: 모든 API 엔드포인트 성공 응답
   - 타임아웃 시나리오: CareerTiming 5초, Consultation 20초 지연
   - 에러 시나리오: INVALID_DATE_FORMAT, COMPANY_NOT_FOUND, NETWORK_ERROR
@@ -713,11 +713,11 @@
 
 ### 9.7 빌드 및 배포 준비
 
-- [ ] T127 `npm run build` 최종 검증
+- [x] T127 `npm run build` 최종 검증
   - TypeScript 타입 체크 성공
   - ESLint 규칙 준수 (no errors, no warnings)
   - 번들 생성 및 최적화 완료
-- [ ] T128 환경 설정 최종 검증
+- [x] T128 환경 설정 최종 검증
   - .env.local 파일 구성 (git 제외 확인)
   - .env.example 업데이트 (키만 포함)
   - API 엔드포인트 (NEXT_PUBLIC_API_BASE_URL)
