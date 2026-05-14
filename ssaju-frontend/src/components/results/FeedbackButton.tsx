@@ -23,6 +23,7 @@ export function FeedbackButton({ feedbackType }: FeedbackButtonProps) {
     <>
       <button
         onClick={() => setIsOpen(true)}
+        aria-haspopup="dialog"
         className="w-full border border-night-700 hover:border-star-500 text-star-300 text-sm py-2 rounded transition-colors"
       >
         이 결과에 대해 의견을 알려주세요

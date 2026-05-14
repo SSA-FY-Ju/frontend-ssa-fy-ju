@@ -23,7 +23,7 @@ export function Header() {
           <span className="hidden text-sm text-gray-400 sm:block">사주 기반 커리어 컨설팅</span>
         </Link>
 
-        <nav className="flex items-center gap-4">
+        <nav className="flex items-center gap-4" aria-label="주요 메뉴">
           <Link
             href="/career-timing"
             className="hidden text-sm text-gray-300 hover:text-white sm:block transition-colors"

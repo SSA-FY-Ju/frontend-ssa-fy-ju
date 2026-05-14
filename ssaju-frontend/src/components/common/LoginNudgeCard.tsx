@@ -15,7 +15,7 @@ export function LoginNudgeCard({ show }: LoginNudgeCardProps) {
   if (isLoggedIn || !show) return null;
 
   return (
-    <div className="rounded-xl bg-amber-900/40 border border-amber-500/50 p-5 flex flex-col gap-4">
+    <div role="region" aria-label="로그인 안내" className="rounded-xl bg-amber-900/40 border border-amber-500/50 p-5 flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <p className="text-amber-300 font-semibold text-sm">
           ⚠ 결과가 저장되지 않습니다

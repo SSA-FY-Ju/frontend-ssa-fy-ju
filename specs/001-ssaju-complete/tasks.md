@@ -33,7 +33,7 @@
 - [x] T002 TypeScript 설정 (`tsconfig.json` - strict: true 강제)
 - [x] T003 ESLint & Prettier 규칙 적용 (헌법 원칙 II: 한국어 주석 의무)
 - [x] T004 Next.js App Router 설정 (`layout.tsx` - 모든 페이지에 'use client' 적용)
-- [ ] T004b `app/page.tsx` - 홈페이지 구현
+- [x] T004b `app/page.tsx` - 홈페이지 구현
   - `/career-timing`으로 자동 리다이렉트 또는 서비스 소개 랜딩 페이지
   - 헤더(Header) + "관운 분석 시작하기" CTA 버튼 최소 구성
   - 메타데이터 설정 (constitution XII: title, description, OG 태그)
@@ -101,7 +101,7 @@
   - 시간: HH:mm 24시간 형식, 미입력 시 12:00 기본값
   - 기업명: 문자열, XSS 방지 처리
   - 피드백: 최대 500자, 만족도 선택 필수
-- [ ] T019b `lib/api/schemas.ts` - API **응답** Zod 스키마 검증 (plan 1.5 요구사항)
+- [x] T019b `lib/api/schemas.ts` - API **응답** Zod 스키마 검증 (plan 1.5 요구사항)
   - `ApiResponse<T>` 래퍼 스키마 (success, data, error, timestamp)
   - `CareerTimingResultSchema`: sajuResultId, h1Period, h2Period, h1Confidence(0-100), h2Confidence(0-100), recommendation
   - `ConsultationDataSchema`: 8개 섹션 전체 필드 검증 (recommendedIndustries, interviewTips, strengths, sajuProfile, wealthStyle, careerRoadmap, branding, monthlyForecasts)
@@ -109,7 +109,7 @@
   - `AnalysisRecordSchema`: recordId, userId, analysisType, data(union 타입), createdAt
   - `apiFetch` 호출 후 응답 파싱 시 각 스키마로 `safeParse` 실행 → 실패 시 `ApiError` throw
   - 참고: plan 1.5절 "모든 API 응답 Zod 검증" 이행
-- [ ] T019c `__tests__/lib/schemas.test.ts` - API 응답 스키마 단위 테스트
+- [x] T019c `__tests__/lib/schemas.test.ts` - API 응답 스키마 단위 테스트
   - 정상 응답: 각 스키마 파싱 성공 확인
   - 비정상 응답: 필수 필드 누락 시 파싱 실패 및 에러 메시지 확인
   - 타입 가드: 각 analysisType에 따른 data 타입 정확성 검증
@@ -170,7 +170,7 @@
   - 768px 기준 팝업/리다이렉트, PKCE 플로우, state CSRF 방지
 - [x] T038 [US1] `hooks/useAuth.ts` - 로그인 상태 관리 훅
   - fetchAuthStatus() 자동 복원, loginWithKakao/Google(), logout() 전 스토어 초기화
-- [ ] T038b [US1] 토큰 갱신 인터셉터 (백엔드 refresh token 미제공 시 스킵)
+- [x] T038b [US1] 토큰 갱신 인터셉터 (백엔드 refresh token 미제공 시 스킵)
 - [x] T039 [US1] `app/api/auth/callback/route.ts` - OAuth 콜백 라우트
   - authorization_code → 백엔드 전달 → HttpOnly 쿠키 처리
 - [x] T040 [US1] `hooks/usePlatformDetect.ts` - 기기별 팝업/리다이렉트 자동 선택
@@ -659,7 +659,7 @@
 
 ### 9.3 접근성 (a11y) 및 SEO
 
-- [ ] T117 [P] 스크린 리더 지원 (WAI-ARIA)
+- [x] T117 [P] 스크린 리더 지원 (WAI-ARIA)
   - DisclaimerOverlay: role="alert" aria-live="assertive"
   - 모달: role="dialog" aria-modal="true" aria-labelledby
   - 버튼: aria-label, aria-pressed (토글)
@@ -683,7 +683,7 @@
 
 ### 9.5 성능 최적화 및 모니터링
 
-- [ ] T122 [P] 번들 최적화
+- [x] T122 [P] 번들 최적화
   - 번들 크기 검증 (초기 < 200KB gzip)
   - dynamic import 활용 (페이지별 코드 분할)
   - 이미지 최적화 (next/image 사용)
@@ -699,7 +699,7 @@
   - 타임아웃 시나리오: CareerTiming 5초, Consultation 20초 지연
   - 에러 시나리오: INVALID_DATE_FORMAT, COMPANY_NOT_FOUND, NETWORK_ERROR
   - 엣지 케이스: 시간 미상 (12:00 기본값), 기업 정보 미발견 (수동 입력)
-- [ ] T125 [P] Jest 커버리지 80% 달성
+- [x] T125 [P] Jest 커버리지 80% 달성
   - hooks: 모든 훅 테스트 (로직, 상태 변경)
   - components: 주요 컴포넌트 (폼, 모달, 결과)
   - utils: 검증, 포맷팅, 에러 처리

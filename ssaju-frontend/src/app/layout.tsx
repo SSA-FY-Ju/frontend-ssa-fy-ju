@@ -9,6 +9,18 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico',
   },
+  openGraph: {
+    title: 'SSAju - 사주 기반 커리어 컨설팅',
+    description: '당신의 관운을 분석하여 최적의 커리어 경로를 제시합니다.',
+    type: 'website',
+    locale: 'ko_KR',
+    siteName: 'SSAju',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SSAju - 사주 기반 커리어 컨설팅',
+    description: '당신의 관운을 분석하여 최적의 커리어 경로를 제시합니다.',
+  },
 };
 
 export default function RootLayout({
