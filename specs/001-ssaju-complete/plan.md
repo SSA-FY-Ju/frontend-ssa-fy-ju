@@ -1,8 +1,8 @@
 # Implementation Plan: SSAju 프론트엔드 완성 (001-ssaju-complete)
 
-**Branch**: `001-ssaju-complete` | **Date**: 2026-05-11 | **Spec**: [specs/001-ssaju-complete/spec.md](spec.md)  
-**Status**: Phase 1 (Design Complete) | **Next**: Phase 3 (Implementation)  
-**Input**: 6 user stories (P1: 3, P2: 3), 65+ functional requirements, 137 implementation tasks
+**Branch**: `001-ssaju-complete` | **Date**: 2026-05-14 | **Spec**: [specs/001-ssaju-complete/spec.md](spec.md)  
+**Status**: Phase 1 (Design — Swiper.js 마이그레이션 반영) | **Next**: Phase 3 (Implementation)  
+**Input**: 6 user stories (P1: 3, P2: 3), 65+ functional requirements, 135 implementation tasks
 
 ---
 
@@ -22,20 +22,57 @@
   - 응답: `{ suggestions: string[] }`
   - 타임아웃: 5s (입력 시마다 호출)
 
+### Session 2026-05-13 (UI 변경)
+
+- Q6: AI 컨설팅 8개 섹션 표시 방식 → A: **fullpage.js 기반 전체화면 섹션 전환**
+  - 탭 기반 UI → 스크롤 + fullpage.js 섹션 방식으로 전환 (spec US4 2026-05-13 변경 반영)
+  - 각 분석 섹션이 화면 전체(100vh)를 차지하는 독립 페이지로 표시
+  - 스크롤 시 fullpage.js가 자동으로 다음/이전 섹션으로 전환 (스냅 스크롤)
+  - 세로 네비게이터(오른쪽 고정): 현재 섹션 표시 + 클릭 이동 지원
+  - `fullpage.js` 라이브러리 추가 (Constitution IV 예외 — 이유: 스크롤 스냅 구현 직접 작성 시 500+ 줄 + 브라우저 호환 이슈)
+
+### Session 2026-05-14 (스크롤 라이브러리 교체)
+
+- Q7: AI 컨설팅 8섹션 스크롤 라이브러리 교체 → A: **Swiper.js v12 수직 슬라이드 방식**
+  - fullpage.js: GPL v3 유료 라이선스 + CSS scroll-snap 수동 wheel 처리 부자연스러운 UX 문제
+  - `swiper@12` 도입: MIT 라이선스, React 공식 지원, 내장 Mousewheel 모듈로 자연스러운 UX
+  - 설정: `direction: "vertical"`, `speed: 700`, `mousewheel.thresholdDelta: 50`, `keyboard: true`
+  - 네비게이터: `swiperRef.current?.slideTo(index)` 호출 (기존 `moveTo()` 대체)
+  - `onSlideChange` 콜백 → `currentSectionIndex` 자동 동기화 (IntersectionObserver 제거)
+  - Constitution IV 예외 유지 — 사용자 명시 요청, `[Exception: Principle IV]` PR 명시 필수
+
 ---
 
 ## Executive Summary
 
-SSAju 프론트엔드는 **사주 기반 커리어 컨설팅 플랫폼**의 완성된 구현입니다. 사용자는 생년월일/시간을 입력하여 관운 분석(H1/H2), AI 커리어 컨설팅(8개 탭), 기업 궁합 분석을 받고, 로그인하여 결과를 영구 저장할 수 있습니다. 
+SSAju 프론트엔드는 **사주 기반 커리어 컨설팅 플랫폼**의 완성된 구현입니다. 사용자는 생년월일/시간을 입력하여 관운 분석(H1/H2), AI 커리어 컨설팅(8개 Swiper.js 섹션), 기업 궁합 분석을 받고, 로그인하여 결과를 영구 저장할 수 있습니다.
 
 **핵심 가치**:
 - 소셜 로그인(카카오/구글) + 분석 결과 영구 저장
-- AI 기반 8탭 컨설팅 (0.2초 탭 전환)
+- **AI 기반 8섹션 컨설팅 (Swiper.js 수직 슬라이드 — 자연스러운 마우스/트랙패드 스크롤)**
 - 1.5초 고지 문구 오버레이 애니메이션
 - 마이페이지 무한 스크롤 (threshold 0.5)
 - "별이 빛나는 밤" 테마 (night-900/800/700, star-500/400/300)
 
 **구현 규모**: ~40개 컴포넌트, ~15개 훅, 5개 Zustand 스토어, 137개 구현 작업, 80% 테스트 커버리지
+
+---
+
+## Constitution Check
+
+*GATE: Swiper.js 라이브러리 사용에 대한 Constitution 준수 여부 검토*
+
+| 원칙 | 상태 | 비고 |
+|------|------|------|
+| **I (파일 크기 100줄)** | ✅ PASS | FullPageConsultation은 섹션별 컴포넌트로 분리 |
+| **II (한국어 문서화)** | ✅ PASS | 모든 훅/컴포넌트 주석 한국어 |
+| **III (4계층 아키텍처)** | ✅ PASS | Page → FullPageConsultation → useConsultation → API |
+| **IV (외부 UI 라이브러리 제한)** | ⚠️ EXCEPTION | Swiper.js 사용 — 마우스/트랙패드 wheel 정규화 직접 구현 복잡. 사용자 명시 요청. MIT 라이선스. `[Exception: Principle IV]` PR에 기록 필수 |
+| **V (타입 안전성)** | ✅ PASS | Swiper.js TypeScript 타입 내장 (`import type { Swiper as SwiperInstance }`) |
+| **VI (빌드/테스트 관문)** | ✅ PASS | npm install 후 Jest mock + build 통과 확인 |
+| **VIII (조기 최적화 금지)** | ✅ PASS | useMemo/useCallback 사용 안 함 |
+
+**Exception 처리**: Constitution IV 위반 사항은 PR에 `[Exception: Principle IV]`로 명시, EXCEPTIONS.md에 기록.
 
 ---
 
@@ -58,13 +95,14 @@ SSAju 프론트엔드는 **사주 기반 커리어 컨설팅 플랫폼**의 완�
 | **Next.js** | 14.0+ | Framework (App Router) | API routes, middleware, deployment |
 | **React DOM** | 18.2+ | DOM rendering | `"use client"` for all pages (Phase 1) |
 | **TypeScript React** | 5.3+ | Type-safe JSX | `strict: true` in tsconfig |
+| **Swiper.js** | 12.0+ | 8섹션 수직 슬라이드 전환 | `swiper/react`, Mousewheel/Keyboard/A11y 모듈. MIT 라이선스. Constitution IV 예외 — 사용자 명시 요청, wheel 정규화 직접 구현 복잡도 과다 |
 
 ### 1.3 상태 관리 & 데이터 흐름
 
 | 라이브러리 | 버전 | 목적 | 아키텍처 |
 |---------|---------|---------|--------------|
 | **Zustand** | 4.4+ | Global state | 5 stores: authStore, sessionStore, analysisStore, consultationStore, errorStore |
-| **Zustand Persist** | 4.4+ | State persistence | localStorage for consultationStore (tab input cache) |
+| **Zustand Persist** | 4.4+ | sessionStorage persist | sessionStore의 sajuResultId, lastAnalysisType만 sessionStorage에 persist (FR-022: localStorage 미사용) |
 
 **Store Details**:
 ```typescript
@@ -72,14 +110,15 @@ SSAju 프론트엔드는 **사주 기반 커리어 컨설팅 플랫폼**의 완�
 // 인증 토큰은 HttpOnly Cookie로만 관리 (Q1 결정: XSS 방지, 클라이언트 미저장)
 { isLoggedIn, user, provider, loginError }
 
-// sessionStore: 현재 세션 분석
+// sessionStore: 현재 세션 분석 — sajuResultId/lastAnalysisType은 sessionStorage persist
 { sajuResultId, lastAnalysisType, currentAnalysisData, isAnalyzing }
 
-// analysisStore: 분석 결과 캐싱
-{ careerTiming, consultation, compatibility }
+// analysisStore: 비로그인 사용자 분석 결과 (메모리만, 새로고침 시 초기화)
+{ careerTiming, compatibility }
 
-// consultationStore: 8탭 전체 데이터 메모리 캐싱 + fieldCache localStorage persist
-{ consultation: ConsultationData | null, lastFetchedId, selectedTabIndex, fieldCache }
+// consultationStore: 8섹션 전체 데이터 메모리 캐싱 전용 (persist 없음, FR-022 준수)
+// Swiper.js activeIndex와 동기화 (0-based index, onSlideChange 콜백으로 업데이트)
+{ consultation: ConsultationData | null, lastFetchedId, currentSectionIndex }
 
 // errorStore: 전역 에러 + 토스트
 { globalError, toastQueue: Toast[] }
@@ -91,7 +130,7 @@ SSAju 프론트엔드는 **사주 기반 커리어 컨설팅 플랫폼**의 완�
 |------|---------|---------------|
 | **Tailwind CSS** | 3.3+ | Utility-first CSS only (no CSS Modules, no styled-components) |
 | **Custom Colors** | - | night-900: #0a0e27, night-800: #1a1f3a, night-700: #2a3050, star-500: #ffd700, star-400: #ffed4e, star-300: #fff8a8 |
-| **Typography** | Pretendard Sans (body), Garamond Serif (headings) | Font sizes: desktop 16-32px, tablet 15-24px, mobile 14-20px |
+| **Typography** | Pretendard Sans (body), Garamond Serif (headings) | Font sizes: desktop 16-32px, tablet 14-20px |
 | **Responsive Breakpoints** | sm (640), md (768), lg (1024), xl (1280) | Mobile-first approach |
 
 **tailwind.config.ts** (Custom Configuration):
@@ -123,9 +162,7 @@ theme: {
 const CareerTimingRequestSchema = z.object({
   birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   birthTime: z.string().optional().default('12:00'),
-  solarType: z.enum(['SOLAR', 'LUNAR']),
-  birthCity: z.string().optional(),
-  gender: z.enum(['M', 'F', 'UNKNOWN']).optional()
+  solarType: z.enum(['SOLAR', 'LUNAR'])
 });
 ```
 
@@ -142,7 +179,7 @@ const CareerTimingRequestSchema = z.object({
 | 컴포넌트 | 버전 | 상세 |
 |-----------|---------|---------|
 | **Native Fetch API** | ES2020 | Wrapped in `lib/api/client.ts` with `apiFetch<T>()` |
-| **Custom Wrapper** | - | Error handling, auth token injection, Q5 retry policy |
+| **Custom Wrapper** | - | Error handling, auth token injection, retry policy |
 | **Environment Variable** | - | `NEXT_PUBLIC_API_BASE_URL` (e.g., `http://localhost:8080`) |
 
 **apiFetch Signature**:
@@ -151,8 +188,8 @@ async function apiFetch<T>(
   path: string,
   options?: {
     method?: 'GET' | 'POST' | 'DELETE' | 'PUT';
-    body?: any;
-    timeout?: number;  // Default: 10s
+    body?: Record<string, unknown>;
+    timeout?: number;  // Default: 10s (Consultation: 20s, Compatibility: 8s)
     retry?: { maxAttempts?: 3; backoff?: 'exponential' };
   }
 ): Promise<T>
@@ -190,7 +227,6 @@ src/
 | **npm install** | - | 모든 dependencies 및 devDependencies 설치 (필수 선행 작업) |
 | **Next.js Build** | 14.0+ | `npm run build` (TypeScript + ESLint validation) |
 | **ESLint** | Latest | Code quality & consistency |
-| **Prettier** | Latest | Code formatting |
 | **npm scripts** | - | `dev`, `build`, `start`, `lint`, `test` |
 
 **개발 환경 초기 설정**:
@@ -211,14 +247,15 @@ npm run dev                    # 개발 서버 시작 (localhost:3000)
 | 엔드포인트 | 메서드 | 타임아웃 | 목적 |
 |----------|--------|---------|---------|
 | `/api/career/timing` | POST | 10s | 관운 분석 |
-| `/api/career/consultation` | POST | 15s | AI 컨설팅 (비용 많음) |
+| `/api/career/consultation` | POST | 20s | AI 컨설팅 (OpenAI 호출) |
 | `/api/company/autocomplete` | POST | 5s | 회사명 자동완성 (Q2) |
-| `/api/company/compatibility` | POST | 10s | 기업 궁합 |
+| `/api/company/compatibility` | POST | 8s | 기업 궁합 |
 | `/api/analysis/{type}/save` | POST | 10s | 분석 결과 저장 |
 | `/api/analysis/records` | POST | 10s | 마이페이지 무한 스크롤 |
 | `/api/analysis/{recordId}` | POST | 5s | 상세 조회 |
 | `/api/analysis/{recordId}` | DELETE | 10s | 기록 삭제 |
-| `/api/feedback` | POST | 5s | 피드백 제출 |
+| `/api/feedback/satisfaction` | POST | 5s | 피드백 제출 |
+| `/api/auth/check` | GET | 5s | 토큰 유효성 검증 (앱 초기화 시 자동 호출) |
 | `/api/auth/callback` | GET | 10s | OAuth 콜백 |
 | `/api/auth/logout` | POST | 5s | 로그아웃 |
 
@@ -275,83 +312,90 @@ interface ApiResponse<T> {
 ```
 src/
 ├── app/
-│   ├── page.tsx                      # Home page
-│   ├── career/
-│   │   └── timing/page.tsx           # Career timing form + result
-│   ├── consultation/[id]/page.tsx    # 8-tab consultation
-│   ├── company/page.tsx              # Company compatibility
-│   ├── my-page/page.tsx              # My page + infinite scroll
-│   └── layout.tsx                    # Root layout (header, footer)
+│   ├── page.tsx                          # Home page
+│   ├── career-timing/
+│   │   └── page.tsx                      # Career timing form + result
+│   ├── consultation/
+│   │   └── page.tsx                      # 8섹션 Swiper.js 수직 슬라이드
+│   ├── compatibility/
+│   │   └── page.tsx                      # Company compatibility
+│   ├── my-page/page.tsx                  # My page + infinite scroll
+│   └── layout.tsx                        # Root layout (header, footer)
 │
 ├── components/
-│   ├── LoginButton.tsx               # OAuth buttons
-│   ├── ProfileMenu.tsx               # Logged-in user menu
-│   ├── TimingForm.tsx                # Career timing input
-│   ├── DisclaimerOverlay.tsx         # 1.5s + 500ms animation
-│   ├── CareerTimingResult.tsx        # H1/H2 + confidence + save
-│   ├── ConsultationTabs.tsx          # 8-tab nav + content
-│   ├── ConsultationTabContent.tsx    # Single tab content
-│   ├── CompanyForm.tsx               # Company input + autocomplete
-│   ├── CompatibilityResult.tsx       # Score + job matching + calendar
-│   ├── AnalysisRecordCard.tsx        # My-page list item
-│   ├── MyPageTabs.tsx                # 3-tab my-page
-│   ├── LoadingSpinner.tsx            # Loading indicator
-│   ├── ErrorMessage.tsx              # Error + retry
-│   ├── FeedbackModal.tsx             # Satisfaction + comment
+│   ├── LoginButton.tsx                   # OAuth buttons
+│   ├── ProfileMenu.tsx                   # Logged-in user menu
+│   ├── TimingForm.tsx                    # Career timing input
+│   ├── DisclaimerOverlay.tsx             # 1.5s + 500ms animation
+│   ├── CareerTimingResult.tsx            # H1/H2 + confidence + save
+│   ├── consultation/
+│   │   ├── FullPageConsultation.tsx      # Swiper.js 수직 슬라이드 컴포넌트 (8섹션)
+│   │   ├── SectionNavigator.tsx          # 세로 네비게이터 (오른쪽 고정)
+│   │   ├── Section1Industries.tsx        # 섹션 1: 추천산업
+│   │   ├── Section2InterviewTips.tsx     # 섹션 2: 면접팁
+│   │   ├── Section3Strengths.tsx         # 섹션 3: 강점
+│   │   ├── Section4SajuProfile.tsx       # 섹션 4: 사주프로필
+│   │   ├── Section5Wealth.tsx            # 섹션 5: 부의운
+│   │   ├── Section6CareerRoadmap.tsx     # 섹션 6: 경력로드맵
+│   │   ├── Section7Branding.tsx          # 섹션 7: 브랜딩
+│   │   └── Section8MonthlyFortune.tsx    # 섹션 8: 월별운세 (캘린더)
+│   ├── CompanyForm.tsx                   # Company input + autocomplete
+│   ├── CompatibilityResult.tsx           # Score + job matching + calendar
+│   ├── AnalysisRecordCard.tsx            # My-page list item
+│   ├── MyPageTabs.tsx                    # 3-tab my-page
+│   ├── LoadingSpinner.tsx                # Loading indicator
+│   ├── ErrorMessage.tsx                  # Error + retry
+│   ├── FeedbackModal.tsx                 # Satisfaction + comment
 │   └── shared/
-│       ├── Header.tsx                # Navigation + login
-│       ├── Footer.tsx                # Footer links
-│       └── Toast.tsx                 # Sonner toast
+│       ├── Header.tsx                    # Navigation + login
+│       ├── Footer.tsx                    # Footer links
+│       └── Toast.tsx                     # Sonner toast
 │
 ├── hooks/
-│   ├── useCareerTiming.ts            # { data, loading, error, submit }
-│   ├── useConsultation.ts            # Tab switching + caching
-│   ├── useCompatibility.ts           # Company analysis
-│   ├── useAnalysisRecords.ts         # My-page + pagination
-│   ├── usePageExitGuard.ts           # beforeunload + beforePopState
-│   ├── useDisclaimerTiming.ts        # 1.5s + 500ms animation
-│   ├── useAuthStore.ts               # Auth state (Zustand)
-│   ├── useSessionStore.ts            # Session state (Zustand)
-│   ├── useAnalysisStore.ts           # Analysis results (Zustand)
-│   ├── useConsultationStore.ts       # Consultation cache (Zustand)
-│   └── useErrorStore.ts              # Global errors (Zustand)
+│   ├── useCareerTiming.ts                # { data, loading, error, submit }
+│   ├── useConsultation.ts                # 섹션 전환 + 캐싱 (Swiper.js onSlideChange 연동)
+│   ├── useCompatibility.ts               # Company analysis
+│   ├── useMyPage.ts                      # My-page + infinite scroll
+│   ├── usePageExitGuard.ts               # beforeunload + beforePopState
+│   ├── useDisclaimerTimer.ts             # 1.5s + 500ms animation
+│   ├── useAuthStore.ts                   # Auth state (Zustand)
+│   ├── useSessionStore.ts                # Session state (Zustand)
+│   ├── useAnalysisStore.ts               # Analysis results (Zustand)
+│   ├── useConsultationStore.ts           # Consultation cache (Zustand)
+│   └── useErrorStore.ts                  # Global errors (Zustand)
 │
 ├── lib/
 │   ├── api/
-│   │   ├── client.ts                 # apiFetch<T>() wrapper
-│   │   ├── career.ts                 # fetchCareerTiming, fetchConsultation
-│   │   ├── company.ts                # fetchCompatibility
-│   │   ├── analysis.ts               # fetchAnalysisRecords, deleteRecord
-│   │   ├── feedback.ts               # submitFeedback
-│   │   ├── auth.ts                   # OAuth callback
-│   │   └── schemas.ts                # All Zod schemas
+│   │   ├── client.ts                     # apiFetch<T>() wrapper
+│   │   ├── career.ts                     # fetchCareerTiming, fetchConsultation
+│   │   ├── company.ts                    # fetchCompatibility
+│   │   ├── mypage.ts                     # fetchAnalysisHistory 등
+│   │   ├── feedback.ts                   # submitFeedback
+│   │   ├── auth.ts                       # OAuth callback
+│   │   └── schemas.ts                    # All Zod schemas
 │   │
 │   ├── stores/
-│   │   ├── auth.ts                   # authStore (Zustand)
-│   │   ├── session.ts                # sessionStore (Zustand)
-│   │   ├── analysis.ts               # analysisStore (Zustand)
-│   │   ├── consultation.ts           # consultationStore (Zustand persist)
-│   │   └── error.ts                  # errorStore (Zustand)
-│   │
+│   │   ├── authStore.ts
+│   │   ├── sessionStore.ts               # sajuResultId sessionStorage persist
+│   │   ├── analysisStore.ts              # 메모리 전용
+│   │   ├── consultationStore.ts          # 메모리 전용, persist 없음
+│   │   └── errorStore.ts
+│
+├── services/
 │   └── utils/
-│       ├── validation.ts             # Input validation helpers
-│       ├── formatting.ts             # Date/time formatting
-│       └── constants.ts              # APP_TIMEOUT, etc.
+│       ├── validation.ts
+│       ├── formatters.ts
+│       └── constants.ts
 │
 ├── types/
-│   ├── api.ts                        # ApiResponse<T>, request types
-│   ├── domain.ts                     # FavoredPeriod, SajuData, etc.
-│   └── component.ts                  # Component prop interfaces
+│   ├── api.ts
+│   ├── domain.ts
+│   └── component.ts
 │
-├── styles/
-│   └── globals.css                   # @tailwind directives only
-│
-├── __tests__/
-│   ├── unit/                         # Component, Hook tests
-│   ├── integration/                  # API flow tests (MSW)
-│   └── fixtures/                     # Mock data
-│
-└── jest.config.ts, tsconfig.json, tailwind.config.ts, etc.
+└── __tests__/
+    ├── unit/
+    ├── integration/
+    └── fixtures/
 ```
 
 ---
@@ -362,11 +406,11 @@ src/
 
 ```
 User (로그인/비로그인)
-  ├─ authStore: { isLoggedIn, user, accessToken, provider }
+  ├─ authStore: { isLoggedIn, user, provider, loginError }
   ├─ sessionStore: { sajuResultId, currentAnalysisData }
   └─ Analysis (1...N)
       ├─ CareerTimingAnalysis { sajuResultId, favoredPeriod, confidenceScore }
-      ├─ ConsultationAnalysis { sajuResultId, tabs[8], selectedTabIndex }
+      ├─ ConsultationAnalysis { sajuResultId, sections[8], currentSectionIndex }
       └─ CompatibilityAnalysis { sajuResultId, companyName, compatibilityScore }
 ```
 
@@ -384,56 +428,66 @@ User (로그인/비로그인)
    └─ sessionStore.setSajuResultId(id)
    
 3. DisclaimerOverlay shows 1.5s
-   └─ useDisclaimerTiming() setTimeout 1500ms
+   └─ useDisclaimerTimer() setTimeout 1500ms
    └─ CSS transition opacity 500ms ease-in-out
    
 4. CareerTimingResult displays
    └─ showLoginNudgeCard() if !isLoggedIn
    
 5. User clicks "로그인하기"
-   └─ OAuth popup (cakaotalk/google)
-   └─ authStore.setLogin(user, token)
-   └─ Q1: Auto-save analysis to backend
+   └─ OAuth popup (kakao/google)
+   └─ authStore.setLogin(user)
+   └─ Auto-save analysis to backend
    └─ Sonner toast: "분석 결과가 저장되었습니다"
-   
-6. User navigates to /my-page
-   └─ Hook: useAnalysisRecords('CAREER')
-   └─ API: POST /api/analysis/records
-   └─ Display saved record in list
 ```
 
-#### 여정 2: 컨설팅 8탭 전환 (Q4)
+#### 여정 2: 컨설팅 8섹션 Swiper.js 수직 슬라이드
 
 ```
-1. User on consultation page
+1. User on consultation page (/consultation)
    └─ Hook: useConsultation(sajuResultId)
-   └─ consultationStore: { fieldCache, selectedTabIndex }
-   
-2. User types in Tab 0 input
-   └─ onChange: consultationStore.setFieldValue('CAREER', value)
-   └─ Persist to localStorage (Zustand persist)
-   
-3. Click Tab 1
-   └─ consultationStore.selectTab(1)
-   └─ Cache hit: display cached value immediately (<200ms)
-   └─ No loading spinner
-   
-4. API fetch only on cache miss
-   └─ submitTab(1): POST /api/career/consultation
-   └─ Receive result, cache it
-   └─ Display result
-   
-5. Page refresh
-   └─ Zustand persist: restore fieldCache from localStorage
-   └─ selectedTabIndex restored
-   └─ All tabs available without re-fetching
+   └─ consultationStore: { consultation, lastFetchedId, currentSectionIndex }
+
+2. 첫 진입 또는 새 분석 시
+   └─ lastFetchedId !== sajuResultId → API 호출
+   └─ POST /api/career/consultation → 8개 섹션 데이터 전체 수신
+   └─ consultationStore.setConsultation(data, sajuResultId)
+
+3. 데이터 로드 완료 → Swiper.js 렌더링
+   └─ FullPageConsultation 컴포넌트: <Swiper direction="vertical"> 래퍼
+   └─ 8개 SwiperSlide가 각각 100vh로 렌더링
+   └─ 초기 섹션: Slide 0 (추천산업)
+
+4. 사용자 마우스 휠 / 트랙패드 스와이프
+   └─ Swiper Mousewheel 모듈: 자동 섹션 전환 처리
+   └─ thresholdDelta: 50 → 트랙패드 관성 스크롤 무시
+   └─ 전환 시간: speed=700ms / prefers-reduced-motion → speed=0
+   └─ onSlideChange → consultationStore.setCurrentSectionIndex(activeIndex)
+
+5. SectionNavigator (오른쪽 고정, 🌕 달 인디케이터)
+   └─ 현재 섹션 강조 표시 (currentSectionIndex 기반)
+   └─ 클릭 시 swiperRef.current?.slideTo(index) 호출
+   └─ 300ms 이내 해당 섹션으로 이동
+
+6. 마지막 섹션 (월별운세) 최초 도달
+   └─ 비로그인 사용자: SignupPromptModal 표시 (회원가입 유도)
+   └─ 피드백 버튼 → FeedbackModal 열림
+
+7. 페이지 새로고침
+   └─ Zustand 메모리 초기화 → consultation=null
+   └─ 재진입 시 API 재호출 (persist 없음)
+
+8. 접근성
+   └─ prefers-reduced-motion → speed: 0 (즉시 전환)
+   └─ keyboard: Arrow↑↓, PageUp/Down 지원 (Keyboard 모듈)
+   └─ a11y: 스크린리더 지원 (A11y 모듈)
 ```
 
-#### 여정 3: 마이페이지 무한 스크롤 (Q3, threshold 0.5)
+#### 여정 3: 마이페이지 무한 스크롤 (threshold 0.5)
 
 ```
 1. User navigates to /my-page
-   └─ Hook: useAnalysisRecords('CAREER')
+   └─ Hook: useMyPage('CAREER')
    └─ Initial load: offset=0, limit=20
    └─ API: POST /api/analysis/records?offset=0&limit=20
    
@@ -449,71 +503,89 @@ User (로그인/비로그인)
    └─ Append 20 more records to list
    
 5. Repeat until hasMore=false
-   └─ No more records available
-   └─ Remove load more trigger
 ```
 
-### 3.3 저장소 전략 (Q1 명확화)
+### 3.3 저장소 전략
 
-| 데이터 | 저장소 | 범위 | 지속시간 | 보안 |
-|------|---------|-------|----------|------|
-| **authStore (로그인 토큰)** | HttpOnly Cookie (Q1) | Current session | Until logout | ✅ XSS 방지 |
-| **sessionStore (분석 상태)** | Zustand (memory) | Current session | Cleared on logout/page close | - |
-| **sajuResultId** | sessionStorage | Track analysis across refresh | Until page close | ⚠️ 비민감정보 |
-| **Consultation inputs** | Zustand + localStorage (persist) | Current & next session | persist enabled | - |
-| **Analysis results** | analysisStore (memory) | Current session | Memory only (no persist) | - |
-| **Current tab index** | Zustand (memory) | Current session | Memory only | - |
-
-**Q1 명확화**:
-- **로그인 토큰**: HttpOnly 쿠키 기반만 사용하여 XSS 방지. sessionStorage 토큰 저장 제거.
-- **sajuResultId**: 민감하지 않은 분석 추적 정보이므로 sessionStorage 사용 (페이지 새로고침 시 복원 필요).
-- **Authorization 헤더**: 개발 환경에서만 선택적 사용 (로깅/디버깅용, 인증에는 미사용).
+| 데이터 | 저장소 | 지속시간 | 보안 |
+|------|---------|----------|------|
+| **인증 토큰** | HttpOnly Cookie | Until logout | ✅ XSS 방지 |
+| **sajuResultId** | sessionStorage | Until page close | ⚠️ 비민감정보 |
+| **Consultation data** | consultationStore (memory) | Until page refresh | - |
+| **currentSectionIndex** | consultationStore (memory) | Current session | - |
+| **분석 기록** | 백엔드 DB | 영구 (로그인 시) | ✅ 서버 관리 |
 
 ---
 
 ## 4. 컴포넌트 계층 & Props 흐름
 
-### 4.1 페이지 컴포넌트
+### 4.1 컨설팅 페이지 컴포넌트 (Swiper.js)
 
 ```
-app/career/timing/page.tsx
-├─ useCareerTiming() hook
-├─ State: formData, showDisclaimer, showResult
+app/consultation/page.tsx
+├─ useConsultation(sajuResultId) hook
 └─ Components:
     ├─ Header (ProfileMenu or LoginButton)
-    ├─ DisclaimerOverlay (visible={showDisclaimer})
-    ├─ TimingForm (isLoading, onSubmit)
-    ├─ CareerTimingResult (analysis, isLoggedIn, onSave)
-    └─ FeedbackModal (visible, onSubmit)
+    ├─ LoadingSpinner (visible during API call)
+    ├─ ErrorMessage (visible on error)
+    └─ FullPageConsultation (visible when data loaded)
+        ├─ <Swiper direction="vertical"> 래퍼 (Mousewheel/Keyboard/A11y 모듈)
+        ├─ SectionNavigator (오른쪽 고정, 🌕 달 인디케이터, currentSection 표시)
+        ├─ SignupPromptModal (마지막 섹션 도달 시 비로그인 사용자에게 표시)
+        └─ 8 SwiperSlide Components:
+            ├─ IndustriesTab      (100vh, slide 0 — 추천산업)
+            ├─ InterviewTipsTab   (100vh, slide 1 — 면접팁)
+            ├─ StrengthsTab       (100vh, slide 2 — 강점)
+            ├─ SajuProfileTab     (100vh, slide 3 — 사주프로필)
+            ├─ WealthStyleTab     (100vh, slide 4 — 부의운)
+            ├─ CareerRoadmapTab   (100vh, slide 5 — 경력로드맵)
+            ├─ BrandingTab        (100vh, slide 6 — 브랜딩)
+            └─ MonthlyForecastTab (100vh, slide 7 — 월별운세, FeedbackButton 포함)
 ```
 
-### 4.2 Props 패턴
+### 4.2 Swiper.js 설정
 
 ```typescript
-// Component Props Interface
-interface TimingFormProps {
-  onSubmit: (formData: CareerTimingRequest) => Promise<void>;
-  isLoading?: boolean;
-  error?: string;
-  onError?: (error: string) => void;
+// components/consultation/FullPageConsultation.tsx
+// [Exception: Principle IV] — Swiper.js 사용. 이유: wheel 정규화 직접 구현 복잡도 과다, 사용자 명시 요청
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Mousewheel, Keyboard, A11y } from 'swiper/modules';
+import type { Swiper as SwiperInstance } from 'swiper';
+
+const swiperRef = useRef<SwiperInstance | null>(null);
+const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+<Swiper
+  direction="vertical"
+  slidesPerView={1}
+  spaceBetween={0}
+  speed={prefersReducedMotion ? 0 : 700}     // 접근성: 즉시 전환
+  mousewheel={{ sensitivity: 1, thresholdDelta: 50 }}  // 트랙패드 관성 무시
+  keyboard={{ enabled: true }}               // Arrow↑↓, PageUp/Down
+  a11y={{ enabled: true }}                   // 스크린리더 지원
+  modules={[Mousewheel, Keyboard, A11y]}
+  onSwiper={(s) => { swiperRef.current = s; }}
+  onSlideChange={(s) => onSectionChange(s.activeIndex)}  // consultationStore 동기화
+  className="h-screen"
+/>
+```
+
+### 4.3 Props 패턴
+
+```typescript
+// FullPageConsultation Props
+interface FullPageConsultationProps {
+  data: ConsultationData;
+  currentSectionIndex: number;
+  onSectionChange: (index: number) => void;
+  onFeedback?: () => void;
 }
 
-// Hook Return Pattern
-interface UseCareerTimingReturn {
-  data: CareerTimingAnalysis | null;
-  loading: boolean;
-  error: string | null;
-  submit: (formData: CareerTimingRequest) => Promise<void>;
-  reset: () => void;
-}
-
-// Zustand Store Pattern
-interface AuthStore {
-  isLoggedIn: boolean;
-  user: User | null;
-  accessToken: string | null;
-  setLogin: (user: User, token: string) => void;
-  setLogout: () => void;
+// SectionNavigator Props
+interface SectionNavigatorProps {
+  sections: string[];           // 섹션 이름 배열 (8개)
+  currentIndex: number;
+  onNavigate: (index: number) => void;  // swiperRef.slideTo() 호출
 }
 ```
 
@@ -521,36 +593,27 @@ interface AuthStore {
 
 ## 5. API 클라이언트 & 에러 처리
 
-### 5.1 Q5 재시도 정책이 있는 apiFetch 래퍼 (Q1 명확화)
+### 5.1 재시도 정책이 있는 apiFetch 래퍼
 
 ```typescript
 // lib/api/client.ts
-// Q1 결정: HttpOnly 쿠키 기반, sessionStorage 제거, Authorization 헤더 선택사항
+// Q1 결정: HttpOnly 쿠키 기반, sessionStorage 제거
 
 async function apiFetch<T>(
   path: string,
   options?: FetchOptions
 ): Promise<T> {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 10000);  // 10s timeout
+  const timeoutMs = options?.timeout ?? 10000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   
-  let lastError: Error | null = null;
-  const maxAttempts = 3;
-  
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}${path}`,
         {
           method: options?.method || 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            // Q1: Authorization 헤더는 선택사항 (로깅/디버깅용)
-            // 실제 인증은 HttpOnly 쿠키에만 의존
-            ...(process.env.NODE_ENV === 'development' && {
-              'Authorization': `Bearer ${getAccessTokenForLogging()}`
-            })
-          },
+          headers: { 'Content-Type': 'application/json' },
           body: options?.body ? JSON.stringify(options.body) : undefined,
           signal: controller.signal,
           credentials: 'include'  // HttpOnly 쿠키 자동 전송
@@ -558,185 +621,70 @@ async function apiFetch<T>(
       );
       
       clearTimeout(timeoutId);
-      
       const json = await response.json();
-      
-      // Validate response with Zod
-      const validatedData = responseSchema.parse(json.data);
-      
-      if (!response.ok) {
-        throw new ApiError(json.error.code, json.error.message);
-      }
-      
-      return validatedData as T;
+      if (!response.ok) throw new ApiError(json.error.code, json.error.message);
+      return responseSchema.parse(json.data) as T;
       
     } catch (error) {
-      lastError = error;
-      
-      // Q5: Only retry on timeout or network error
-      const isRetryable = (
-        error instanceof TypeError ||  // Network error
-        (error as any).name === 'AbortError'  // Timeout
-      );
-      
-      if (!isRetryable || attempt === maxAttempts) {
-        clearTimeout(timeoutId);
-        throw lastError;
-      }
-      
-      // Exponential backoff: 1s, 2s, 4s
-      const backoffMs = 1000 * Math.pow(2, attempt - 1);
-      await new Promise(resolve => setTimeout(resolve, backoffMs));
+      const isRetryable = error instanceof TypeError || (error as any).name === 'AbortError';
+      if (!isRetryable || attempt === 3) { clearTimeout(timeoutId); throw error; }
+      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, attempt - 1)));
     }
   }
-  
-  throw lastError || new Error('Unknown API error');
 }
-```
-
-**Q1 명확화 적용**:
-- **HttpOnly Cookie**: 백엔드가 설정, 브라우저 자동 포함 (`credentials: 'include'`)
-- **sessionStorage**: 제거 (XSS 위험성으로 인해 불필요)
-- **Authorization 헤더**: 개발 환경에서만 선택사항으로 제공 (로깅/디버깅)
-
-### 5.2 에러 처리 전략
-
-```typescript
-// Q5: Retry policy
-- Timeout (>10s): Retry up to 3 times (1s, 2s, 4s backoff)
-- Network error: Retry up to 3 times (same backoff)
-- 400/401/403/404/500: Fail immediately, no retry
-- Business logic error: Fail immediately, no retry
-
-// Error UI
-- Network/timeout: "네트워크 오류. 다시 시도해주세요." + Retry button
-- 401 Unauthorized: "로그인이 필요합니다. 다시 로그인해주세요."
-- 500 Server Error: "서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
-- Generic error: "요청 처리 중 오류가 발생했습니다."
 ```
 
 ---
 
 ## 6. Zustand 스토어 아키텍처
 
-### 6.1 authStore (인증, Q1 명확화)
+### 6.1 consultationStore (섹션 캐싱 — Swiper.js 연동)
 
-```typescript
-// lib/stores/auth.ts
-// Q1 결정: HttpOnly 쿠키 기반, sessionStorage 제거
-
-interface User {
-  userId: string;
-  provider: 'KAKAO' | 'GOOGLE';
-  email: string;
-  nickname: string;
-  createdAt: string;
-}
-
-interface AuthStore {
-  // State
-  isLoggedIn: boolean;
-  user: User | null;
-  provider: 'KAKAO' | 'GOOGLE' | null;
-  loginError: string | null;
-  
-  // Actions
-  setLogin: (user: User) => void;  // token은 HttpOnly 쿠키에만 저장
-  setLogout: () => void;
-  setLoginError: (error: string) => void;
-  checkToken: () => Promise<boolean>;  // Validate token on app init
-}
-
-export const useAuthStore = create<AuthStore>((set) => ({
-  isLoggedIn: false,  // 페이지 로드 시 서버 검증 필요
-  user: null,
-  provider: null,
-  loginError: null,
-  
-  setLogin: (user) => {
-    // Token은 백엔드가 HttpOnly 쿠키로 설정 (자동)
-    set({ isLoggedIn: true, user });
-  },
-  
-  setLogout: () => {
-    set({ isLoggedIn: false, user: null, provider: null });
-  },
-  
-  // ... rest of actions
-}));
-```
-
-**Q1 명확화 적용**:
-- **HttpOnly Cookie**: 백엔드가 설정, 모든 요청에 자동 포함
-- **sessionStorage 제거**: accessToken 저장 불필요 (XSS 위험)
-- **setLogin()**: token 파라미터 제거 (저장 불필요)
-- **인증 확인**: 앱 초기화 시 서버에 검증 요청 (`/api/auth/check`)
-
-### 6.2 sessionStore (현재 세션)
-
-```typescript
-interface SessionStore {
-  // State
-  sajuResultId: string | null;
-  lastAnalysisType: 'CAREER' | 'CONSULTATION' | 'COMPANY' | null;
-  currentAnalysisData: any | null;
-  isAnalyzing: boolean;
-  
-  // Actions
-  setSajuResultId: (id: string) => void;
-  setCurrentAnalysis: (data: any) => void;
-  setIsAnalyzing: (loading: boolean) => void;
-  clearSession: () => void;
-}
-```
-
-### 6.3 consultationStore (Q4 캐싱)
-
-**실제 구현 기준** (Phase 5 완료 후 업데이트):
+**구현 기준**: API 응답 전체를 메모리에만 캐싱. localStorage/sessionStorage persist 없음.
 
 ```typescript
 interface ConsultationStore {
-  // State — 8탭 전체 데이터 메모리 캐싱 (탭 전환 0.2초 보증)
-  consultation: ConsultationData | null;  // 전체 응답 메모리 저장
-  lastFetchedId: string | null;           // 캐시 유효성 검증
-  selectedTabIndex: number;
+  // State — 8섹션 전체 데이터 메모리 캐싱
+  consultation: ConsultationData | null;
+  lastFetchedId: string | null;
+  currentSectionIndex: number;     // Swiper.js onSlideChange 콜백으로 동기화
   isLoading: boolean;
   error: string | null;
-
-  // 탭 입력값 캐시 (localStorage persist)
-  fieldCache: Record<string, string>;
 
   // Actions
   setConsultation: (data: ConsultationData, sajuResultId: string) => void;
   clearData: () => void;
-  setSelectedTabIndex: (index: number) => void;
-  isValid: (sajuResultId: string) => boolean;  // 캐시 유효성 확인
+  setCurrentSectionIndex: (index: number) => void;  // 0-based (Swiper activeIndex)
+  isValid: (sajuResultId: string) => boolean;
   reset: () => void;
 }
-
-// persist 대상: fieldCache만 (consultation은 메모리 전용)
 ```
 
-### 6.4 errorStore (전역 에러 & 토스트)
+### 6.2 authStore (인증)
 
 ```typescript
-interface Toast {
-  id: string;
-  message: string;
-  type: 'success' | 'error' | 'info' | 'warning';
-  duration?: number;
+interface AuthStore {
+  isLoggedIn: boolean;
+  user: User | null;
+  provider: 'KAKAO' | 'GOOGLE' | null;
+  loginError: string | null;
+  setLogin: (user: User) => void;   // token은 HttpOnly 쿠키에만 저장
+  setLogout: () => void;
+  checkToken: () => Promise<boolean>;
 }
+```
 
-interface ErrorStore {
-  // State
-  globalError: { message: string; code: string } | null;
-  toastQueue: Toast[];
-  
-  // Actions
-  setGlobalError: (error: { message: string; code: string }) => void;
-  clearError: () => void;
-  addToast: (toast: Omit<Toast, 'id'>) => void;
-  removeToast: (id: string) => void;
+### 6.3 sessionStore (현재 세션)
+
+```typescript
+interface SessionStore {
+  sajuResultId: string | null;
+  lastAnalysisType: 'CAREER' | 'CONSULTATION' | 'COMPANY' | null;
+  currentAnalysisData: CareerTimingData | ConsultationData | CompatibilityData | null;
+  isAnalyzing: boolean;
+  setSajuResultId: (id: string) => void;
+  setCurrentAnalysis: (data: any) => void;
+  clearSession: () => void;
 }
 ```
 
@@ -744,73 +692,57 @@ interface ErrorStore {
 
 ## 7. 애니메이션 & 타이밍 사양
 
-### 7.1 고지 문구 오버레이 (FR-048, FR-049, Q1)
+### 7.1 고지 문구 오버레이 (FR-048)
 
 ```
 Timeline:
   0ms    ─ Display overlay (fade-in starts)
-  0ms    ─ Opacity: 0 → 1 (CSS transition)
   ~50ms  ─ Fully opaque
   1500ms ─ Start fade-out (1.5s exact)
-  1500ms ─ Loading spinner fade-in starts (simultaneous)
   2000ms ─ Overlay fully transparent, removed from DOM
   2000ms ─ Loading spinner fully visible
 
 CSS:
-  .disclaimer-overlay {
-    opacity: 1;  // Rendered immediately
-    transition: opacity 500ms ease-in-out;
-  }
-  
-  .loading-spinner {
-    opacity: 0;  // Hidden initially
-    transition: opacity 500ms ease-in-out;
-    &.visible { opacity: 1; }
-  }
-
-Implementation (Hook: useDisclaimerTiming):
-  1. Set visible=true (render overlay, opacity: 1)
-  2. setTimeout 1500ms:
-     ├─ Set isFadingOut=true
-     ├─ CSS class added: trigger fade-out transition
-     └─ Simultaneous: show loading spinner (fade-in)
-  3. setTimeout 2000ms (total):
-     ├─ Remove overlay from DOM
-     └─ Fire onComplete() callback
-
-Rendering (Component: DisclaimerOverlay):
-  - Full-screen overlay (z-index: high)
-  - Dark background (opacity: 0.5)
-  - Centered white text: "본 사주는 재미로 보는 것이니 참고만 바랍니다"
-  - Font: responsive (desktop 28px, tablet 24px, mobile 20px)
-  - User input blocked: pointer-events: none
-  - Accessibility: role="alert", aria-live="assertive"
+  .disclaimer-overlay { transition: opacity 500ms ease-in-out; }
 ```
 
-### 7.2 탭 전환 (FR-018, Q4)
+### 7.2 Swiper.js 섹션 전환 (US4 — Q7 결정)
 
 ```
-Target: <200ms visual update (0.2s)
+기본 전환:
+  speed: 700ms
+  direction: 'vertical'
+  방향: 수직 슬라이드 (마우스 휠, 트랙패드, 터치 스와이프, Arrow/Page 키)
 
-Trigger: User clicks tab
-  ├─ Click handler: consultationStore.selectTab(index)
-  ├─ Update selectedTabIndex immediately (state change)
-  └─ Re-render component with new tab content
+Mousewheel 설정:
+  - sensitivity: 1 (마우스 1노치 = 1섹션)
+  - thresholdDelta: 50 (트랙패드 관성 스크롤 무시)
 
-Cache Logic:
-  - Check cache: consultationStore.fieldCache[tabId]
-  - Cache HIT: Display cached data immediately
-    └─ Time: <100ms (no network latency)
-  - Cache MISS: Fetch from API
-    ├─ Show loading spinner
-    ├─ POST /api/career/consultation (15s timeout)
-    ├─ Cache result
-    └─ Display result (~1-2s)
+SectionNavigator 직접 이동:
+  - swiperRef.current?.slideTo(index)  // 0-based API
+  - 300ms 이내 해당 섹션 도달
 
-Measurement:
-  - Performance.now() at click
-  - Performance.now() when new content visible
-  - Assert: elapsed < 200ms (for cached tabs)
+접근성 (prefers-reduced-motion):
+  - speed: 0 (즉시 전환, 애니메이션 없음)
+  - Swiper 초기화 시 matchMedia 감지 후 speed prop에 전달
+
+모바일:
+  - Swiper 기본 터치 스와이프 지원 (별도 설정 불필요)
+  - 각 SwiperSlide: h-screen overflow-y-auto
+
+섹션 내 오버플로우:
+  - SwiperSlide overflow-y: auto → 섹션 내부 스크롤 가능
+  - Swiper는 슬라이드 간 전환만 담당
+```
+
+### 7.3 섹션 진입 페이드인 (각 섹션 콘텐츠)
+
+```
+각 섹션 컴포넌트의 콘텐츠 등장 애니메이션:
+  - Swiper onSlideChangeTransitionEnd 이벤트 활용 가능
+  - 섹션 진입 시: opacity 0 → 1 (350ms ease-out)
+  - transform: translateY(20px) → translateY(0) (350ms ease-out)
+  - prefers-reduced-motion: 애니메이션 없음 (즉시 표시)
 ```
 
 ---
@@ -819,150 +751,127 @@ Measurement:
 
 ### 8.1 US1: 인증 & 사용자 관리
 
-**Components**:
-- LoginButton (OAuth popup)
-- ProfileMenu (logged-in state)
-- LoginModal (alternative: modal instead of popup)
-
-**Hooks**:
-- useAuthStore (global state)
-
-**API**:
-- GET /api/auth/callback (OAuth)
-- POST /api/auth/logout
-
-**Success Criteria**:
-- OAuth popup opens (not redirect)
-- Token saved in httpOnly Cookie + sessionStorage
-- Header changes based on isLoggedIn
-- Auto-save on login (Q1)
+**컴포넌트**: LoginButton, ProfileMenu  
+**훅**: useAuthStore  
+**API**: GET /api/auth/callback, POST /api/auth/logout  
+**성공 기준**: OAuth 팝업 → HttpOnly 쿠키 → 헤더 변경 → 분석 결과 자동 저장
 
 ---
 
 ### 8.2 US2: 마이페이지 & 히스토리
 
-**컴포넌트**:
-- MyPageTabs (3 tabs)
-- AnalysisRecordCard (list item)
-- DeleteConfirmModal
-
-**Hooks**:
-- useAnalysisRecords (pagination + infinite scroll)
-
-**API**:
-- POST /api/analysis/records (pagination)
-- POST /api/analysis/{recordId} (detail)
-- DELETE /api/analysis/{recordId}
-
-**Success Criteria**:
-- 3 tabs load independently
-- Infinite scroll (threshold 0.5)
-- 0.1s instant replay of saved results
-- Delete with confirmation
+**컴포넌트**: MyPageTabs, AnalysisRecordCard, DeleteConfirmModal  
+**훅**: useMyPage (pagination + infinite scroll, threshold 0.5)  
+**API**: POST /api/analysis/records, DELETE /api/analysis/{recordId}  
+**성공 기준**: 3 탭, 무한 스크롤, 0.1s 즉시 재현, 삭제 확인
 
 ---
 
 ### 8.3 US3: 관운 분석
 
-**컴포넌트**:
-- TimingForm (date + time picker)
-- DisclaimerOverlay (1.5s + 500ms)
-- CareerTimingResult (H1/H2 + progress bar)
-
-**Hooks**:
-- useCareerTiming
-- useDisclaimerTiming (Q1)
-
-**API**:
-- POST /api/career/timing (10s timeout)
-
-**Success Criteria**:
-- Disclaimer 1.5s auto-display
-- 500ms fade transition
-- H1/H2 with confidence score
-- Auto-save on login (Q1)
+**컴포넌트**: TimingForm, DisclaimerOverlay, CareerTimingResult  
+**훅**: useCareerTiming, useDisclaimerTimer  
+**API**: POST /api/career/timing (10s timeout)  
+**성공 기준**: 1.5s 자동 고지 문구 → H1/H2 + 신뢰도 점수 → 로그인 자동 저장
 
 ---
 
-### 8.4 US4: AI 컨설팅 (8개 탭, Q4)
+### 8.4 US4: AI 컨설팅 (8섹션 Swiper.js — Q7)
 
 **컴포넌트**:
-- ConsultationTabs (8 tabs)
-- ConsultationTabContent (single tab)
-- MonthlyCalendar (for月別运势)
+- `FullPageConsultation` — Swiper.js 수직 슬라이드, 8섹션 조립, SignupPromptModal 포함
+- `SectionNavigator` — 오른쪽 고정, 🌕 달 인디케이터, 현재 섹션 강조 + 클릭 이동
+- `SignupPromptModal` — 마지막 섹션 최초 도달 시 비로그인 사용자 회원가입 유도
+- `IndustriesTab` ~ `MonthlyForecastTab` — 각 분석 섹션 UI
 
-**Hooks**:
-- useConsultation (caching + 0.2s switching)
+**훅**:
+- `useConsultation` — API 호출, consultationStore 캐싱, Swiper onSlideChange 섹션 동기화
 
-**API**:
-- POST /api/career/consultation (15s timeout)
+**API**: POST /api/career/consultation (20s timeout, 8개 섹션 전체 단일 수신)
 
-**Success Criteria**:
-- All 8 tabs loaded (cached)
-- <200ms tab switching (Q4)
-- Input value persistence (Q4)
-- Page refresh restores state
+**Swiper.js 설정**:
+```typescript
+// FullPageConsultation.tsx
+// [Exception: Principle IV] — 사용자 명시 요청, MIT 라이선스, wheel 정규화 직접 구현 복잡도 과다
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Mousewheel, Keyboard, A11y } from 'swiper/modules';
+
+<Swiper
+  direction="vertical"
+  speed={prefersReducedMotion ? 0 : 700}
+  mousewheel={{ sensitivity: 1, thresholdDelta: 50 }}
+  keyboard={{ enabled: true }}
+  a11y={{ enabled: true }}
+  modules={[Mousewheel, Keyboard, A11y]}
+  onSwiper={(s) => { swiperRef.current = s; }}
+  onSlideChange={(s) => onSectionChange(s.activeIndex)}
+  className="h-screen"
+>
+  {SECTION_LABELS.map((label, index) => (
+    <SwiperSlide key={label} className="h-screen overflow-y-auto bg-night-900 flex flex-col justify-center">
+      <div className="max-w-3xl mx-auto px-4 py-8 w-full">
+        {sections[index]}
+      </div>
+    </SwiperSlide>
+  ))}
+</Swiper>
+```
+
+**성공 기준**:
+- 8개 섹션 각각 100vh 전체화면 표시
+- 마우스 휠: 1노치 = 1섹션, 자연스러운 700ms 전환
+- SectionNavigator 클릭 → swiperRef.slideTo() → 300ms 이내 이동
+- 모바일: 터치 스와이프 지원 (Swiper 기본 지원)
+- prefers-reduced-motion: speed=0 즉시 전환
+- 마지막 섹션 최초 도달: 비로그인 시 SignupPromptModal 표시
+- 마지막 섹션에서 피드백 버튼 표시
 
 ---
 
-### 8.5 US5: 기업 궁합 (Q2 명확화)
+### 8.5 US5: 기업 궁합
 
-**컴포넌트**:
-- CompanyForm (input + autocomplete)
-- CompatibilityResult (score + job cards + calendar)
-
-**Hooks**:
-- useCompatibility
-- useCompanyAutocomplete (Q2: 백엔드 의존)
-
-**API** (Q2: 백엔드 `/api/company/autocomplete` 사용):
-- POST `/api/company/autocomplete` (5s timeout)
-  - Request: `{ query: string }`
-  - Response: `{ suggestions: string[] }`
-- POST `/api/company/compatibility` (10s timeout)
-
-**Success Criteria**:
-- 사용자 입력 시 자동완성 목록 표시 (5s 타임아웃)
-- Score + job matching 표시
-- Calendar layout 반응형
-- 자동완성 API 실패 시 수동 입력 폴백
+**컴포넌트**: CompanyForm, CompatibilityResult  
+**훅**: useCompatibility, useCompanyAutocomplete  
+**API**: POST /api/company/autocomplete (5s), POST /api/company/compatibility (8s)  
+**성공 기준**: 자동완성, 점수 + 직무 카드 + 캘린더, 폴백 수동 입력
 
 ---
 
 ### 8.6 US6: 피드백 모달
 
-**컴포넌트**:
-- FeedbackModal (satisfaction + comment)
-
-**Hooks**:
-- useFeedback
-
-**API**:
-- POST /api/feedback (5s timeout)
-
-**Success Criteria**:
-- Modal appears on all result screens
-- Satisfaction selection (radio)
-- Character counter (max 500)
-- Submit success message
+**컴포넌트**: FeedbackModal  
+**훅**: useFeedback  
+**API**: POST /api/feedback/satisfaction (5s)  
+**성공 기준**: 만족도 라디오, 글자 수 카운터(500자), 제출 성공 메시지
 
 ---
 
 ## 9. 구현 단계 (9개 단계, 137개 작업)
 
-| 단계 | 목표 | 작업 | 예상시간 | 차단 |
-|-------|------|-------|----------|----------|
-| Phase 1 | Setup & Infrastructure | T001-T010 | 1-2 days | Everything |
-| Phase 2 | Foundation (Zustand, API, Validation) | T011-T036 | 2-3 days | US1-US6 |
-| Phase 3 | US1: Authentication | T037-T050 | 1-2 days | US2, US6 |
-| Phase 4 | US3: Career Timing | T051-T070 | 2-3 days | US4, US5, US6 |
-| Phase 5 | US5: Company Compatibility | T071-T085 | 1-2 days | (independent) |
-| Phase 6 | US4: Consultation (8 tabs) | T086-T100 | 3-4 days | US3 (depends sajuResultId) |
-| Phase 7 | US2: My Page | T101-T112 | 2-3 days | US1, US3, US5, US6 |
-| Phase 8 | US6: Feedback & Error Handling | T113-T120 | 1 day | All result screens |
-| Phase 9 | Responsive, A11y, Testing, Polish | T121-T137 | 2-3 days | All |
+| 단계 | 목표 | 작업 | 차단 |
+|-------|------|-------|----------|
+| Phase 1 | Setup & Infrastructure | T001-T010 | Everything |
+| Phase 2 | Foundation (Zustand, API, Validation) | T011-T036 | US1-US6 |
+| Phase 3 | US1: Authentication | T037-T050 | US2, US6 |
+| Phase 4 | US3: Career Timing | T051-T070 | US4, US5, US6 |
+| Phase 5 | US5: Company Compatibility | T071-T085 | (independent) |
+| Phase 6 | US4: Consultation (8섹션 Swiper.js) | T086-T100 | US3 (sajuResultId) |
+| Phase 7 | US2: My Page | T101-T112 | US1, US3, US5, US6 |
+| Phase 8 | US6: Feedback & Error Handling | T113-T120 | All result screens |
+| Phase 9 | Responsive, A11y, Testing, Polish | T121-T137 | All |
 
-**중요 경로**: 단계 1 → 단계 2 → 단계 3 → 단계 4 → 단계 6 → 단계 7 → 단계 8 → 단계 9
+**Phase 6 추가 작업 (Swiper.js 마이그레이션 — tasks.md Phase 10)**:
+- `npm install swiper` (swiper@12, MIT 라이선스)
+- `app/globals.css`에 `@import 'swiper/css'` 추가
+- `FullPageConsultation` 컴포넌트 재작성 (Swiper 교체, Constitution IV 예외 주석 필수)
+- `SectionNavigator` — onNavigate prop 유지, swiperRef.slideTo() 연동
+- `SignupPromptModal` — 마지막 섹션 최초 도달 시 비로그인 사용자 모달
+- 8개 섹션 컴포넌트 작성 (IndustriesTab ~ MonthlyForecastTab)
+- 모바일 터치 스와이프 (Swiper 기본 지원)
+- prefers-reduced-motion: speed=0 처리
+- Jest 테스트: Swiper mock (`jest.mock('swiper/react')`, `jest.mock('swiper/modules')`)
+
+**중요 경로**: 단계 1 → 2 → 3 → 4 → 6 → 7 → 8 → 9
 
 ---
 
@@ -971,136 +880,57 @@ Measurement:
 ### 10.1 단위 테스트
 
 ```
-Coverage Target: 80% (src/)
+Coverage Target: 80%
 
 Components:
-  - TimingForm: input validation, submit handler
-  - DisclaimerOverlay: timing (1.5s + 500ms)
-  - ConsultationTabs: tab switching, caching
-  - AnalysisRecordCard: click, delete
-  - LoginButton: OAuth flow
+  - FullPageConsultation: 섹션 렌더링, onSectionChange 콜백
+  - SectionNavigator: 현재 섹션 강조, 클릭 이동
+  - Section1~8: 데이터 렌더링, 엣지 케이스
+  - TimingForm, DisclaimerOverlay, FeedbackModal
 
 Hooks:
-  - useCareerTiming: submit, error handling, reset
-  - useConsultation: tab selection, cache restore
-  - useAnalysisRecords: pagination, infinite scroll
-  - Zustand stores: state updates, persist
-
-API Functions:
-  - apiFetch: success, error, timeout, retry (Q5)
-  - fetchCareerTiming, etc.: response validation (Zod)
+  - useConsultation: API 호출, 캐시, sectionIndex 동기화
+  - useCareerTiming, useMyPage, Zustand stores
 ```
 
 ### 10.2 통합 테스트 (MSW)
 
 ```
 Scenarios:
-  1. Full login flow (OAuth callback)
-  2. Career timing analysis + auto-save on login (Q1)
-  3. Consultation tab switching + caching (Q4)
-  4. My-page pagination + infinite scroll (Q3)
-  5. Company compatibility + fallback
-  6. API retry policy (Q5): timeout, network, success
-  7. Feedback submission
-  8. Page exit guard (beforeunload, beforePopState)
-
-MSW Setup:
-  - Mock all POST endpoints
-  - Simulate timing (3-5s for analysis)
-  - Simulate failures (timeout, 500 error)
-  - Test error recovery paths
+  1. Full login flow
+  2. Career timing + auto-save
+  3. Consultation 8섹션 fullpage.js (MSW mock API)
+  4. My-page 무한 스크롤
+  5. API retry policy
+  6. Feedback submission
 ```
 
 ### 10.3 E2E 테스트 (Playwright)
 
 ```
 Critical Paths:
-  1. DisclaimerOverlay timing (1.5s exact ±50ms, 500ms fade)
-  2. Tab switching performance (<200ms cached)
-  3. Infinite scroll threshold (50% visible)
-  4. beforeunload modal for unsaved data
-  5. Full user journey (login → analysis → save → my-page)
-
-Measurements:
-  - Performance.now() for timing assertions
-  - Visual regression testing
-  - Accessibility (axe-core)
+  1. DisclaimerOverlay timing (1.5s ±50ms)
+  2. fullpage.js 섹션 전환 (<700ms)
+  3. SectionNavigator 클릭 이동 (<300ms)
+  4. 무한 스크롤 (threshold 0.5)
+  5. prefers-reduced-motion: 즉시 전환
 ```
 
 ---
 
-## 11. 성능 최적화
-
-### 11.1 번들 크기
-
-| 목표 | 현재 (예상) | 최적화 |
-|--------|---------------------|--------------|
-| Initial JS | <100KB | Code splitting (dynamic imports) |
-| CSS | <50KB | Tailwind purge (unused styles) |
-| Fonts | <100KB | Pretendard + Garamond (web fonts) |
-| Total | <250KB | gzip compression |
-
-### 11.2 렌더링 성능
+## 11. 성능 목표
 
 | 지표 | 목표 | 접근 방식 |
 |--------|--------|----------|
-| **LCP** (Largest Contentful Paint) | <3s | Lazy load images, critical CSS inline |
-| **FID** (First Input Delay) | <100ms | Debounce handlers, async API calls |
-| **CLS** (Cumulative Layout Shift) | <0.1 | Fixed heights for images, skeletons |
-| **Tab Switching** | <200ms | Zustand cache (in-memory) |
-
-### 11.3 캐싱 전략
-
-```
-캐시 계층:
-  1. Browser cache: HTTP 304 (my-page detail)
-  2. Zustand persist: localStorage (consultation inputs)
-  3. sessionStorage: sajuResultId across page refresh
-  4. Memory cache: analysisStore (current session)
-```
+| **LCP** | <3s | fullpage.js 동적 import |
+| **FID** | <100ms | Debounce handlers |
+| **CLS** | <0.1 | 100vh 고정 섹션 크기 |
+| **섹션 전환** | 700ms | fullpage.js scrollingSpeed |
+| **초기 번들** | <200KB | Code splitting |
 
 ---
 
-## 12. 보안 & 개인정보 보호
-
-### 12.1 인증
-
-- **HttpOnly Cookie**: Server validation (CSRF protection)
-- **sessionStorage Token**: Frontend logic only (XSS exposure, but mitigated by httpOnly)
-- **Q2 Decision**: OAuth popup (not redirect)
-- **Token Refresh**: Q5 retry policy on timeout/network only
-
-### 12.2 입력 검증
-
-- **Frontend**: Zod schemas (UX feedback)
-- **Backend**: Double validation (security)
-- **Sanitization**: No HTML in feedback text (max 500 chars)
-
-### 12.3 데이터 개인정보 보호
-
-- **Non-logged-in Analysis**: sessionMemory only (volatile)
-- **Logged-in Analysis**: Backend persistent (user-owned)
-- **PII**: Birth date stored (required), no SSN
-- **Feedback**: Anonymous OK (no user ID required)
-
----
-
-## 13. 위험 관리 & 대응책
-
-| 위험 | 확률 | 영향 | 완화책 |
-|------|-------------|--------|-----------|
-| **OAuth failure** | Medium | High | Fallback to email login (Phase 2) |
-| **API timeout** | Medium | Medium | Q5 retry policy (3 attempts) |
-| **Large dataset (my-page)** | Low | Medium | Pagination + infinite scroll |
-| **Browser back button** | High | Medium | beforePopState guard (US6) |
-| **Disclaimer timing drift** | Low | Medium | setTimeout ±50ms, E2E test |
-| **Zustand persist corruption** | Low | Low | Clear localStorage fallback |
-
----
-
-## 14. 의존성 & 서드파티 통합
-
-### 14.1 NPM 의존성
+## 12. 의존성 (NPM)
 
 ```json
 {
@@ -1111,106 +941,45 @@ Measurements:
     "zod": "^3.22.0",
     "recharts": "^2.10.0",
     "sonner": "^1.0.0",
-    "react-intersection-observer": "^9.5.0"
+    "react-intersection-observer": "^9.5.0",
+    "swiper": "^12.0.0"
   },
   "devDependencies": {
     "typescript": "^5.3.0",
     "jest": "^29.0.0",
-    "react-testing-library": "^14.0.0",
+    "@testing-library/react": "^14.0.0",
     "msw": "^1.3.0",
     "@playwright/test": "^1.40.0"
   }
 }
 ```
 
-### 14.2 백엔드 API (Spring Boot)
-
-- **Base URL**: `http://localhost:8080` (dev), TBD (production)
-- **All endpoints**: POST, return `ApiResponse<T>`
-- **Authentication**: HttpOnly Cookie + Authorization header (optional)
-- **CORS**: Enable localhost:3000 (dev), configure production origin
-
-### 14.3 OAuth 제공자
-
-- **Kakao Login API**: OAuth 2.0, popup flow
-- **Google Login API**: OAuth 2.0, popup flow
-- **Callback Handler**: `/api/auth/callback?code=X&state=Y`
+**Swiper.js 라이선스**:
+- MIT 라이선스 — 상업용 포함 무료 사용 가능
+- React 공식 바인딩 (`swiper/react`) 내장, 별도 패키지 불필요
+- TypeScript 타입 정의 패키지에 포함됨
 
 ---
 
-## 15. 배포 & 릴리스 전략
+## 13. 위험 관리
 
-### 15.1 사전 릴리스 체크리스트
-
-```
-코드 품질:
-  ☐ npm run build (0 errors)
-  ☐ npm run lint (0 violations)
-  ☐ npm test -- --coverage (≥80%)
-  ☐ TypeScript strict mode (0 errors)
-  
-Testing:
-  ☐ Unit tests pass
-  ☐ Integration tests (MSW) pass
-  ☐ E2E tests (critical paths) pass
-  ☐ Manual testing: all 6 user stories
-  
-Performance:
-  ☐ Lighthouse score ≥80
-  ☐ Bundle size <250KB (gzip)
-  ☐ LCP <3s, FID <100ms, CLS <0.1
-  
-Accessibility:
-  ☐ axe-core audit: no critical issues
-  ☐ Screen reader testing
-  ☐ Keyboard navigation working
-  
-Documentation:
-  ☐ README.md updated
-  ☐ API contract documented
-  ☐ Component storybook (nice-to-have)
-  ☐ Git commit messages follow convention
-```
-
-### 15.2 CI/CD 파이프라인
-
-```yaml
-# .github/workflows/build-and-test.yml
-on: [push, pull_request]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - npm install
-      - npm run lint
-      - npm run build
-      - npm test -- --coverage
-      - npx playwright test  # E2E
-```
-
-### 15.3 프로덕션 배포
-
-1. **Build**: `npm run build`
-2. **Deploy**: Next.js to Vercel / AWS Amplify / custom server
-3. **Environment**: Set `NEXT_PUBLIC_API_BASE_URL=https://api.production.com`
-4. **Health Check**: Verify OAuth, API endpoints, database connectivity
-5. **Monitoring**: Sentry (error tracking), Datadog (performance)
+| 위험 | 확률 | 완화책 |
+|------|-------------|--------|
+| **Swiper.js Next.js SSR 호환** | Low | `'use client'` 컴포넌트에서 import, SSR safe (v9+) |
+| **Swiper.js 모바일 터치** | Low | Swiper 기본 지원, 터치 스와이프 자동 처리 |
+| **월별운세 섹션 내 오버플로우** | Medium | SwiperSlide `overflow-y: auto` → 슬라이드 내부 스크롤 |
+| **OAuth failure** | Medium | 비로그인 계속 허용 |
+| **API timeout** | Medium | 재시도 정책 (3회) |
+| **Disclaimer timing drift** | Low | setTimeout ±50ms, E2E 테스트 |
 
 ---
 
-## 16. 용어사전 & 용어
+## 14. 보안 & 개인정보 보호
 
-| 용어 | 정의 | 약어 |
-|------|-----------|------------------|
-| **Saju** (사주) | Korean astrology based on birth date/time | - |
-| **Timing (관운)** | Favorable/unfavorable career periods (H1/H2) | Career Timing |
-| **Consultation (컨설팅)** | 8-tab AI-powered career advice | Consultation |
-| **Compatibility (궁합)** | Company-user astrological matching | Compatibility |
-| **Disclaimer** | Legal notice: "재미로만 참고" (for entertainment only) | - |
-| **Zustand** | State management library | Store, Global State |
-| **MSW** | Mock Service Worker (API mocking) | API Mock |
-| **E2E** | End-to-End testing | Integration Test |
-| **Q1-Q5** | 5 clarification sessions (2026-05-11) | Clarification |
+- **HttpOnly Cookie**: 인증 토큰 (XSS 방지)
+- **Zod**: 모든 API 응답 런타임 검증
+- **XSS**: HTML 자동 이스케이프 (React 기본 + Tailwind)
+- **입력 검증**: 생년월일 YYYY-MM-DD, 시간 HH:mm, 기업명 최대 길이
 
 ---
 
@@ -1220,18 +989,17 @@ jobs:
 - **137개 작업** (9개 단계)
 - **6개 사용자 스토리** (P1: 3, P2: 3)
 - **65개 이상의 기능 요구사항**
-- **5개 Zustand 스토어** (명확한 상태 관리)
-- **Q1-Q5 명확화** (전체에 통합됨)
-- **80% 테스트 커버리지** (성공 기준)
-- **성능 목표**: <3s LCP, <200ms 탭 전환, <0.1 CLS
+- **5개 Zustand 스토어** (consultationStore는 Swiper onSlideChange로 sectionIndex 동기화)
+- **Swiper.js v12** AI 컨설팅 8섹션 수직 슬라이드 (Constitution IV 예외, MIT 라이선스)
+- **80% 테스트 커버리지**
+- **성능 목표**: <3s LCP, 700ms 섹션 전환, <0.1 CLS
 - **보안**: HttpOnly 쿠키 + Zod 검증
-- **접근성**: WCAG 2.1 AA (axa-core)
+- **접근성**: prefers-reduced-motion, keyboard, a11y 모듈
 
-**다음 단계**: 단계 3 구현 (US1: 인증)
+**다음 단계**: tasks.md Phase 10 (T130-T135) Swiper.js 마이그레이션 구현
 
 ---
 
-**생성됨**: 2026-05-11  
-**버전**: 1.0  
-**총 줄 수**: 1,047  
+**업데이트**: 2026-05-14 (Swiper.js 마이그레이션 반영 — fullpage.js/CSS scroll-snap 대체)  
+**버전**: 1.2  
 **상태**: 구현 준비 완료

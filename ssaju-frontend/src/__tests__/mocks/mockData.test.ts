@@ -90,9 +90,9 @@ describe('mockCompatibilityResult', () => {
     expect(mockCompatibilityResult.compatibilityScore).toBeLessThanOrEqual(100);
   });
 
-  it('직무 포지션 배열 존재', () => {
-    expect(Array.isArray(mockCompatibilityResult.matchedJobPositions)).toBe(true);
-    expect(mockCompatibilityResult.matchedJobPositions.length).toBeGreaterThan(0);
+  it('직무 매칭 카드 배열 존재', () => {
+    expect(Array.isArray(mockCompatibilityResult.jobMatchCards)).toBe(true);
+    expect(mockCompatibilityResult.jobMatchCards.length).toBeGreaterThan(0);
   });
 });
 

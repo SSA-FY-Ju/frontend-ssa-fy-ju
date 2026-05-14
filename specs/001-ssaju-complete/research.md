@@ -1,8 +1,8 @@
 # Research & Design Decisions: SSAju Frontend (001-ssaju-complete)
 
-**Created**: 2026-05-11  
+**Created**: 2026-05-11 | **Updated**: 2026-05-13  
 **Phase**: 0 (Research) → 1 (Design)  
-**Basis**: Spec clarifications Q1-Q5 (Session 2026-05-11), Constitution v1.0, CLAUDE.md architecture
+**Basis**: Spec clarifications Q1-Q5 (2026-05-11), Q6 fullpage.js (2026-05-13), Constitution v2.6.0, CLAUDE.md architecture
 
 ---
 
@@ -1741,8 +1741,39 @@ jobs:
 
 ---
 
+---
+
+### D7: AI 컨설팅 8섹션 표시 방식 (Q6 — 2026-05-13)
+
+**Decision**: `@fullpage/react-fullpage` — 각 섹션을 100vh 전체화면 슬라이드로 표시  
+**Why Chosen**:
+- 사용자 명시 요청 (spec US4 2026-05-13 변경)
+- 기존 탭 UI → 스크롤 방식으로 전환 중, 단순 스크롤보다 명확한 "1섹션 = 1페이지" UX 전달
+- fullpage.js 직접 구현(스냅 스크롤 + 크로스 브라우저 + 접근성) 최소 500줄 + 브라우저 엣지 케이스 다수
+- `@fullpage/react-fullpage` 래퍼: React 친화적, TypeScript 타입 지원
+
+**Alternatives Considered**:
+- **CSS scroll-snap**: 브라우저 지원 양호하나, 섹션 인식/네비게이션 커스텀 로직 복잡
+- **수동 구현 (IntersectionObserver + scroll)**: 500+ 줄, 모바일 터치 처리 별도
+- **Framer Motion + AnimatePresence**: 애니메이션 강력하나 라이브러리 크기 크고 fullpage 스냅 지원 제한적
+
+**Rationale**: Constitution IV (외부 UI 라이브러리 제한) 예외 적용. 사용자가 명시적으로 fullpage.js를 요청했고, 직접 구현 시 복잡도와 파일 크기(Constitution I 위반 우려)가 과다. PR에 `[Exception: Principle IV]` 명시 필수.
+
+**fullpage.js 설정 결정**:
+- `scrollingSpeed: 700` — 부드러운 전환 (스냅 너무 빠르면 UX 불편)
+- `scrollOverflow: true` — 월별운세 캘린더 등 긴 콘텐츠 섹션 내 스크롤 허용
+- `responsiveWidth: 768` — 모바일에서 fullpage.js 비활성, 일반 스크롤로 전환
+- `prefers-reduced-motion`: afterRender에서 `scrollingSpeed: 0` 적용 (접근성)
+
+**라이선스 주의**:
+- fullpage.js: GPL v3 오픈 소스 라이선스
+- 상업용 배포 시 유료 라이선스 필요 (확인 후 결정)
+
+---
+
 ## No Further Research Blockers
 
-All security, state management, animation, and testing patterns researched and documented.
+All security, state management, animation, and testing patterns researched and documented.  
+Q6 (fullpage.js) 결정 반영 완료.
 
 ✅ **Ready for Phase 1 Implementation**

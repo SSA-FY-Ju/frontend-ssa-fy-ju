@@ -1,3 +1,5 @@
+// 파일 크기 예외: Kakao·Google OAuth URL 생성, PKCE 코드 생성, state CSRF 방지가
+// 하나의 OAuth 흐름을 구성. 분리 시 PKCE 공유 유틸 의존성이 복잡해짐
 /**
  * OAuth 소셜 로그인 유틸리티
  *

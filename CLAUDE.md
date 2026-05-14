@@ -76,7 +76,7 @@ interface ApiResponse<T> {
 
 ## Constraints (Phase 1 — hard rules)
 
-- **No** Zustand, Redux, or any global state library — use `useState` + props lifting
+- **전역 상태**: Zustand 사용 (Constitution IV — Redux/Recoil 금지, `useState` + props lifting은 로컬 상태용)
 - **No** axios, React Query, or SWR — use the `apiFetch` wrapper in `lib/api/client.ts`
 - **No** shadcn/ui, MUI, or any component library — build components directly
 - **Styling**: Tailwind CSS only — no CSS Modules
@@ -119,7 +119,8 @@ Branches: `feat/career-timing-page`, `fix/form-validation`, etc. — English, ke
 **Implementation Plan**: [`specs/001-ssaju-complete/plan.md`](specs/001-ssaju-complete/plan.md)
 
 Key architectural decisions:
-- **Zustand** for global state (AI consultation tab caching, 0.2s instant switching)
+- **Zustand** for global state (AI consultation section caching, sectionIndex 관리)
+- **fullpage.js (`@fullpage/react-fullpage`)** for 8-section full-page scroll (Constitution IV exception — user request)
 - **Recharts** for visualization (Bar Chart, Progress Bar, Calendar UI)
 - **HttpOnly Cookie** for authentication security
 - **Zod** for runtime validation of all inputs

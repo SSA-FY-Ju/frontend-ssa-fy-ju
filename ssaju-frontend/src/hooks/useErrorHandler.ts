@@ -7,7 +7,6 @@
  * - Q5 재시도 정책: 타임아웃/네트워크 에러만 재시도
  */
 
-import { useCallback } from 'react';
 import { getErrorMessage, RETRYABLE_ERROR_CODES, ApiErrorCode } from '@/types/errors';
 import { ApiError } from '@/lib/api/client';
 
@@ -15,7 +14,7 @@ export function useErrorHandler() {
   /**
    * 에러 객체를 UI 표시용 메시지로 변환
    */
-  const getDisplayMessage = useCallback((err: unknown): string => {
+  const getDisplayMessage = (err: unknown): string => {
     if (err instanceof ApiError) {
       return getErrorMessage(err.errorCode);
     }
@@ -30,12 +29,12 @@ export function useErrorHandler() {
       }
     }
     return getErrorMessage(ApiErrorCode.UNKNOWN_ERROR);
-  }, []);
+  };
 
   /**
    * 재시도 가능한 에러인지 확인 (Q5: 타임아웃/네트워크만)
    */
-  const isRetryable = useCallback((err: unknown): boolean => {
+  const isRetryable = (err: unknown): boolean => {
     if (err instanceof ApiError) {
       return RETRYABLE_ERROR_CODES.has(err.errorCode as ApiErrorCode);
     }
@@ -43,7 +42,7 @@ export function useErrorHandler() {
       return err.name === 'AbortError' || err instanceof TypeError;
     }
     return false;
-  }, []);
+  };
 
   return { getDisplayMessage, isRetryable };
 }

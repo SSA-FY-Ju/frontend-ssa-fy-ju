@@ -9,7 +9,7 @@
  * 3. 총 2초 후 onComplete 콜백 → 로딩 상태로 전환
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useRef } from 'react';
 
 interface UseDisclaimerTimerOptions {
   /** 고지 문구 표시 완료 후 콜백 (로딩 전환 시점) */
@@ -26,7 +26,7 @@ export function useDisclaimerTimer({ onComplete }: UseDisclaimerTimerOptions) {
    * - 1500ms: 고지 문구 표시 → 페이드 아웃 시작
    * - 2000ms: 페이드 완료 → onComplete 호출
    */
-  const start = useCallback(() => {
+  const start = () => {
     setIsVisible(true);
     setIsFading(false);
 
@@ -41,16 +41,16 @@ export function useDisclaimerTimer({ onComplete }: UseDisclaimerTimerOptions) {
         onComplete();
       }, 500);
     }, 1500);
-  }, [onComplete]);
+  };
 
   /** 타이머 정리 */
-  const reset = useCallback(() => {
+  const reset = () => {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
     setIsVisible(false);
     setIsFading(false);
-  }, []);
+  };
 
   return { isVisible, isFading, start, reset };
 }

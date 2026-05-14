@@ -1,5 +1,7 @@
 'use client';
 
+// 파일 크기 예외: disclaimer→loading→result 단계 전환, sessionStore·analysisStore 저장,
+// 중복 요청 방지 로직이 하나의 분석 흐름을 구성하여 분리 시 상태 일관성 위험
 /**
  * 관운 기반 채용 시기 분석 훅 (T055)
  *
@@ -14,7 +16,7 @@
  * - useRef로 중복 요청 방지 (T055b)
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { fetchCareerTiming } from '@/lib/api/career';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
 import { useSessionStore } from '@/stores/sessionStore';
@@ -35,7 +37,7 @@ export function useCareerTiming() {
   const pendingArgsRef = useRef<{ birthDate: string; birthTime: string } | null>(null);
 
   /** disclaimer 완료 후 실제 API 호출 */
-  const runApiCall = useCallback(async () => {
+  const runApiCall = async () => {
     const args = pendingArgsRef.current;
     if (!args) return;
 
@@ -73,7 +75,7 @@ export function useCareerTiming() {
       isRequestingRef.current = false;
       pendingArgsRef.current = null;
     }
-  }, []);
+  };
 
   const { isVisible: disclaimerVisible, isFading: disclaimerFading, start: startDisclaimer, reset: resetDisclaimer } =
     useDisclaimerTimer({ onComplete: runApiCall });
@@ -83,32 +85,29 @@ export function useCareerTiming() {
    * @param birthDate - 생년월일 (YYYY-MM-DD)
    * @param birthTime - 태어난 시간 (HH:mm, 기본값 12:00)
    */
-  const submitAnalysis = useCallback(
-    (birthDate: string, birthTime: string = '12:00') => {
-      // 이미 진행 중이면 무시 (T055b)
-      if (isRequestingRef.current) return;
-      isRequestingRef.current = true;
+  const submitAnalysis = (birthDate: string, birthTime: string = '12:00') => {
+    // 이미 진행 중이면 무시 (T055b)
+    if (isRequestingRef.current) return;
+    isRequestingRef.current = true;
 
-      // API 호출 인자 보관
-      pendingArgsRef.current = { birthDate, birthTime };
-      setError(null);
-      setPhase('disclaimer');
+    // API 호출 인자 보관
+    pendingArgsRef.current = { birthDate, birthTime };
+    setError(null);
+    setPhase('disclaimer');
 
-      // 고지 문구 1.5초 표시 시작
-      startDisclaimer();
-    },
-    [startDisclaimer],
-  );
+    // 고지 문구 1.5초 표시 시작
+    startDisclaimer();
+  };
 
   /** 상태 초기화 */
-  const reset = useCallback(() => {
+  const reset = () => {
     resetDisclaimer();
     setResult(null);
     setError(null);
     setPhase('idle');
     isRequestingRef.current = false;
     pendingArgsRef.current = null;
-  }, [resetDisclaimer]);
+  };
 
   return {
     phase,

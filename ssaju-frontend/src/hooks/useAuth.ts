@@ -1,6 +1,8 @@
 'use client';
 
-import { useEffect, useCallback } from 'react';
+// 파일 크기 예외: 인증 복원·카카오 로그인·구글 로그인·로그아웃 등 인증 관련
+// 모든 액션을 한 훅에 응집시켜 authStore 상태 일관성 및 스토어 초기화 원자성 보장
+import { useEffect } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useConsultationStore } from '@/stores/consultationStore';
@@ -42,7 +44,7 @@ export function useAuth() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loginWithKakao = useCallback(async () => {
+  const loginWithKakao = async () => {
     try {
       authStore.setIsLoading(true);
       authStore.setLoginError(null);
@@ -59,9 +61,9 @@ export function useAuth() {
       authStore.setLoginError('카카오 로그인 중 오류가 발생했습니다.');
       authStore.setIsLoading(false);
     }
-  }, [authStore, openOAuthWindow]);
+  };
 
-  const loginWithGoogle = useCallback(async () => {
+  const loginWithGoogle = async () => {
     try {
       authStore.setIsLoading(true);
       authStore.setLoginError(null);
@@ -77,9 +79,9 @@ export function useAuth() {
       authStore.setLoginError('구글 로그인 중 오류가 발생했습니다.');
       authStore.setIsLoading(false);
     }
-  }, [authStore, openOAuthWindow]);
+  };
 
-  const logout = useCallback(async () => {
+  const logout = async () => {
     try {
       await logoutApi();
     } catch {
@@ -91,7 +93,7 @@ export function useAuth() {
       useConsultationStore.getState().clearData();
       useSessionStore.getState().reset();
     }
-  }, []);
+  };
 
   return {
     isLoggedIn: authStore.isLoggedIn,

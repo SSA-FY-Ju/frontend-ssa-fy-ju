@@ -1,18 +1,23 @@
 'use client';
 
 /**
- * AI 커리어 컨설팅 훅 (T066)
+ * AI 커리어 컨설팅 훅 (T065b, T066)
  *
  * 흐름:
- * 1. submitConsultation() → disclaimer 1.5초 → API 호출(15-20초)
- * 2. 19개 필드 전체 수신 → consultationStore에 캐싱
- * 3. 탭 전환 시 store 메모리 조회 (0.2초 이내, 재요청 없음)
+ * 1. submitConsultation() → disclaimer 1.5초 → API 호출(20초)
+ * 2. 19개 필드 전체 수신 → consultationStore에 메모리 캐싱
+ * 3. FullPageConsultation에서 fullpage.js 스냅 스크롤로 탐색 (재요청 없음)
+ *
+ * 변경사항 (2026-05-13):
+ * - useSectionObserver 의존성 제거 (IntersectionObserver 기반 → fullpage.js 전환)
+ * - consultationStore.currentSectionIndex 읽기/쓰기
+ * - handleSectionChange(index) → consultationStore.setCurrentSectionIndex(index)
  *
  * 타임아웃 정책 (FR-027):
  * - 20초 타임아웃, 최대 2회 재시도 (각 5초 간격)
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { fetchConsultation } from '@/lib/api/career';
 import { useConsultationStore } from '@/stores/consultationStore';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
@@ -29,7 +34,7 @@ export function useConsultation() {
   const consultationStore = useConsultationStore();
 
   /** disclaimer 완료 후 실제 API 호출 */
-  const runApiCall = useCallback(async () => {
+  const runApiCall = async () => {
     const args = pendingArgsRef.current;
     if (!args) return;
 
@@ -45,7 +50,7 @@ export function useConsultation() {
 
       const data = await fetchConsultation(request);
 
-      // Zustand에 전체 캐싱 (탭 전환 0.2초 보증)
+      // Zustand 메모리에 전체 캐싱 (fullpage.js 즉시 렌더링)
       consultationStore.setConsultation(data, data.sajuResultId);
       setPhase('result');
     } catch (err) {
@@ -57,7 +62,7 @@ export function useConsultation() {
       isRequestingRef.current = false;
       pendingArgsRef.current = null;
     }
-  }, [consultationStore]);
+  };
 
   const {
     isVisible: disclaimerVisible,
@@ -68,44 +73,41 @@ export function useConsultation() {
 
   /**
    * 컨설팅 분석 시작
-   * 캐시 유효 시 API 재호출 없이 즉시 result 상태로 전환 (0.2초)
+   * 캐시 유효 시 API 재호출 없이 즉시 result 상태로 전환
    */
-  const submitConsultation = useCallback(
-    (birthDate: string, birthTime: string = '12:00', sajuResultId?: string) => {
-      // 캐시 히트: 즉시 결과 표시
-      if (sajuResultId && consultationStore.isValid(sajuResultId)) {
-        setPhase('result');
-        return;
-      }
+  const submitConsultation = (birthDate: string, birthTime: string = '12:00', sajuResultId?: string) => {
+    // 캐시 히트: 즉시 결과 표시
+    if (sajuResultId && consultationStore.isValid(sajuResultId)) {
+      setPhase('result');
+      return;
+    }
 
-      if (isRequestingRef.current) return;
-      isRequestingRef.current = true;
+    if (isRequestingRef.current) return;
+    isRequestingRef.current = true;
 
-      pendingArgsRef.current = { birthDate, birthTime };
-      setError(null);
-      setPhase('disclaimer');
-      startDisclaimer();
-    },
-    [consultationStore, startDisclaimer],
-  );
+    pendingArgsRef.current = { birthDate, birthTime };
+    setError(null);
+    setPhase('disclaimer');
+    startDisclaimer();
+  };
 
-  /** 탭 선택 (0.2초 이내 — 메모리 조회) */
-  const selectTab = useCallback(
-    (index: number) => {
-      consultationStore.setSelectedTabIndex(index);
-    },
-    [consultationStore],
-  );
+  /**
+   * fullpage.js afterLoad 콜백에서 호출
+   * destination.index (0-based) → consultationStore.currentSectionIndex 동기화
+   */
+  const handleSectionChange = (index: number) => {
+    consultationStore.setCurrentSectionIndex(index);
+  };
 
   /** 상태 초기화 */
-  const reset = useCallback(() => {
+  const reset = () => {
     resetDisclaimer();
     consultationStore.clearData();
     setPhase('idle');
     setError(null);
     isRequestingRef.current = false;
     pendingArgsRef.current = null;
-  }, [resetDisclaimer, consultationStore]);
+  };
 
   return {
     phase,
@@ -114,9 +116,9 @@ export function useConsultation() {
     disclaimerFading,
     loading: phase === 'loading',
     consultation: consultationStore.consultation,
-    selectedTabIndex: consultationStore.selectedTabIndex,
+    currentSectionIndex: consultationStore.currentSectionIndex,
+    handleSectionChange,
     submitConsultation,
-    selectTab,
     reset,
   };
 }

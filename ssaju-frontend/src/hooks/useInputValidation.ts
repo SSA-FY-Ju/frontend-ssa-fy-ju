@@ -10,7 +10,7 @@
  * - birthTime: HH:mm 또는 빈값 → 12:00 기본값 (FR-002, FR-003)
  */
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { birthDateSchema, birthTimeSchema } from '@/services/utils/validation';
 
 interface ValidationErrors {
@@ -27,7 +27,7 @@ export function useInputValidation() {
   /**
    * 생년월일 실시간 검증
    */
-  const validateBirthDate = useCallback((value: string): boolean => {
+  const validateBirthDate = (value: string): boolean => {
     if (!value) {
       setErrors((prev) => ({ ...prev, birthDate: '생년월일을 입력해주세요.' }));
       return false;
@@ -44,12 +44,12 @@ export function useInputValidation() {
 
     setErrors((prev) => ({ ...prev, birthDate: '' }));
     return true;
-  }, []);
+  };
 
   /**
    * 시간 실시간 검증 (빈값은 유효 — 12:00 기본값 적용)
    */
-  const validateBirthTime = useCallback((value: string): boolean => {
+  const validateBirthTime = (value: string): boolean => {
     if (!value) {
       // 빈값은 유효 (12:00 기본값)
       setErrors((prev) => ({ ...prev, birthTime: '' }));
@@ -67,25 +67,22 @@ export function useInputValidation() {
 
     setErrors((prev) => ({ ...prev, birthTime: '' }));
     return true;
-  }, []);
+  };
 
   /**
    * 전체 폼 검증 (제출 시 호출)
    * @returns 검증 통과 여부
    */
-  const validateAll = useCallback(
-    (birthDate: string, birthTime: string): boolean => {
-      const dateValid = validateBirthDate(birthDate);
-      const timeValid = validateBirthTime(birthTime);
-      return dateValid && timeValid;
-    },
-    [validateBirthDate, validateBirthTime],
-  );
+  const validateAll = (birthDate: string, birthTime: string): boolean => {
+    const dateValid = validateBirthDate(birthDate);
+    const timeValid = validateBirthTime(birthTime);
+    return dateValid && timeValid;
+  };
 
   /** 에러 초기화 */
-  const clearErrors = useCallback(() => {
+  const clearErrors = () => {
     setErrors({ birthDate: '', birthTime: '' });
-  }, []);
+  };
 
   return {
     errors,
