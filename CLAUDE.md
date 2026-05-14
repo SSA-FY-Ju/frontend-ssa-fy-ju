@@ -119,7 +119,8 @@ Branches: `feat/career-timing-page`, `fix/form-validation`, etc. — English, ke
 **Implementation Plan**: [`specs/001-ssaju-complete/plan.md`](specs/001-ssaju-complete/plan.md)
 
 Key architectural decisions:
-- **Zustand** for global state (AI consultation tab caching, 0.2s instant switching)
+- **Zustand** for global state (AI consultation section caching, sectionIndex 관리)
+- **fullpage.js (`@fullpage/react-fullpage`)** for 8-section full-page scroll (Constitution IV exception — user request)
 - **Recharts** for visualization (Bar Chart, Progress Bar, Calendar UI)
 - **HttpOnly Cookie** for authentication security
 - **Zod** for runtime validation of all inputs
