@@ -96,11 +96,23 @@
 
 ### 2.2 입력 검증 및 데이터 타입 (Zod)
 
-- [x] T019 `services/utils/validation.ts` - Zod 스키마 정의
+- [x] T019 `services/utils/validation.ts` - Zod 스키마 정의 (입력 검증)
   - 생년월일: YYYY-MM-DD 형식, 과거 날짜만 허용
   - 시간: HH:mm 24시간 형식, 미입력 시 12:00 기본값
   - 기업명: 문자열, XSS 방지 처리
   - 피드백: 최대 500자, 만족도 선택 필수
+- [ ] T019b `lib/api/schemas.ts` - API **응답** Zod 스키마 검증 (plan 1.5 요구사항)
+  - `ApiResponse<T>` 래퍼 스키마 (success, data, error, timestamp)
+  - `CareerTimingResultSchema`: sajuResultId, h1Period, h2Period, h1Confidence(0-100), h2Confidence(0-100), recommendation
+  - `ConsultationDataSchema`: 8개 섹션 전체 필드 검증 (recommendedIndustries, interviewTips, strengths, sajuProfile, wealthStyle, careerRoadmap, branding, monthlyForecasts)
+  - `CompatibilityResultSchema`: compatibilityScore(0-100), confidenceLevel(LOW/MEDIUM/HIGH), jobMatchCards
+  - `AnalysisRecordSchema`: recordId, userId, analysisType, data(union 타입), createdAt
+  - `apiFetch` 호출 후 응답 파싱 시 각 스키마로 `safeParse` 실행 → 실패 시 `ApiError` throw
+  - 참고: plan 1.5절 "모든 API 응답 Zod 검증" 이행
+- [ ] T019c `__tests__/lib/schemas.test.ts` - API 응답 스키마 단위 테스트
+  - 정상 응답: 각 스키마 파싱 성공 확인
+  - 비정상 응답: 필수 필드 누락 시 파싱 실패 및 에러 메시지 확인
+  - 타입 가드: 각 analysisType에 따른 data 타입 정확성 검증
 - [x] T020 `services/utils/formatters.ts` - 날짜/시간 파싱 및 표시 함수 (date-fns 활용)
 
 ### 2.3 전역 상태 관리 (Zustand - 5개 스토어)
@@ -532,24 +544,24 @@
 
 ### 8.1 마이페이지 라우팅 및 접근 제어
 
-- [ ] T098 [US2] `app/my-page/page.tsx` - MyPagePage 페이지
+- [x] T098 [US2] `app/my-page/page.tsx` - MyPagePage 페이지
   - 로그인 필수 (비로그인 시 로그인 페이지 리다이렉트)
   - "내 분석 기록" 페이지 제목
   - 3개 탭: 관운 분석, AI 컨설팅, 기업 궁합
   - 탭 클릭 시 해당 기록 로드 (무한 스크롤)
-- [ ] T099 [US2] `hooks/useMyPageAccess.ts` - 마이페이지 접근 제어 훅
+- [x] T099 [US2] `hooks/useMyPageAccess.ts` - 마이페이지 접근 제어 훅
   - isLoggedIn 확인
   - 비로그인 시 /login으로 리다이렉트
   - authStore 상태 구독
 
 ### 8.2 히스토리 탭 및 기록 리스트
 
-- [ ] T100 [US2] `components/history/HistoryTabs.tsx` - 마이페이지 3개 분석유형 탭 (독립 구현)
+- [x] T100 [US2] `components/history/HistoryTabs.tsx` - 마이페이지 3개 분석유형 탭 (독립 구현)
   - 관운 분석 (CAREER_TIMING)
   - AI 컨설팅 (CONSULTATION)
   - 기업 궁합 (COMPATIBILITY)
   - 참고: 컨설팅 스크롤 뷰(ConsultationScrollView)와 무관한 독립 컴포넌트
-- [ ] T101 [US2] `components/history/HistoryCard.tsx` - 기록 카드
+- [x] T101 [US2] `components/history/HistoryCard.tsx` - 기록 카드
   - 분석 날시 (예: "2026-05-07 14:30")
   - 분석 대상 정보 (예: 생년월일 또는 기업명)
   - 핵심 결과 미리보기 (예: "H1 권장, 신뢰도 85%")
@@ -558,25 +570,25 @@
 
 ### 8.3 무한 스크롤 구현 (Q3 명확화)
 
-- [ ] T102 [US2] `hooks/useMyPage.ts` - 히스토리 조회 + 무한 스크롤 훅
+- [x] T102 [US2] `hooks/useMyPage.ts` - 히스토리 조회 + 무한 스크롤 훅
   - **초기 로드**: 최신 20개 기록만 fetch (성능 최적화)
   - **무한 스크롤**: 사용자가 하단에 도달하면 다음 20개 자동 로드
   - **Q3 명확화**: react-intersection-observer threshold: 0.5 + Zustand isLoadingMore 플래그로 중복 요청 방지
   - **로딩 중**: 하단에 로딩 스피너 표시
   - **완료**: "더 이상 기록이 없습니다" 메시지
   - API: GET /api/my-page/history?type=CAREER_TIMING&page=1&limit=20
-- [ ] T103 [US2] `components/history/InfiniteScroll.tsx` - 무한 스크롤 컨테이너
+- [x] T103 [US2] `components/history/InfiniteScroll.tsx` - 무한 스크롤 컨테이너
   - react-intersection-observer 관찰 요소 (마지막 카드 아래)
   - 로딩 중 스피너 표시
   - 완료 메시지 표시
 
 ### 8.4 기록 상세 조회 및 재현
 
-- [ ] T104 [US2] `hooks/useHistoryDetail.ts` - 기록 상세 데이터 조회 훅
+- [x] T104 [US2] `hooks/useHistoryDetail.ts` - 기록 상세 데이터 조회 훅
   - sajuResultId 기반으로 백엔드에서 전체 분석 데이터 조회
   - GET /api/my-page/history/{resultId} (타임아웃 5초)
   - 데이터 로드 후 결과 페이지로 네비게이션
-- [ ] T105 [US2] `components/results/HistoryDetailPage.tsx` - 재현된 결과 페이지
+- [x] T105 [US2] `components/results/HistoryDetailPage.tsx` - 재현된 결과 페이지
   - 원본 분석 결과 페이지와 동일한 레이아웃으로 재현
   - CareerTimingResult, ConsultationResult, CompatibilityResult 컴포넌트 재사용
   - "뒤로 가기" 또는 "히스토리로 돌아가기" 버튼 (마이페이지로 복귀)
@@ -584,26 +596,26 @@
 
 ### 8.5 기록 삭제
 
-- [ ] T106 [US2] `components/history/DeleteConfirmModal.tsx` - 삭제 확인 모달
+- [x] T106 [US2] `components/history/DeleteConfirmModal.tsx` - 삭제 확인 모달
   - 메시지: "정말 삭제하시겠습니까?"
   - "삭제" 버튼: 백엔드 삭제 후 마이페이지에서 즉시 제거
   - "취소" 버튼: 모달 닫힘
-- [ ] T107 [US2] `hooks/useDeleteHistory.ts` - 기록 삭제 훅
+- [x] T107 [US2] `hooks/useDeleteHistory.ts` - 기록 삭제 훅
   - DELETE /api/my-page/history/{resultId} 호출
   - 성공: Zustand 상태 업데이트, 카드 UI에서 제거, 토스트 "기록이 삭제되었습니다"
   - 실패: 에러 메시지 표시
 
 ### 8.6 빈 상태 처리
 
-- [ ] T108 [US2] `components/history/EmptyState.tsx` - 기록 없음 안내
+- [x] T108 [US2] `components/history/EmptyState.tsx` - 기록 없음 안내
   - 메시지: "아직 분석 기록이 없습니다. 지금 분석을 시작해보세요!"
   - "분석하기" 버튼 (분석 페이지로 이동)
 
 ### 8.7 테스트 (Jest, MSW)
 
-- [ ] T109 [US2] `__tests__/hooks/useMyPage.test.ts` - 초기 20개 로드, 무한 스크롤
-- [ ] T110 [US2] `__tests__/hooks/useHistoryDetail.test.ts` - 상세 조회, 0.1초 재현
-- [ ] T111 [US2] `__tests__/components/HistoryCard.test.ts` - 카드 렌더링, 삭제 모달
+- [x] T109 [US2] `__tests__/hooks/useMyPage.test.ts` - 초기 20개 로드, 무한 스크롤
+- [x] T110 [US2] `__tests__/hooks/useHistoryDetail.test.ts` - 상세 조회, 0.1초 재현
+- [x] T111 [US2] `__tests__/components/HistoryCard.test.ts` - 카드 렌더링, 삭제 모달
 
 ---
 
@@ -734,10 +746,17 @@ Phase 2: Foundational (auth, Zustand, API client, validation, MSW)
   │     └─→ 결과 표시 (차트, 진행 바)
   │
   ├─→ Phase 5: US4 (AI 컨설팅) [depends on: Phase 2, Phase 4 (고지 문구)]
-  │     ├─→ @fullpage/react-fullpage 설치 (T065a)
-  │     ├─→ FullPageConsultation + SectionNavigator (fullpage.js 전체화면 스냅)
+  │     ├─→ @fullpage/react-fullpage 설치 (T065a) ← Phase 10에서 Swiper.js로 교체됨
+  │     ├─→ FullPageConsultation + SectionNavigator (T065, T065c)
   │     ├─→ Zustand 캐싱 (consultationStore, currentSectionIndex 관리)
-  │     └─→ 8개 섹션 컴포넌트 (기존 Tab 컴포넌트 재활용)
+  │     └─→ 8개 섹션 컴포넌트 (T067~T074 — Phase 10 이후에도 재사용)
+  │           ↓ Phase 5 완료 후 실행 가능
+  │     Phase 10: Swiper.js 마이그레이션 [depends on: Phase 5 완료]
+  │           ├─→ swiper@12 설치 (T130) — @fullpage/react-fullpage 대체
+  │           ├─→ FullPageConsultation 재작성 (T132) — Swiper 기반으로 교체
+  │           ├─→ 테스트 업데이트 (T133) — Swiper mock으로 교체
+  │           └─→ 8개 섹션 컴포넌트는 변경 없이 SwiperSlide 내 재사용
+  │     ⚠️ Phase 10은 Phase 5의 기능 구현 완료 후 별도 PR로 진행 (Constitution IV 예외)
   │
   ├─→ Phase 6: US5 (기업 궁합) [depends on: Phase 2, Phase 4 (고지 문구)]
   │     ├─→ 기업명 조회

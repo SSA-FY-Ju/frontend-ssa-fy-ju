@@ -47,7 +47,6 @@ interface FullPageConsultationProps {
   data: ConsultationData;
   currentSectionIndex: number;
   onSectionChange: (index: number) => void;
-  onFeedback?: () => void;
 }
 
 export function FullPageConsultation({

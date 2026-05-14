@@ -6,10 +6,10 @@
  * 흐름:
  * 1. submitConsultation() → disclaimer 1.5초 → API 호출(20초)
  * 2. 19개 필드 전체 수신 → consultationStore에 메모리 캐싱
- * 3. FullPageConsultation에서 fullpage.js 스냅 스크롤로 탐색 (재요청 없음)
+ * 3. FullPageConsultation에서 Swiper.js 수직 슬라이드로 탐색 (재요청 없음)
  *
  * 변경사항 (2026-05-13):
- * - useSectionObserver 의존성 제거 (IntersectionObserver 기반 → fullpage.js 전환)
+ * - Swiper.js onSlideChange 콜백에서 handleSectionChange 호출
  * - consultationStore.currentSectionIndex 읽기/쓰기
  * - handleSectionChange(index) → consultationStore.setCurrentSectionIndex(index)
  *
@@ -92,8 +92,8 @@ export function useConsultation() {
   };
 
   /**
-   * fullpage.js afterLoad 콜백에서 호출
-   * destination.index (0-based) → consultationStore.currentSectionIndex 동기화
+   * Swiper onSlideChange 콜백에서 호출
+   * swiper.activeIndex (0-based) → consultationStore.currentSectionIndex 동기화
    */
   const handleSectionChange = (index: number) => {
     consultationStore.setCurrentSectionIndex(index);

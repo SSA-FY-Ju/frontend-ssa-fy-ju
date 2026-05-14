@@ -22,7 +22,7 @@ interface ConsultationStore {
   lastFetchedId: string | null;
   isLoading: boolean;
   error: string | null;
-  currentSectionIndex: number; // fullpage.js 현재 섹션 (0-based)
+  currentSectionIndex: number; // Swiper 현재 섹션 (0-based)
 
   // Actions
   setConsultation: (data: ConsultationData, sajuResultId: string) => void;
