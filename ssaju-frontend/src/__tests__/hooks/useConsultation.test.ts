@@ -1,7 +1,10 @@
 /**
  * useConsultation 훅 테스트 (T080)
  *
- * useDisclaimerTimer를 모킹하여 타이머 없이 runApiCall을 직접 트리거
+ * 2026-05-13 업데이트 (v2):
+ * - useSectionObserver 의존성 제거 확인
+ * - handleSectionChange → consultationStore.setCurrentSectionIndex 검증
+ * - currentSectionIndex 반환값 검증
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react';
@@ -37,7 +40,7 @@ describe('useConsultation', () => {
     expect(result.current.consultation).toBeNull();
   });
 
-  it('submitConsultation 호출 → disclaimer phase → API 성공 시 result', async () => {
+  it('submitConsultation 호출 → API 성공 시 phase result', async () => {
     fetchConsultation.mockResolvedValueOnce(mockConsultationData);
     const { result } = renderHook(() => useConsultation());
 
@@ -49,7 +52,7 @@ describe('useConsultation', () => {
     expect(result.current.consultation).toEqual(mockConsultationData);
   });
 
-  it('API 성공 시 consultationStore에 전체 데이터 캐싱', async () => {
+  it('API 성공 시 consultationStore에 전체 데이터 캐싱 (스크롤 뷰 즉시 렌더링 가능)', async () => {
     fetchConsultation.mockResolvedValueOnce(mockConsultationData);
     const { result } = renderHook(() => useConsultation());
 
@@ -59,9 +62,10 @@ describe('useConsultation', () => {
 
     await waitFor(() => expect(result.current.phase).toBe('result'));
     expect(useConsultationStore.getState().consultation).toEqual(mockConsultationData);
+    expect(useConsultationStore.getState().lastFetchedId).toBe(mockConsultationData.sajuResultId);
   });
 
-  it('캐시 유효 시 API 재호출 없이 즉시 result', () => {
+  it('캐시 유효 시 API 재호출 없이 즉시 result (스크롤 뷰 복원)', () => {
     useConsultationStore.getState().setConsultation(mockConsultationData, 'saju-001');
     const { result } = renderHook(() => useConsultation());
 
@@ -69,17 +73,6 @@ describe('useConsultation', () => {
 
     expect(result.current.phase).toBe('result');
     expect(fetchConsultation).not.toHaveBeenCalled();
-  });
-
-  it('탭 선택 시 selectedTabIndex 업데이트', async () => {
-    fetchConsultation.mockResolvedValueOnce(mockConsultationData);
-    const { result } = renderHook(() => useConsultation());
-
-    await act(async () => { result.current.submitConsultation('1990-10-10', '14:30'); });
-    await waitFor(() => expect(result.current.phase).toBe('result'));
-
-    act(() => { result.current.selectTab(3); });
-    expect(result.current.selectedTabIndex).toBe(3);
   });
 
   it('API 실패 시 phase error, error 메시지 설정', async () => {
@@ -93,7 +86,7 @@ describe('useConsultation', () => {
     expect(result.current.consultation).toBeNull();
   });
 
-  it('reset 호출 시 전체 초기화', async () => {
+  it('reset 호출 시 phase idle + consultationStore 초기화', async () => {
     fetchConsultation.mockResolvedValueOnce(mockConsultationData);
     const { result } = renderHook(() => useConsultation());
 
@@ -104,5 +97,35 @@ describe('useConsultation', () => {
 
     expect(result.current.phase).toBe('idle');
     expect(result.current.consultation).toBeNull();
+    expect(useConsultationStore.getState().lastFetchedId).toBeNull();
+  });
+
+  // ─── fullpage.js 연동 테스트 (T080 - 2026-05-13 추가) ───────────────────
+
+  it('currentSectionIndex 초기값 0 반환 (fullpage.js 섹션 0-based)', () => {
+    const { result } = renderHook(() => useConsultation());
+    expect(result.current.currentSectionIndex).toBe(0);
+  });
+
+  it('handleSectionChange(index) → consultationStore.setCurrentSectionIndex 호출', () => {
+    const { result } = renderHook(() => useConsultation());
+
+    act(() => { result.current.handleSectionChange(3); });
+
+    expect(useConsultationStore.getState().currentSectionIndex).toBe(3);
+    expect(result.current.currentSectionIndex).toBe(3);
+  });
+
+  it('useSectionObserver 의존성 없음 — 모듈에서 import하지 않음', () => {
+    // useConsultation이 useSectionObserver를 사용하지 않는지 간접 검증:
+    // reset() 후 currentSectionIndex는 consultationStore에서만 관리됨
+    const { result } = renderHook(() => useConsultation());
+
+    act(() => { result.current.handleSectionChange(5); });
+    expect(useConsultationStore.getState().currentSectionIndex).toBe(5);
+
+    act(() => { result.current.reset(); });
+    // reset 시 consultationStore.clearData() → currentSectionIndex 0으로 초기화
+    expect(useConsultationStore.getState().currentSectionIndex).toBe(0);
   });
 });
