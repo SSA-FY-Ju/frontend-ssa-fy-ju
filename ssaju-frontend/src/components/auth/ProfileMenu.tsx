@@ -33,7 +33,18 @@ export function ProfileMenu() {
     await logout();
   };
 
-  const showAvatar = !user.profileImage || imgError;
+  // next/image는 remotePatterns에 없는 도메인을 렌더 시점에 throw함
+  // 허용된 도메인(Google, Kakao)이 아니면 이니셜 아바타로 폴백
+  const ALLOWED_HOSTS = ['lh3.googleusercontent.com', 'k.kakaocdn.net'];
+  const isAllowedHost = (url: string) => {
+    try {
+      return ALLOWED_HOSTS.includes(new URL(url).hostname);
+    } catch {
+      return false;
+    }
+  };
+  const showAvatar =
+    !user.profileImage || imgError || !isAllowedHost(user.profileImage);
 
   return (
     <div ref={menuRef} className="relative">
