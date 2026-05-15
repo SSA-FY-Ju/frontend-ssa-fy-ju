@@ -12,6 +12,7 @@
 
 import dynamic from 'next/dynamic';
 import { useConsultation } from '@/hooks/useConsultation';
+import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { InputForm } from '@/components/forms/InputForm';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { ConsultationLoading } from '@/components/results/ConsultationLoading';
@@ -27,6 +28,9 @@ const FullPageConsultation = dynamic(
 );
 
 export default function ConsultationPage() {
+  // Route Guard: require birthDate to access this result page
+  useRouteGuard(true);
+
   const {
     phase,
     error,

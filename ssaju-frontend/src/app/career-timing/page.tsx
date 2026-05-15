@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSave } from '@/hooks/useSave';
 import { useAuthStore } from '@/stores/authStore';
 import { usePageExitGuard } from '@/hooks/usePageExitGuard';
+import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { InputForm } from '@/components/forms/InputForm';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { LoadingProgress } from '@/components/results/LoadingProgress';
@@ -23,6 +24,9 @@ import { ErrorMessage } from '@/components/errors/ErrorMessage';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export default function CareerTimingPage() {
+  // Route Guard: require birthDate to access this result page
+  useRouteGuard(true);
+
   const { phase, result, error, disclaimerVisible, disclaimerFading, submitAnalysis, reset } =
     useCareerTiming();
   const { isLoggedIn } = useAuth();

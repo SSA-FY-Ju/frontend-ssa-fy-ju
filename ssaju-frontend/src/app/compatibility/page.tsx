@@ -11,6 +11,7 @@
 import { useState } from 'react';
 import { useCompatibility } from '@/hooks/useCompatibility';
 import { useCompanyInfo } from '@/hooks/useCompanyInfo';
+import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { InputForm } from '@/components/forms/InputForm';
 import { CompanyForm } from '@/components/forms/CompanyForm';
 import { CompanyConfirmModal } from '@/components/modals/CompanyConfirmModal';
@@ -20,6 +21,9 @@ import { ErrorMessage } from '@/components/errors/ErrorMessage';
 import { CompatibilityResult } from '@/components/results/CompatibilityResult';
 
 export default function CompatibilityPage() {
+  // Route Guard: require birthDate to access this result page
+  useRouteGuard(true);
+
   const { phase, result, error, disclaimerVisible, disclaimerFading, submitCompatibility, reset } =
     useCompatibility();
   const { lookupCompany, suggestions, status: companyStatus, reset: resetCompanyInfo } =

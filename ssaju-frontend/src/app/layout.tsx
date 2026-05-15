@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Providers } from './providers';
 import { Header } from '@/components/common/Header';
+import { SessionRehydrationWrapper } from '@/components/providers/SessionRehydrationWrapper';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -42,8 +43,10 @@ export default function RootLayout({
       </head>
       <body>
         <Providers>
-          <Header />
-          {children}
+          <SessionRehydrationWrapper>
+            <Header />
+            {children}
+          </SessionRehydrationWrapper>
         </Providers>
       </body>
     </html>

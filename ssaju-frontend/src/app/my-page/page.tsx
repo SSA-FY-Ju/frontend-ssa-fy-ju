@@ -14,6 +14,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useMyPageAccess } from '@/hooks/useMyPageAccess';
 import { useMyPage } from '@/hooks/useMyPage';
 import { useHistoryDetail } from '@/hooks/useHistoryDetail';
@@ -27,6 +28,9 @@ import { HistoryDetailPage } from '@/components/results/HistoryDetailPage';
 import type { AnalysisRecord } from '@/types/api';
 
 export default function MyPage() {
+  // Route Guard: require login to access this page
+  useAuthGuard(true);
+
   const { isLoggedIn, isChecking } = useMyPageAccess();
 
   const {

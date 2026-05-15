@@ -17,6 +17,10 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface SessionState {
+  // User Input (Route Guard)
+  birthDate: string | null; // YYYY-MM-DD format
+  birthTime: string | null; // HH:mm format
+  // Analysis Tracking
   sajuResultId: string | null;
   lastAnalysisType: 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY' | null;
   currentAnalysisData: Record<string, unknown> | null;
@@ -24,6 +28,11 @@ interface SessionState {
 }
 
 interface SessionActions {
+  // User Input
+  initSession: (data: { birthDate: string; birthTime: string }) => void;
+  setBirthDate: (birthDate: string | null) => void;
+  setBirthTime: (birthTime: string | null) => void;
+  // Analysis Tracking
   setSajuResultId: (id: string | null) => void;
   setLastAnalysisType: (type: SessionState['lastAnalysisType']) => void;
   setCurrentAnalysisData: (data: Record<string, unknown> | null) => void;
@@ -35,6 +44,10 @@ interface SessionActions {
 type SessionStore = SessionState & SessionActions;
 
 const initialState: SessionState = {
+  // User Input
+  birthDate: null,
+  birthTime: null,
+  // Analysis Tracking
   sajuResultId: null,
   lastAnalysisType: null,
   currentAnalysisData: null,
@@ -46,6 +59,25 @@ export const useSessionStore = create<SessionStore>()(
     (set) => ({
       ...initialState,
 
+      // User Input Actions
+      initSession: (data: { birthDate: string; birthTime: string }) => {
+        set({
+          birthDate: data.birthDate,
+          birthTime: data.birthTime,
+        });
+        // Also persist to sessionStorage for explicit backup
+        sessionStorage.setItem('sessionData', JSON.stringify(data));
+      },
+
+      setBirthDate: (birthDate: string | null) => {
+        set({ birthDate });
+      },
+
+      setBirthTime: (birthTime: string | null) => {
+        set({ birthTime });
+      },
+
+      // Analysis Tracking Actions
       setSajuResultId: (id: string | null) => {
         set({ sajuResultId: id });
       },
@@ -64,10 +96,13 @@ export const useSessionStore = create<SessionStore>()(
 
       clearSession: () => {
         set({
+          birthDate: null,
+          birthTime: null,
           currentAnalysisData: null,
           isAnalyzing: false,
           // sajuResultId와 lastAnalysisType은 유지 (히스토리 추적용)
         });
+        sessionStorage.removeItem('sessionData');
       },
 
       reset: () => {
@@ -79,6 +114,8 @@ export const useSessionStore = create<SessionStore>()(
       storage: createJSONStorage(() => sessionStorage), // sessionStorage 사용 (탭 닫으면 삭제)
       // persist할 필드만 선택 (currentAnalysisData, isAnalyzing은 메모리만)
       partialize: (state) => ({
+        birthDate: state.birthDate,
+        birthTime: state.birthTime,
         sajuResultId: state.sajuResultId,
         lastAnalysisType: state.lastAnalysisType,
       }),
