@@ -1,5 +1,6 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { LoginButton } from '@/components/auth/LoginButton';
 import { ProfileMenu } from '@/components/auth/ProfileMenu';
@@ -11,9 +12,15 @@ import { useAuthStore } from '@/stores/authStore';
  * 로그인 상태에 따라:
  * - 비로그인: LoginButton 표시
  * - 로그인됨: ProfileMenu 표시
+ *
+ * 홈 페이지(/)에서는 숨김
  */
 export function Header() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const pathname = usePathname();
+
+  // 홈 페이지에서는 헤더 숨김
+  if (pathname === '/') return null;
 
   return (
     <header className="sticky top-0 z-40 border-b border-night-700 bg-night-900/95 backdrop-blur">

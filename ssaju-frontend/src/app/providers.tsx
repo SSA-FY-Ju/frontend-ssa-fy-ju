@@ -19,11 +19,13 @@ import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 export function Providers({ children }: { children: ReactNode }): React.ReactElement {
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
-      import('@/mocks/browser').then(({ worker }) => {
-        worker.start({
+      const initMSW = async () => {
+        const { worker } = await import('@/mocks/browser');
+        await worker.start({
           onUnhandledRequest: 'bypass', // 목업 없는 요청은 그냥 통과
         });
-      });
+      };
+      initMSW().catch((err) => console.error('MSW 초기화 실패:', err));
     }
   }, []);
 
