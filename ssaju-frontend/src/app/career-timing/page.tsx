@@ -11,24 +11,40 @@ import { useCareerTiming } from '@/hooks/useCareerTiming';
 import { useAuth } from '@/hooks/useAuth';
 import { useSave } from '@/hooks/useSave';
 import { useAuthStore } from '@/stores/authStore';
+import { usePageExitGuard } from '@/hooks/usePageExitGuard';
+import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { InputForm } from '@/components/forms/InputForm';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { LoadingProgress } from '@/components/results/LoadingProgress';
 import { CareerTimingResult } from '@/components/results/CareerTimingResult';
 import { FeedbackButton } from '@/components/results/FeedbackButton';
+import { LoginNudgeCard } from '@/components/common/LoginNudgeCard';
+import { PageExitModal } from '@/components/common/PageExitModal';
 import { ErrorMessage } from '@/components/errors/ErrorMessage';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
 export default function CareerTimingPage() {
+  // Route Guard: require birthDate to access this result page
+  useRouteGuard(true);
+
   const { phase, result, error, disclaimerVisible, disclaimerFading, submitAnalysis, reset } =
     useCareerTiming();
   const { isLoggedIn } = useAuth();
   const { save } = useSave('CAREER_TIMING');
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
+  const { shouldShowExitModal, confirmExit, cancelExit } = usePageExitGuard();
   const { getDisplayMessage } = useErrorHandler();
 
   return (
-    <main className="min-h-screen bg-night-900 text-white">
+    <main className="min-h-screen bg-night-900 text-white pt-16">
+      {/* 페이지 이탈 방지 모달 */}
+      <PageExitModal
+        isOpen={shouldShowExitModal}
+        onConfirmExit={confirmExit}
+        onCancelExit={cancelExit}
+        onLoginAndStay={() => { cancelExit(); openLoginModal(); }}
+      />
+
       {/* 고지 문구 오버레이 */}
       <DisclaimerOverlay isVisible={disclaimerVisible} isFading={disclaimerFading} />
 
@@ -71,6 +87,9 @@ export default function CareerTimingPage() {
             />
             <div className="mt-4">
               <FeedbackButton feedbackType="CAREER_TIMING" />
+            </div>
+            <div className="mt-6">
+              <LoginNudgeCard show={phase === 'result'} />
             </div>
           </>
         )}

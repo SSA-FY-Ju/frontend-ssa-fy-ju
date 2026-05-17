@@ -1,4 +1,5 @@
 {
+  "ignorePatterns": [],
   "extends": [
     "next/core-web-vitals"
   ],

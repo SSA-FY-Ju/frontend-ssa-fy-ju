@@ -1,13 +1,28 @@
 import type { Metadata } from 'next';
 import { Providers } from './providers';
 import { Header } from '@/components/common/Header';
+import { SessionRehydrationWrapper } from '@/components/providers/SessionRehydrationWrapper';
+import StarryBackground from '@/components/landing/StarryBackground';
 import './globals.css';
+import '@/styles/landing.css';
 
 export const metadata: Metadata = {
   title: 'SSAju - 사주 기반 커리어 컨설팅',
   description: '당신의 관운을 분석하여 최적의 커리어 경로를 제시합니다.',
   icons: {
     icon: '/favicon.ico',
+  },
+  openGraph: {
+    title: 'SSAju - 사주 기반 커리어 컨설팅',
+    description: '당신의 관운을 분석하여 최적의 커리어 경로를 제시합니다.',
+    type: 'website',
+    locale: 'ko_KR',
+    siteName: 'SSAju',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SSAju - 사주 기반 커리어 컨설팅',
+    description: '당신의 관운을 분석하여 최적의 커리어 경로를 제시합니다.',
   },
 };
 
@@ -29,9 +44,12 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <StarryBackground />
         <Providers>
-          <Header />
-          {children}
+          <SessionRehydrationWrapper>
+            <Header />
+            {children}
+          </SessionRehydrationWrapper>
         </Providers>
       </body>
     </html>

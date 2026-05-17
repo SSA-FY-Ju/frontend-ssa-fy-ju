@@ -66,6 +66,36 @@ const updateLoadingState = (loading: boolean): void => {
 };
 
 /**
+ * 토큰 갱신 시도 (백엔드가 /api/auth/refresh를 지원할 때만 동작)
+ * 쿠키 기반 refresh token 전송 → 새 access token 쿠키 수신
+ */
+async function tryRefreshToken(): Promise<boolean> {
+  try {
+    const baseUrl = config.apiBaseUrl;
+    const response = await fetch(`${baseUrl}/api/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 인증 만료 시 클라이언트 상태 초기화
+ */
+function clearAuthAndRedirect(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const { useAuthStore } = require('@/stores/authStore');
+    useAuthStore.getState().logout?.();
+  } catch {
+    // 스토어를 사용할 수 없으면 무시
+  }
+}
+
+/**
  * 중앙 API fetch 래퍼
  *
  * @param path - API 경로 (예: /api/career/timing)
@@ -126,6 +156,19 @@ export async function apiFetch<T>(
             json.error?.message || 'Unknown error',
             json.error?.requestId || 'unknown',
           );
+        }
+
+        // 401 — 토큰 갱신 시도 후 1회 재요청
+        if (response.status === 401 && attempt === 0) {
+          const refreshed = await tryRefreshToken();
+          if (refreshed) {
+            // 재시도 (attempt 루프는 continue로 돌리지 않고 break 후 재귀 호출)
+            lastError = new Error('TOKEN_REFRESHED');
+            continue;
+          }
+          // 갱신 실패 → 로그아웃 처리
+          clearAuthAndRedirect();
+          throw new ApiError(401, 'UNAUTHORIZED', '인증이 만료되었습니다. 다시 로그인해주세요.', 'unknown');
         }
 
         // 4xx 에러 (재시도 하지 않음)

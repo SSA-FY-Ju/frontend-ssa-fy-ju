@@ -8,10 +8,12 @@ import { careerHandlers } from './handlers/career';
 import { companyHandlers } from './handlers/company';
 import { feedbackHandlers } from './handlers/feedback';
 import { authHandlers } from './handlers/auth';
+import { mypageHandlers } from './handlers/mypage';
 
 export const worker = setupWorker(
   ...careerHandlers,
   ...companyHandlers,
   ...feedbackHandlers,
   ...authHandlers,
+  ...mypageHandlers,
 );

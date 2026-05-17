@@ -14,6 +14,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useMyPageAccess } from '@/hooks/useMyPageAccess';
 import { useMyPage } from '@/hooks/useMyPage';
 import { useHistoryDetail } from '@/hooks/useHistoryDetail';
@@ -27,6 +28,9 @@ import { HistoryDetailPage } from '@/components/results/HistoryDetailPage';
 import type { AnalysisRecord } from '@/types/api';
 
 export default function MyPage() {
+  // Route Guard: require login to access this page
+  useAuthGuard(true);
+
   const { isLoggedIn, isChecking } = useMyPageAccess();
 
   const {
@@ -75,7 +79,7 @@ export default function MyPage() {
   // 접근 권한 체크 중
   if (isChecking) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-night-900">
+      <div className="flex items-center justify-center min-h-screen bg-night-900 pt-16">
         <p className="text-night-600 text-sm">로딩 중...</p>
       </div>
     );
@@ -103,9 +107,9 @@ export default function MyPage() {
   };
 
   return (
-    <div className="min-h-screen bg-night-900">
+    <div className="min-h-screen bg-night-900 pt-16">
       {/* 헤더 */}
-      <header className="px-4 pt-10 pb-4 max-w-2xl mx-auto">
+      <header className="px-4 pt-6 pb-4 max-w-2xl mx-auto">
         <h1 className="text-white text-2xl font-bold">내 분석 기록</h1>
         <p className="text-night-600 text-sm mt-1">나의 사주 분석 결과를 확인하세요</p>
       </header>

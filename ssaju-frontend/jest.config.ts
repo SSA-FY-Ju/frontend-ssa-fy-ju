@@ -27,13 +27,19 @@ const config: Config = {
     '!src/**/*.d.ts',
     '!src/**/*.stories.tsx',
     '!src/**/__tests__/**',
+    // Next.js 페이지·API 라우트는 서버 컨텍스트가 필요 → 단위 테스트 제외
+    '!src/app/**',
+    // MSW 목 핸들러 — 테스트 인프라 코드, 소스 코드 아님
+    '!src/mocks/**',
+    // TypeScript 타입 선언만 포함된 파일 — 실행 가능한 코드 없음
+    '!src/types/api.ts',
   ],
   coverageThreshold: {
     global: {
-      branches: 50,
-      functions: 50,
-      lines: 50,
-      statements: 50,
+      branches: 70,
+      functions: 70,
+      lines: 80,
+      statements: 80,
     },
   },
 };
@@ -49,6 +55,9 @@ async function jestConfig() {
     ],
     // *.test.ts(x) / *.spec.ts(x) 파일만 테스트로 인식 (setup.ts 제외)
     testMatch: ['**/?(*.)+(spec|test).[jt]s?(x)'],
+    // nextJest가 collectCoverageFrom을 재정의할 수 있으므로 명시적 재설정
+    collectCoverageFrom: config.collectCoverageFrom,
+    coverageThreshold: config.coverageThreshold,
   };
 }
 

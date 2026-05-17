@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 
 /**
@@ -22,12 +23,28 @@ export function ProfileMenu() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const [imgError, setImgError] = useState(false);
+  const handleImgError = useCallback(() => setImgError(true), []);
+
   if (!user) return null;
 
   const handleLogout = async () => {
     setIsOpen(false);
     await logout();
   };
+
+  // next/image는 remotePatterns에 없는 도메인을 렌더 시점에 throw함
+  // 허용된 도메인(Google, Kakao)이 아니면 이니셜 아바타로 폴백
+  const ALLOWED_HOSTS = ['lh3.googleusercontent.com', 'k.kakaocdn.net'];
+  const isAllowedHost = (url: string) => {
+    try {
+      return ALLOWED_HOSTS.includes(new URL(url).hostname);
+    } catch {
+      return false;
+    }
+  };
+  const showAvatar =
+    !user.profileImage || imgError || !isAllowedHost(user.profileImage);
 
   return (
     <div ref={menuRef} className="relative">
@@ -37,16 +54,19 @@ export function ProfileMenu() {
         aria-expanded={isOpen}
         aria-label="프로필 메뉴"
       >
-        {user.profileImage ? (
-          <img
-            src={user.profileImage}
-            alt={user.name}
-            className="h-8 w-8 rounded-full object-cover"
-          />
-        ) : (
+        {showAvatar ? (
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-star-500 text-sm font-bold text-night-900">
             {user.name.charAt(0)}
           </div>
+        ) : (
+          <Image
+            src={user.profileImage!}
+            alt={user.name}
+            width={32}
+            height={32}
+            className="rounded-full object-cover"
+            onError={handleImgError}
+          />
         )}
         <span className="text-sm text-white">{user.name}</span>
         <span className="text-xs text-gray-400">{isOpen ? '▲' : '▼'}</span>
