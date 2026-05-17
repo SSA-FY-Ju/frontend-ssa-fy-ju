@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 채팅 입력 단계에서 생년월일 입력/검증 UI를 담당합니다.\n */
+
 import { useState } from 'react';
 
 interface DatePickerFieldProps {

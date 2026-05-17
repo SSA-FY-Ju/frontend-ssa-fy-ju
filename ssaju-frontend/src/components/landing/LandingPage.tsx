@@ -1,6 +1,9 @@
 'use client';
 
+/**\n * 파일 역할: 랜딩 5페이지 전환, 입력 진입 상태, 페이지 네비게이션을 총괄하는 메인 컨테이너입니다.\n */
+
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import Brand from './Brand';
 import Page1 from './pages/Page1';
 import Page2 from './pages/Page2';
@@ -39,6 +42,7 @@ const PAGES = [
 ] as const;
 
 export default function LandingPage() {
+  const router = useRouter();
   const [pageIndex, setPageIndex] = useState(0);
   const [state, setState] = useState<PageState>('landing');
   const totalPages = PAGES.length;
@@ -138,7 +142,7 @@ export default function LandingPage() {
         </div>
 
         <div className={`page ${pageIndex === 4 ? 'active' : ''}`}>
-          <Page5 onStart={() => setState('chat')} />
+          <Page5 onStart={() => router.push('/select')} />
         </div>
       </div>
     </div>

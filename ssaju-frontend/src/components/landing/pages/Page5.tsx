@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 랜딩 스토리 5페이지(최종 CTA 및 시작 버튼)를 렌더합니다.\n */
+
 interface Page5Props {
   onStart: () => void;
 }

@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 랜딩 스토리 4페이지(제공 서비스 요약 섹션)를 렌더합니다.\n */
+
 const services = [
   { num: '01', t: '관운 분석', s: '상반기·하반기, 언제가 좋을까?', d: 'Career Timing' },
   { num: '02', t: 'AI 커리어 컨설팅', s: '19개 항목으로 풀어내는 나만의 지도', d: 'Consultation' },

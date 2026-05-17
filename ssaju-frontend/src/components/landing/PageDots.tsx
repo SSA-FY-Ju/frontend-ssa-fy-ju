@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 현재 페이지 인덱스를 표시하고 페이지 점프를 제공하는 도트 네비게이션입니다.\n */
+
 interface PageDotsProps {
   currentPage: number;
   totalPages: number;

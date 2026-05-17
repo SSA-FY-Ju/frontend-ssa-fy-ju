@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 서비스 소개용 요약 카드를 출력하는 프레젠테이션 컴포넌트입니다.\n */
+
 interface ServiceIntroCardProps {
   number: string;
   title: string;

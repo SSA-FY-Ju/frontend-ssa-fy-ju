@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 스토리형 랜딩 경험(페이지 전환, 도트 네비, CTA 후 서비스 이동)을 구성합니다.\n */
+
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 

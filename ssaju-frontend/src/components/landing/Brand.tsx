@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 랜딩 상단 브랜드 로고/타이틀을 렌더하고 클릭 시 홈 초기 상태로 이동시킵니다.\n */
+
 interface BrandProps {
   onClick?: () => void;
 }

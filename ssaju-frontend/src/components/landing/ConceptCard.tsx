@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 랜딩 설명 섹션에서 단일 컨셉 카드를 표시하는 재사용 UI 컴포넌트입니다.\n */
+
 interface ConceptCardProps {
   icon: string;
   title: string;

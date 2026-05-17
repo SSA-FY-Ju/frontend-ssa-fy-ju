@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 채팅 입력 단계에서 태어난 시간 입력과 빠른 선택 버튼 UI를 제공합니다.\n */
+
 interface TimePickerFieldProps {
   birthTime: string;
   onChange: (time: string) => void;

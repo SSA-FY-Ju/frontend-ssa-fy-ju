@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 랜딩 스토리 3페이지(브랜드 약속/가치 제안)를 렌더합니다.\n */
+
 export default function Page3() {
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center px-6">

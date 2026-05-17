@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 랜딩 스토리 1페이지(문제 제기/도입 화면)를 렌더합니다.\n */
+
 export default function Page1() {
   return (
     <div className="w-screen h-screen flex flex-col items-center justify-center relative overflow-hidden">

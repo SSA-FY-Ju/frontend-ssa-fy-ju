@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 랜딩 배경의 별/유성 애니메이션을 생성하고 렌더합니다.\n */
+
 import { useState, useEffect } from 'react';
 
 export default function StarryBackground() {

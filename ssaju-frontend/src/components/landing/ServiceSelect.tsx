@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 사용자가 분석 서비스를 선택하고 해당 서비스 페이지로 이동하도록 처리합니다.\n */
+
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ServiceCard from './ServiceCard';
@@ -35,14 +37,6 @@ const services = [
     description: '기업과의 궁합도 측정',
     duration: '5-8초',
     icon: '🏢',
-  },
-  {
-    id: 'FEEDBACK',
-    number: '04',
-    title: '만족도 피드백',
-    description: '서비스 피드백 제출',
-    duration: '1-2초',
-    icon: '📝',
   },
 ];
 
@@ -107,7 +101,7 @@ export default function ServiceSelect({
 
       {/* Service Cards Grid */}
       <div className="flex-1 px-6 py-8">
-        <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
           {services.map((service) => (
             <ServiceCard
               key={service.id}

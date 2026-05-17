@@ -1,5 +1,7 @@
 'use client';
 
+/**\n * 파일 역할: 채팅형 입력 플로우에서 생년월일/시간을 수집하고 다음 단계(서비스 선택)로 전환합니다.\n */
+
 import { useState, useEffect, useRef } from 'react';
 import { useSessionStore } from '@/stores/sessionStore';
 import DatePickerField from './DatePickerField';
