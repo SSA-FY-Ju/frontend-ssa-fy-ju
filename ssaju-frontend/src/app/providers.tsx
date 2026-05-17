@@ -20,12 +20,18 @@ export function Providers({ children }: { children: ReactNode }): React.ReactEle
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
       const initMSW = async () => {
-        const { worker } = await import('@/mocks/browser');
-        await worker.start({
-          onUnhandledRequest: 'bypass', // 목업 없는 요청은 그냥 통과
-        });
+        try {
+          const { worker } = await import('@/mocks/browser');
+          await worker.start({
+            onUnhandledRequest: 'bypass',
+          }).catch(() => {
+            // MSW 초기화 실패해도 앱 계속 실행
+          });
+        } catch (error) {
+          // 에러 무시하고 계속 진행
+        }
       };
-      initMSW().catch((err) => console.error('MSW 초기화 실패:', err));
+      initMSW();
     }
   }, []);
 

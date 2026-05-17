@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 
 const TOTAL_PAGES = 5;
@@ -29,64 +29,63 @@ type Stage = 'landing' | 'select';
 export function StoryLandingExperience() {
   const [stage, setStage] = useState<Stage>('landing');
   const [pageIndex, setPageIndex] = useState(0);
-  const [direction, setDirection] = useState<'down' | 'up'>('down');
+  const landingPagesRef = useRef<HTMLElement | null>(null);
+  const pageRefs = useRef<Array<HTMLDivElement | null>>([]);
 
   useEffect(() => {
-    if (stage !== 'landing') return;
-    let lock = false;
-
-    const advance = (dir: 1 | -1) => {
-      if (lock) return;
-      lock = true;
-      setDirection(dir > 0 ? 'down' : 'up');
-      setPageIndex((prev) => Math.max(0, Math.min(TOTAL_PAGES - 1, prev + dir)));
-      window.setTimeout(() => {
-        lock = false;
-      }, 900);
-    };
-
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      if (Math.abs(e.deltaY) < 6) return;
-      advance(e.deltaY > 0 ? 1 : -1);
-    };
-
     const onKey = (e: KeyboardEvent) => {
+      if (!landingPagesRef.current) return;
       if (['ArrowDown', 'PageDown', ' '].includes(e.key)) {
         e.preventDefault();
-        advance(1);
+        const next = Math.min(pageIndex + 1, TOTAL_PAGES - 1);
+        pageRefs.current[next]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
       if (['ArrowUp', 'PageUp'].includes(e.key)) {
         e.preventDefault();
-        advance(-1);
+        const prev = Math.max(pageIndex - 1, 0);
+        pageRefs.current[prev]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     };
 
-    let touchY = 0;
-    const onTouchStart = (e: TouchEvent) => {
-      touchY = e.touches[0]?.clientY ?? 0;
-    };
-    const onTouchEnd = (e: TouchEvent) => {
-      const dy = touchY - (e.changedTouches[0]?.clientY ?? 0);
-      if (Math.abs(dy) > 40) {
-        advance(dy > 0 ? 1 : -1);
-      }
-    };
-
-    window.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('keydown', onKey);
-    window.addEventListener('touchstart', onTouchStart, { passive: true });
-    window.addEventListener('touchend', onTouchEnd, { passive: true });
     return () => {
-      window.removeEventListener('wheel', onWheel);
       window.removeEventListener('keydown', onKey);
-      window.removeEventListener('touchstart', onTouchStart);
-      window.removeEventListener('touchend', onTouchEnd);
     };
-  }, [stage]);
+  }, [stage, pageIndex]);
+
+  useEffect(() => {
+    if (stage !== 'landing') return;
+
+    const onScroll = () => {
+      const viewportCenter = window.innerHeight / 2;
+      let closestIndex = 0;
+      let closestDistance = Number.POSITIVE_INFINITY;
+
+      pageRefs.current.forEach((pageEl, idx) => {
+        if (!pageEl) return;
+        const rect = pageEl.getBoundingClientRect();
+        const center = rect.top + rect.height / 2;
+        const distance = Math.abs(center - viewportCenter);
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestIndex = idx;
+        }
+      });
+
+      if (closestIndex !== pageIndex) setPageIndex(closestIndex);
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [stage, pageIndex]);
+
+  const handleDotClick = (index: number) => {
+    pageRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   return (
-    <main className="landing-root relative min-h-[calc(100vh-64px)] overflow-hidden bg-night-900 text-white">
+    <main className="landing-root relative bg-night-900 text-white">
       <LandingStars />
       <div className="landing-bg-drift pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(41,82,163,0.35),transparent_55%),radial-gradient(ellipse_at_80%_20%,rgba(59,109,184,0.30),transparent_60%),radial-gradient(ellipse_at_50%_80%,rgba(26,47,94,0.45),transparent_55%),linear-gradient(180deg,#0a1230_0%,#16306b_40%,#1e4490_70%,#0d1b3d_100%)]" />
 
@@ -95,7 +94,7 @@ export function StoryLandingExperience() {
           {Array.from({ length: TOTAL_PAGES }).map((_, i) => (
             <button
               key={i}
-              onClick={() => setPageIndex(i)}
+              onClick={() => handleDotClick(i)}
               className={`landing-dot ${pageIndex === i ? 'active' : ''}`}
               aria-label={`페이지 ${i + 1}`}
             />
@@ -104,8 +103,8 @@ export function StoryLandingExperience() {
       )}
 
       {stage === 'landing' && (
-        <section className={['landing-pages', direction === 'down' ? 'page-enter-down' : 'page-enter-up'].join(' ')}>
-          <div className={`page ${pageIndex === 0 ? 'active' : ''}`}>
+        <section ref={landingPagesRef} className="landing-pages">
+          <div ref={(el) => { pageRefs.current[0] = el; }} className={`page ${pageIndex === 0 ? 'active' : ''}`}>
             <div style={{ textAlign: 'center', maxWidth: 900 }}>
               <div className="label fade-in-up" style={{ marginBottom: 24 }}>
                 SSAju · 별이 빛나는 밤, 당신의 길을 묻다
@@ -125,7 +124,7 @@ export function StoryLandingExperience() {
             </div>
           </div>
 
-          <div className={`page ${pageIndex === 1 ? 'active' : ''}`}>
+          <div ref={(el) => { pageRefs.current[1] = el; }} className={`page ${pageIndex === 1 ? 'active' : ''}`}>
             <div style={{ width: '100%', maxWidth: 880 }}>
               <h2 className="headline headline-lg fade-in-up" style={{ textAlign: 'center', marginBottom: 8 }}>
                 누구나 한 번쯤<br />
@@ -145,7 +144,7 @@ export function StoryLandingExperience() {
             </div>
           </div>
 
-          <div className={`page ${pageIndex === 2 ? 'active' : ''}`}>
+          <div ref={(el) => { pageRefs.current[2] = el; }} className={`page ${pageIndex === 2 ? 'active' : ''}`}>
             <div style={{ textAlign: 'center', maxWidth: 820 }}>
               <div className="label fade-in-up" style={{ marginBottom: 28 }}>저희의 약속</div>
               <h2 className="headline headline-lg fade-in-up delay-1" style={{ marginBottom: 36 }}>
@@ -162,7 +161,7 @@ export function StoryLandingExperience() {
             </div>
           </div>
 
-          <div className={`page ${pageIndex === 3 ? 'active' : ''}`}>
+          <div ref={(el) => { pageRefs.current[3] = el; }} className={`page ${pageIndex === 3 ? 'active' : ''}`}>
             <div style={{ width: '100%', maxWidth: 920 }}>
               <h2 className="headline headline-lg fade-in-up" style={{ textAlign: 'center', marginBottom: 12 }}>
                 네 가지 별자리,<br />
@@ -184,7 +183,7 @@ export function StoryLandingExperience() {
             </div>
           </div>
 
-          <div className={`page ${pageIndex === 4 ? 'active' : ''}`}>
+          <div ref={(el) => { pageRefs.current[4] = el; }} className={`page ${pageIndex === 4 ? 'active' : ''}`}>
             <div style={{ textAlign: 'center', maxWidth: 720 }}>
               <div className="label fade-in-up" style={{ marginBottom: 24 }}>이제, 시작합니다</div>
               <h2 className="headline headline-xl fade-in-up delay-1" style={{ marginBottom: 28 }}>

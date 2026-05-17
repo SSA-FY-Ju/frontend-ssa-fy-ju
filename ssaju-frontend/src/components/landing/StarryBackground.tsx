@@ -1,23 +1,30 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function StarryBackground() {
   const [shootingStars, setShootingStars] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const [stars, setStars] = useState<Array<{ x: number; y: number; size: number; delay: number; duration: number; color: string }>>([]);
 
-  const stars = useMemo(() => {
+  useEffect(() => {
     const arr = [];
-    for (let i = 0; i < 80; i++) {
+    for (let i = 0; i < 200; i++) {
+      const rand = Math.random();
+      let color = '';
+      if (rand > 0.85) color = 'gold';
+      else if (rand > 0.65) color = 'blue';
+      else if (rand > 0.45) color = 'purple';
+
       arr.push({
         x: Math.random() * 100,
         y: Math.random() * 100,
-        size: Math.random() * 2.5 + 1,
+        size: Math.random() * 2 + 0.5,
         delay: Math.random() * 3,
-        duration: 2 + Math.random() * 3,
-        color: Math.random() > 0.65 ? (Math.random() > 0.5 ? 'gold' : 'blue') : '',
+        duration: 2.5 + Math.random() * 2,
+        color,
       });
     }
-    return arr;
+    setStars(arr);
   }, []);
 
   useEffect(() => {
@@ -32,7 +39,7 @@ export default function StarryBackground() {
       setTimeout(() => setShootingStars((prev) => prev.filter((s) => s.id !== id)), 2000);
     };
     spawn();
-    const interval = setInterval(spawn, 6500 + Math.random() * 4000);
+    const interval = setInterval(spawn, 3000 + Math.random() * 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -46,84 +53,63 @@ export default function StarryBackground() {
         xmlns="http://www.w3.org/2000/svg"
       >
         <defs>
-          <filter id="impasto" x="-20%" y="-20%" width="140%" height="140%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed={5} />
-            <feDisplacementMap in="SourceGraphic" scale={6} />
-          </filter>
-          <radialGradient id="moonGrad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#fef3c7" stopOpacity="1" />
-            <stop offset="40%" stopColor="#fcd34d" stopOpacity="0.9" />
-            <stop offset="100%" stopColor="#fcd34d" stopOpacity="0" />
+          <radialGradient id="galaxyCore" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#d8b8ff" stopOpacity="0.15" />
+            <stop offset="50%" stopColor="#6450c8" stopOpacity="0.08" />
+            <stop offset="100%" stopColor="#2d3b7f" stopOpacity="0" />
           </radialGradient>
-          <radialGradient id="starGrad" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#fef3c7" stopOpacity="1" />
-            <stop offset="50%" stopColor="#fcd34d" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#fcd34d" stopOpacity="0" />
+          <radialGradient id="nebula" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#a8d8ff" stopOpacity="0.1" />
+            <stop offset="100%" stopColor="#2d3b7f" stopOpacity="0" />
           </radialGradient>
         </defs>
 
-        <g filter="url(#impasto)" style={{ transformOrigin: '800px 400px', animation: 'spin-slow 120s linear infinite' }}>
+        {/* Rotating galaxy spiral */}
+        <g style={{ transformOrigin: '800px 450px', animation: 'galaxy-spin 200s linear infinite' }}>
           <path
-            d="M 600 400 Q 700 250 900 350 Q 1100 450 1000 600 Q 850 750 700 650 Q 500 550 600 400 Z"
+            d="M 800 450 Q 900 350 950 300 Q 1000 250 1050 200 Q 1100 150 1120 100"
             fill="none"
-            stroke="#4a7fb8"
-            strokeWidth="14"
+            stroke="#6450c8"
+            strokeWidth="3"
             strokeLinecap="round"
-            opacity="0.5"
+            opacity="0.12"
           />
           <path
-            d="M 650 400 Q 730 300 880 380 Q 1020 470 950 580 Q 830 690 730 620 Q 580 530 650 400 Z"
+            d="M 800 450 Q 700 350 650 300 Q 600 250 550 200 Q 500 150 480 100"
             fill="none"
-            stroke="#a5b4fc"
-            strokeWidth="8"
+            stroke="#6450c8"
+            strokeWidth="3"
             strokeLinecap="round"
-            opacity="0.6"
+            opacity="0.12"
           />
           <path
-            d="M 700 410 Q 760 340 850 400 Q 950 470 900 550 Q 820 630 760 580 Q 660 510 700 410 Z"
+            d="M 800 450 Q 900 550 950 600 Q 1000 650 1050 700 Q 1100 750 1120 800"
             fill="none"
-            stroke="#fef3c7"
-            strokeWidth="4"
+            stroke="#8b7fbf"
+            strokeWidth="2"
             strokeLinecap="round"
-            opacity="0.7"
-          />
-        </g>
-
-        <g filter="url(#impasto)" style={{ transformOrigin: '1300px 200px', animation: 'spin-slow 90s linear infinite reverse' }}>
-          <path
-            d="M 1200 200 Q 1280 120 1380 180 Q 1450 260 1380 320 Q 1280 380 1220 320 Q 1140 260 1200 200 Z"
-            fill="none"
-            stroke="#3b6db8"
-            strokeWidth="10"
-            strokeLinecap="round"
-            opacity="0.55"
+            opacity="0.1"
           />
           <path
-            d="M 1240 200 Q 1290 150 1360 200 Q 1410 250 1360 300 Q 1290 340 1250 300 Q 1190 250 1240 200 Z"
+            d="M 800 450 Q 700 550 650 600 Q 600 650 550 700 Q 500 750 480 800"
             fill="none"
-            stroke="#a5b4fc"
-            strokeWidth="5"
+            stroke="#8b7fbf"
+            strokeWidth="2"
             strokeLinecap="round"
-            opacity="0.65"
+            opacity="0.1"
           />
         </g>
 
-        <g filter="url(#impasto)" opacity="0.4">
-          <path d="M 0 100 Q 200 80 400 110 T 800 90 T 1200 100 T 1600 80" fill="none" stroke="#4a7fb8" strokeWidth="6" strokeLinecap="round" />
-          <path d="M 0 180 Q 250 200 500 170 T 900 190 T 1300 175 T 1600 200" fill="none" stroke="#a5b4fc" strokeWidth="3" strokeLinecap="round" />
-          <path d="M 0 720 Q 300 700 600 730 T 1100 710 T 1600 730" fill="none" stroke="#1e4490" strokeWidth="8" strokeLinecap="round" />
-          <path d="M 0 800 Q 350 820 700 800 T 1300 810 T 1600 800" fill="none" stroke="#16306b" strokeWidth="10" strokeLinecap="round" />
+        {/* Nebula clouds */}
+        <circle cx="300" cy="200" r="200" fill="url(#nebula)" opacity="0.6" />
+        <circle cx="1300" cy="700" r="250" fill="url(#galaxyCore)" opacity="0.5" />
+        <circle cx="800" cy="450" r="180" fill="url(#galaxyCore)" opacity="0.3" />
+
+        {/* Subtle wave lines */}
+        <g opacity="0.08" style={{ animation: 'wave-drift 25s ease-in-out infinite' }}>
+          <path d="M 0 300 Q 400 280 800 300 T 1600 300" fill="none" stroke="#a8d8ff" strokeWidth="2" strokeLinecap="round" />
+          <path d="M 0 600 Q 400 620 800 600 T 1600 600" fill="none" stroke="#d8b8ff" strokeWidth="2" strokeLinecap="round" />
         </g>
-
-        <circle cx="1320" cy="180" r="80" fill="url(#moonGrad)" opacity="0.5" />
-        <circle cx="1320" cy="180" r="32" fill="#fcd34d" opacity="0.9" />
-
-        <circle cx="240" cy="160" r="60" fill="url(#starGrad)" opacity="0.4" />
-        <circle cx="240" cy="160" r="14" fill="#fef3c7" />
-        <circle cx="500" cy="240" r="40" fill="url(#starGrad)" opacity="0.35" />
-        <circle cx="500" cy="240" r="8" fill="#fef3c7" />
-        <circle cx="1100" cy="120" r="40" fill="url(#starGrad)" opacity="0.35" />
-        <circle cx="1100" cy="120" r="9" fill="#fef3c7" />
       </svg>
 
       <div className="stars-layer">

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook } from '@testing-library/react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSessionStore } from '@/stores/sessionStore';

@@ -4,20 +4,21 @@
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
 :root {
-  /* Starry Night palette */
-  --night-deep: #0a1230;
-  --night: #0d1b3d;
-  --night-mid: #16306b;
-  --night-blue: #1e4490;
+  /* Deep Space palette */
+  --night-deep: #020817;
+  --night: #0d0f2d;
+  --night-mid: #1a1f4d;
+  --night-blue: #2d3b7f;
   --night-cyan: #4a7fb8;
-  --moon: #fcd34d;
-  --moon-glow: #f9d976;
-  --star: #fef3c7;
-  --star-blue: #a5b4fc;
+  --moon: #e0e6ff;
+  --moon-glow: #b8c5ff;
+  --star: #ffffff;
+  --star-blue: #a8d8ff;
+  --star-purple: #d8b8ff;
   --cypress: #1a3a2e;
   --cypress-dark: #0f1f1a;
   --village: #e8d5a6;
-  --paint-cream: #f4ecd8;
+  --paint-cream: #e0e8ff;
   --ink: #0a0f1f;
 
   --serif: 'Noto Serif KR', 'Gowun Batang', 'Cormorant Garamond', serif;
@@ -45,27 +46,28 @@ html, body {
   overflow: hidden;
 }
 
-/* ===== Starry Night background — layered SVG swirls + stars ===== */
+/* ===== Deep Space background — layered nebula + stars ===== */
 .sky {
   position: absolute;
   inset: 0;
   z-index: 0;
   background:
-    radial-gradient(ellipse 80% 60% at 20% 30%, #2952a3 0%, transparent 55%),
-    radial-gradient(ellipse 60% 50% at 80% 20%, #3b6db8 0%, transparent 60%),
-    radial-gradient(ellipse 90% 70% at 50% 80%, #1a2f5e 0%, transparent 55%),
-    linear-gradient(180deg, #0a1230 0%, #16306b 40%, #1e4490 70%, #0d1b3d 100%);
+    radial-gradient(ellipse 120% 100% at 20% 30%, rgba(100, 80, 200, 0.25) 0%, transparent 50%),
+    radial-gradient(ellipse 100% 80% at 80% 20%, rgba(100, 150, 255, 0.2) 0%, transparent 55%),
+    radial-gradient(ellipse 110% 90% at 50% 80%, rgba(150, 100, 200, 0.15) 0%, transparent 50%),
+    linear-gradient(180deg, #020817 0%, #0d0f2d 25%, #1a1f4d 50%, #2d3b7f 75%, #0d0f2d 100%);
   overflow: hidden;
 }
 
 .sky::before {
-  /* impasto-like noise */
+  /* subtle space noise */
   content: '';
   position: absolute;
   inset: -20%;
   background-image:
-    repeating-radial-gradient(circle at 30% 40%, rgba(255,255,255,0.015) 0, rgba(255,255,255,0.015) 2px, transparent 3px, transparent 8px),
-    repeating-radial-gradient(circle at 70% 60%, rgba(252, 211, 77, 0.02) 0, rgba(252, 211, 77, 0.02) 1px, transparent 2px, transparent 6px);
+    radial-gradient(circle at 20% 50%, rgba(200, 180, 255, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 40%, rgba(150, 180, 255, 0.06) 0%, transparent 50%),
+    repeating-radial-gradient(circle at 30% 40%, rgba(255,255,255,0.03) 0, rgba(255,255,255,0.03) 2px, transparent 3px, transparent 8px);
   mix-blend-mode: screen;
   pointer-events: none;
 }
@@ -76,14 +78,20 @@ html, body {
   width: 100%;
   height: 100%;
   pointer-events: none;
-  opacity: 0.55;
-  animation: swirl-drift 60s ease-in-out infinite alternate;
+  opacity: 0.15;
+  animation: swirl-drift 80s ease-in-out infinite alternate;
 }
 
-@keyframes swirl-drift {
-  0%   { transform: translate(0, 0) scale(1); }
-  50%  { transform: translate(-2%, 1%) scale(1.04); }
-  100% { transform: translate(1%, -1%) scale(1.02); }
+@keyframes galaxy-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes wave-drift {
+  0%, 100% { transform: translateX(0) translateY(0); }
+  25%      { transform: translateX(20px) translateY(-15px); }
+  50%      { transform: translateX(0) translateY(-20px); }
+  75%      { transform: translateX(-20px) translateY(-15px); }
 }
 
 /* ===== Stars ===== */
@@ -95,12 +103,13 @@ html, body {
 .star {
   position: absolute;
   border-radius: 50%;
-  background: var(--star);
-  box-shadow: 0 0 6px var(--moon-glow), 0 0 14px rgba(252, 211, 77, 0.5);
-  animation: twinkle 3s ease-in-out infinite;
+  background: #ffffff;
+  box-shadow: 0 0 3px #ffffff, 0 0 8px rgba(200, 220, 255, 0.6);
+  animation: twinkle 2.5s ease-in-out infinite;
 }
-.star.gold { background: var(--moon-glow); box-shadow: 0 0 8px var(--moon), 0 0 18px rgba(252,211,77,0.6); }
-.star.blue { background: var(--star-blue); box-shadow: 0 0 6px var(--star-blue), 0 0 12px rgba(165,180,252,0.5); }
+.star.gold { background: #e0e6ff; box-shadow: 0 0 4px #e0e6ff, 0 0 12px rgba(224, 230, 255, 0.8); }
+.star.blue { background: #a8d8ff; box-shadow: 0 0 3px #a8d8ff, 0 0 10px rgba(168, 216, 255, 0.7); }
+.star.purple { background: #d8b8ff; box-shadow: 0 0 3px #d8b8ff, 0 0 10px rgba(216, 184, 255, 0.6); }
 
 @keyframes twinkle {
   0%, 100% { opacity: 0.4; transform: scale(0.8); }
@@ -110,11 +119,11 @@ html, body {
 /* shooting star */
 .shooting-star {
   position: absolute;
-  width: 2px;
-  height: 2px;
-  background: white;
+  width: 3px;
+  height: 3px;
+  background: #e0e6ff;
   border-radius: 50%;
-  box-shadow: 0 0 10px white, 0 0 20px var(--moon);
+  box-shadow: 0 0 8px #e0e6ff, 0 0 16px rgba(224, 230, 255, 0.8);
   opacity: 0;
 }
 .shooting-star::after {
@@ -122,15 +131,16 @@ html, body {
   position: absolute;
   top: 50%;
   right: 0;
-  width: 80px;
-  height: 1px;
-  background: linear-gradient(to left, white, transparent);
+  width: 120px;
+  height: 1.5px;
+  background: linear-gradient(to left, rgba(224, 230, 255, 0.8), transparent);
   transform: translateY(-50%);
+  filter: blur(0.5px);
 }
 @keyframes shoot {
   0%   { opacity: 0; transform: translate(0, 0) rotate(-25deg); }
-  10%  { opacity: 1; }
-  100% { opacity: 0; transform: translate(-220px, 100px) rotate(-25deg); }
+  8%   { opacity: 1; }
+  100% { opacity: 0; transform: translate(-280px, 120px) rotate(-25deg); }
 }
 
 /* ===== Page flip container ===== */
@@ -171,7 +181,7 @@ html, body {
   line-height: 1.25;
   letter-spacing: -0.02em;
   color: var(--paint-cream);
-  text-shadow: 0 2px 30px rgba(252, 211, 77, 0.15);
+  text-shadow: 0 2px 20px rgba(184, 197, 255, 0.2);
 }
 .headline em {
   font-style: italic;
@@ -269,22 +279,28 @@ html, body {
   z-index: 100;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 24px;
 }
 .page-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: rgba(244, 236, 216, 0.25);
+  width: auto;
+  height: auto;
   border: none;
+  background: none;
   cursor: pointer;
   transition: all 0.3s ease;
   padding: 0;
+  font-size: 24px;
+  opacity: 0.4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  color: var(--moon-glow);
 }
 .page-dot.active {
-  background: var(--moon-glow);
-  box-shadow: 0 0 12px var(--moon);
-  transform: scale(1.4);
+  font-size: 28px;
+  opacity: 1;
+  filter: drop-shadow(0 0 10px var(--moon-glow));
 }
 
 /* ===== Scroll hint ===== */

@@ -278,27 +278,25 @@ button {
   position: relative;
   width: 100%;
   min-height: calc(100vh - 64px);
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
 }
 
 .landing-root .page {
-  position: absolute;
-  inset: 0;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 6vh 8vw;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.9s ease, transform 1.1s cubic-bezier(0.22, 1, 0.36, 1);
-  transform: translateY(40px) scale(0.98);
-  z-index: 1;
+  min-height: calc(100vh - 64px);
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  opacity: 0.58;
+  transition: opacity 0.35s ease;
 }
 
 .landing-root .page.active {
   opacity: 1;
-  pointer-events: auto;
-  transform: translateY(0) scale(1);
-  z-index: 2;
 }
 
 .landing-root .headline {

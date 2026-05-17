@@ -20,6 +20,7 @@ interface SessionState {
   // User Input (Route Guard)
   birthDate: string | null; // YYYY-MM-DD format
   birthTime: string | null; // HH:mm format
+  selectedService: string | null;
   // Analysis Tracking
   sajuResultId: string | null;
   lastAnalysisType: 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY' | null;
@@ -32,6 +33,7 @@ interface SessionActions {
   initSession: (data: { birthDate: string; birthTime: string }) => void;
   setBirthDate: (birthDate: string | null) => void;
   setBirthTime: (birthTime: string | null) => void;
+  setSajuData: (data: { birthDate: string; birthTime: string; selectedService: string }) => void;
   // Analysis Tracking
   setSajuResultId: (id: string | null) => void;
   setLastAnalysisType: (type: SessionState['lastAnalysisType']) => void;
@@ -47,6 +49,7 @@ const initialState: SessionState = {
   // User Input
   birthDate: null,
   birthTime: null,
+  selectedService: null,
   // Analysis Tracking
   sajuResultId: null,
   lastAnalysisType: null,
@@ -75,6 +78,14 @@ export const useSessionStore = create<SessionStore>()(
 
       setBirthTime: (birthTime: string | null) => {
         set({ birthTime });
+      },
+
+      setSajuData: (data: { birthDate: string; birthTime: string; selectedService: string }) => {
+        set({
+          birthDate: data.birthDate,
+          birthTime: data.birthTime,
+          selectedService: data.selectedService,
+        });
       },
 
       // Analysis Tracking Actions
@@ -116,6 +127,7 @@ export const useSessionStore = create<SessionStore>()(
       partialize: (state) => ({
         birthDate: state.birthDate,
         birthTime: state.birthTime,
+        selectedService: state.selectedService,
         sajuResultId: state.sajuResultId,
         lastAnalysisType: state.lastAnalysisType,
       }),

@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import { Providers } from './providers';
 import { Header } from '@/components/common/Header';
 import { SessionRehydrationWrapper } from '@/components/providers/SessionRehydrationWrapper';
+import StarryBackground from '@/components/landing/StarryBackground';
 import './globals.css';
+import '@/styles/landing.css';
 
 export const metadata: Metadata = {
   title: 'SSAju - 사주 기반 커리어 컨설팅',
@@ -42,6 +44,7 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <StarryBackground />
         <Providers>
           <SessionRehydrationWrapper>
             <Header />
