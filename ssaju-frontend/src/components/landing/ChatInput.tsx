@@ -6,8 +6,8 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { useSessionStore } from '@/stores/sessionStore';
-import ServiceSelect from './ServiceSelect';
 import type { PageState } from './types';
 
 interface Message {
@@ -36,8 +36,8 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
   const [draftDate, setDraftDate] = useState('');
   const [draftHour, setDraftHour] = useState('12');
   const [draftMinute, setDraftMinute] = useState('00');
-  const [showService, setShowService] = useState(false);
   const flowRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
   const { setBirthDate: storeSetBirthDate, setBirthTime: storeSetBirthTime } = useSessionStore();
 
   useEffect(() => {
@@ -104,14 +104,9 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
     }, 1700);
   };
 
-  if (showService) {
-    return (
-      <ServiceSelect
-        birthDate={birthDate}
-        birthTime={`${draftHour.padStart(2, '0')}:${draftMinute.padStart(2, '0')}`}
-      />
-    );
-  }
+  const goToSelect = () => {
+    router.push('/select');
+  };
 
   const quickTimes = [
     { label: '자정', h: '00', m: '00' },
@@ -218,7 +213,7 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
               {m.input === 'confirm' && (
                 <div className="flex flex-wrap gap-2 mt-[14px]">
                   <button
-                    onClick={() => setShowService(true)}
+                    onClick={goToSelect}
                     className="bg-gradient-to-br from-[#fcd34d] to-[#f9d976] text-[#0a1230] font-medium text-[14px] py-3 px-6 rounded-full border-0 cursor-pointer hover:-translate-y-0.5 transition-transform shadow-[0_4px_30px_rgba(252,211,77,0.4)]"
                   >
                     서비스 고르러 가기 →
