@@ -182,7 +182,7 @@ export default function ChatInput({ onStateChange }: ChatInputProps) {
   };
 
   if (step === 'service') {
-    return <ServiceSelect birthDate={birthDate} birthTime={birthTime} onGoBack={handleGoBack} />;
+    return <ServiceSelect birthDate={birthDate} birthTime={birthTime} />;
   }
 
   return (

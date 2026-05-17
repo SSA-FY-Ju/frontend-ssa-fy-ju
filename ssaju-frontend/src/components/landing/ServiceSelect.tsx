@@ -10,7 +10,6 @@ import { useSessionStore } from '@/stores/sessionStore';
 interface ServiceSelectProps {
   birthDate: string;
   birthTime: string;
-  onGoBack: () => void;
 }
 
 const services = [
@@ -40,11 +39,7 @@ const services = [
   },
 ];
 
-export default function ServiceSelect({
-  birthDate,
-  birthTime,
-  onGoBack,
-}: ServiceSelectProps) {
+export default function ServiceSelect({ birthDate, birthTime }: ServiceSelectProps) {
   const router = useRouter();
   const { setSajuData } = useSessionStore();
   const [selectedService, setSelectedService] = useState<string | null>(null);
@@ -73,35 +68,10 @@ export default function ServiceSelect({
   };
 
   return (
-    <div className="w-screen h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-950 overflow-auto">
-      {/* Header */}
-      <div className="flex-shrink-0 px-6 py-8 border-b border-slate-700">
-        <button
-          onClick={onGoBack}
-          className="text-sm text-gray-400 hover:text-gray-300 transition-colors mb-6"
-        >
-          ← 처음으로
-        </button>
-
-        <div className="text-xs text-purple-400 font-semibold tracking-widest mb-2">
-          STEP 02 · 서비스 선택
-        </div>
-        <h1 className="text-4xl font-bold text-white">어떤 별자리부터 보여드릴까요?</h1>
-
-        {/* Display birth info */}
-        <div className="mt-6 flex gap-4 flex-wrap">
-          <div className="px-4 py-2 rounded-lg bg-gradient-to-r from-yellow-500/20 to-amber-500/20 border border-yellow-600/30">
-            <p className="text-sm text-yellow-300">
-              <span className="font-semibold">{formatDateKorean(birthDate)}</span>
-              <span className="text-yellow-400/70 ml-2">{birthTime}</span>
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <div className="w-screen h-screen flex flex-col bg-gradient-to-b from-slate-900 to-slate-950">
       {/* Service Cards Grid */}
-      <div className="flex-1 px-6 py-8">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="flex-1 px-6 py-8 flex items-center justify-center overflow-hidden">
+        <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-9 h-fit">
           {services.map((service) => (
             <ServiceCard
               key={service.id}
@@ -114,9 +84,4 @@ export default function ServiceSelect({
       </div>
     </div>
   );
-}
-
-function formatDateKorean(dateStr: string): string {
-  const [year, month, day] = dateStr.split('-');
-  return `${year}년 ${parseInt(month)}월 ${parseInt(day)}일`;
 }

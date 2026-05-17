@@ -36,7 +36,7 @@ export default function CareerTimingPage() {
   const { getDisplayMessage } = useErrorHandler();
 
   return (
-    <main className="min-h-screen bg-night-900 text-white">
+    <main className="min-h-screen bg-night-900 text-white pt-16">
       {/* 페이지 이탈 방지 모달 */}
       <PageExitModal
         isOpen={shouldShowExitModal}

@@ -23,35 +23,14 @@ export function Header() {
   if (pathname === '/') return null;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-night-700 bg-night-900/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+    <header className="fixed top-0 left-0 right-0 z-40 h-16">
+      <div className="mx-auto max-w-6xl flex items-center justify-between px-4 py-4">
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-xl font-bold text-star-500">✦ SSAju</span>
-          <span className="hidden text-sm text-gray-400 sm:block">사주 기반 커리어 컨설팅</span>
+          <span className="font-serif italic text-lg font-semibold text-yellow-300/70 hover:text-yellow-300 transition-colors">✦ SSAju</span>
+          <span className="hidden text-xs text-gray-400/50 sm:block">사주 기반 커리어 컨설팅</span>
         </Link>
 
-        <nav className="flex items-center gap-4" aria-label="주요 메뉴">
-          <Link
-            href="/career-timing"
-            className="hidden text-sm text-gray-300 hover:text-white sm:block transition-colors"
-          >
-            관운 분석
-          </Link>
-          <Link
-            href="/consultation"
-            className="hidden text-sm text-gray-300 hover:text-white sm:block transition-colors"
-          >
-            AI 컨설팅
-          </Link>
-          <Link
-            href="/compatibility"
-            className="hidden text-sm text-gray-300 hover:text-white sm:block transition-colors"
-          >
-            기업 궁합
-          </Link>
-
-          {isLoggedIn ? <ProfileMenu /> : <LoginButton />}
-        </nav>
+        {isLoggedIn ? <ProfileMenu /> : <LoginButton />}
       </div>
     </header>
   );

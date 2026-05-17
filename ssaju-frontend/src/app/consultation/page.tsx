@@ -43,7 +43,7 @@ export default function ConsultationPage() {
     reset,
   } = useConsultation();
   return (
-    <main className="min-h-screen bg-night-900 text-white">
+    <main className="min-h-screen bg-night-900 text-white pt-16">
       <DisclaimerOverlay isVisible={disclaimerVisible} isFading={disclaimerFading} />
 
       {/* 결과 페이지: fullpage.js가 전체 화면 차지 → 감싸는 컨테이너 없음 */}
