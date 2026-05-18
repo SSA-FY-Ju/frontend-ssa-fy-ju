@@ -16,9 +16,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel, Keyboard, A11y } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import type { ConsultationData } from '@/types/api';
-import { useAuth } from '@/hooks/useAuth';
 import { SectionNavigator } from './SectionNavigator';
-import { SignupPromptModal } from './SignupPromptModal';
 import { FeedbackPromptCard } from './FeedbackPromptCard';
 import { IndustriesTab } from './IndustriesTab';
 import { InterviewTipsTab } from './InterviewTipsTab';
@@ -56,31 +54,18 @@ export function FullPageConsultation({
 }: FullPageConsultationProps) {
   const swiperRef = useRef<SwiperType | null>(null);
 
-  const { isLoggedIn, loginWithKakao, loginWithGoogle } = useAuth();
-  const [showSignupModal, setShowSignupModal] = useState(false);
   const [showFeedbackPrompt, setShowFeedbackPrompt] = useState(false);
-  /** 세션 중 모달/카드를 이미 보여줬으면 다시 보여주지 않음 */
-  const signupShownRef = useRef(false);
   const feedbackShownRef = useRef(false);
 
-  /** currentSectionIndex가 바뀔 때 마지막 섹션 도달 감지 */
+  /** currentSectionIndex가 바뀔 때 마지막 섹션 도달 감지 → 피드백 카드 표시 */
   useEffect(() => {
     if (currentSectionIndex !== LAST_SECTION) return;
+    if (feedbackShownRef.current) return;
 
-    // 비로그인 사용자 → 회원가입 모달 (600ms 딜레이)
-    if (!isLoggedIn && !signupShownRef.current) {
-      signupShownRef.current = true;
-      const t = setTimeout(() => setShowSignupModal(true), 600);
-      return () => clearTimeout(t);
-    }
-
-    // 모든 사용자 → 피드백 카드 (800ms 딜레이)
-    if (!feedbackShownRef.current) {
-      feedbackShownRef.current = true;
-      const t = setTimeout(() => setShowFeedbackPrompt(true), 800);
-      return () => clearTimeout(t);
-    }
-  }, [currentSectionIndex, isLoggedIn]);
+    feedbackShownRef.current = true;
+    const t = setTimeout(() => setShowFeedbackPrompt(true), 800);
+    return () => clearTimeout(t);
+  }, [currentSectionIndex]);
 
   /** 네비게이터 클릭 → Swiper 슬라이드 이동 */
   const handleNavigate = (index: number) => {
@@ -111,27 +96,29 @@ export function FullPageConsultation({
       <Swiper
         direction="vertical"
         slidesPerView={1}
-        speed={1400}
+        speed={900}
         modules={[Mousewheel, Keyboard, A11y]}
-        mousewheel={{ thresholdDelta: 10, forceToAxis: true }}
+        mousewheel={{ thresholdDelta: 50, forceToAxis: true, releaseOnEdges: false }}
         keyboard={{ enabled: true }}
         a11y={{ enabled: true }}
         onSwiper={(swiper) => {
           swiperRef.current = swiper;
         }}
         onSlideChange={(swiper) => onSectionChange(swiper.activeIndex)}
-        style={{ height: '100vh' }}
+        style={{ height: '100vh', willChange: 'transform' }}
         data-testid="fullpage-container"
       >
         {SECTIONS.map((section, index) => (
           <SwiperSlide
             key={section.label}
-            style={{ height: '100vh', overflowY: 'auto' }}
+            style={{ height: '100vh', overflow: 'hidden' }}
             data-testid={`fullpage-section-${index}`}
           >
             <div
               className="min-h-full flex flex-col justify-center"
               style={{
+                height: '100vh',
+                overflowY: 'auto',
                 background: `radial-gradient(ellipse at 60% 30%, ${section.accentBg} 0%, transparent 65%)`,
               }}
             >
@@ -148,15 +135,6 @@ export function FullPageConsultation({
           </SwiperSlide>
         ))}
       </Swiper>
-
-      {/* 회원가입 유도 모달 (비로그인 사용자, 마지막 섹션 도달 시) */}
-      {showSignupModal && (
-        <SignupPromptModal
-          onKakao={() => { setShowSignupModal(false); loginWithKakao(); }}
-          onGoogle={() => { setShowSignupModal(false); loginWithGoogle(); }}
-          onClose={() => setShowSignupModal(false)}
-        />
-      )}
 
       {/* 피드백 유도 카드 (마지막 섹션 도달 시 슬라이드업) */}
       {showFeedbackPrompt && (
