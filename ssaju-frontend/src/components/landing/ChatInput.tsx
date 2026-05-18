@@ -27,7 +27,7 @@ const ArrowIcon = () => (
 );
 
 const selectClass =
-  'flex-1 appearance-none bg-[rgba(244,236,216,0.06)] border border-[rgba(244,236,216,0.2)] text-[#f4ecd8] px-5 py-[14px] rounded-xl text-sm outline-none [color-scheme:dark] cursor-pointer text-center';
+  'flex-1 appearance-none bg-[rgba(244,236,216,0.06)] border border-[rgba(244,236,216,0.2)] text-[#f4ecd8] px-3 py-2 rounded-xl text-sm outline-none [color-scheme:dark] cursor-pointer text-center';
 
 export default function ChatInput({ onStateChange: _onStateChange }: ChatInputProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -59,9 +59,28 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
   }, []);
 
   useEffect(() => {
-    if (flowRef.current) {
-      flowRef.current.scrollTo({ top: flowRef.current.scrollHeight, behavior: 'smooth' });
-    }
+    const el = flowRef.current;
+    if (!el) return;
+
+    const start = el.scrollTop;
+    const end = el.scrollHeight - el.clientHeight;
+    const change = end - start;
+    if (change <= 0) return;
+
+    // 버블 애니메이션과 동일: 1.4s cubic-bezier(0.22, 1, 0.36, 1)
+    const duration = 1400;
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+    const startTime = performance.now();
+    let rafId: number;
+
+    const step = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      el.scrollTop = start + change * easeOut(progress);
+      if (progress < 1) rafId = requestAnimationFrame(step);
+    };
+
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
   }, [messages]);
 
   const submitDate = () => {
@@ -78,7 +97,7 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
     setTimeout(() => {
       setMessages((prev) => [
         ...prev,
-        { who: 'bot' as const, text: '한 시간 차이로도 별이 달라져요. 모르시면 정오(12시)로 두셔도 괜찮아요.', input: 'time' as const },
+        { who: 'bot' as const, text: '한 시간 차이로도 별이 달라져요.\n모르시면 정오(12시)로 두셔도 괜찮아요.', input: 'time' as const },
       ]);
       setStep(2);
     }, 1500);
@@ -144,7 +163,7 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
                 </div>
               )}
 
-              {m.text}
+              <span className="whitespace-pre-line">{m.text}</span>
 
               {m.input === 'date' && (
                 <div className="flex gap-[10px] pt-3 items-center">
