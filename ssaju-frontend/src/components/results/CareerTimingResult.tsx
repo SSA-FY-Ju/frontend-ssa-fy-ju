@@ -35,25 +35,25 @@ export function CareerTimingResult({ result }: CareerTimingResultProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      {/* 추천 시기 배너 */}
+      {/* 추천 시기 배너 — 골드 계열로 추천 카드(보라)와 명확히 구분 */}
       <div className="relative overflow-hidden rounded-2xl p-6 text-center"
         style={{
-          background: 'linear-gradient(135deg, rgba(139,92,246,0.25) 0%, rgba(59,130,246,0.15) 50%, rgba(139,92,246,0.1) 100%)',
-          border: '1px solid rgba(139,92,246,0.4)',
+          background: 'linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(251,191,36,0.1) 50%, rgba(234,179,8,0.08) 100%)',
+          border: '1px solid rgba(245,158,11,0.45)',
         }}
       >
         {/* 배경 광원 */}
         <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full opacity-20"
-          style={{ background: 'radial-gradient(circle, #a78bfa 0%, transparent 70%)' }}
+          style={{ background: 'radial-gradient(circle, #fbbf24 0%, transparent 70%)' }}
         />
 
-        <p className="text-star-300 text-xs tracking-widest uppercase mb-3 relative">
+        <p className="text-amber-400 text-xs tracking-widest uppercase mb-3 relative">
           ✦ 채용 운이 좋은 시기 ✦
         </p>
         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-3 relative"
-          style={{ background: 'rgba(139,92,246,0.3)', border: '1px solid rgba(167,139,250,0.5)' }}
+          style={{ background: 'rgba(245,158,11,0.25)', border: '1px solid rgba(251,191,36,0.5)' }}
         >
-          <span className="text-violet-300 text-xs font-medium">{recommended} 권장</span>
+          <span className="text-amber-300 text-xs font-medium">{recommended} 권장</span>
         </div>
         <p className="text-white text-2xl font-bold relative">{recommendedPeriod}</p>
       </div>
