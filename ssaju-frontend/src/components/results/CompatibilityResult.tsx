@@ -1,10 +1,7 @@
 'use client';
 
 /**
- * 기업 궁합 분석 결과 컴포넌트
- *
- * compatibility/page.tsx에서 결과 렌더링 부분을 분리
- * 종합 점수, 직무 매칭, 경력 마일스톤, 월별 운세 표시
+ * 기업 궁합 분석 결과 컴포넌트 — 에디토리얼 스타일
  */
 
 import type { CompatibilityResult as CompatibilityResultType } from '@/types/api';
@@ -17,66 +14,193 @@ interface CompatibilityResultProps {
   onReset: () => void;
 }
 
+const MILESTONE_STAGES = [
+  { key: 'shortTerm' as const, label: '단기', period: '0 — 3개월', numeral: '一', color: '#34d399' },
+  { key: 'midTerm'   as const, label: '중기', period: '3 — 12개월', numeral: '二', color: '#22d3ee' },
+  { key: 'longTerm'  as const, label: '장기', period: '1 — 3년',    numeral: '三', color: '#c4b5fd' },
+];
+
 export function CompatibilityResult({ result, onReset }: CompatibilityResultProps) {
   return (
-    <div className="flex flex-col gap-6">
-      {/* 기업명 헤더 */}
-      <div className="text-center">
-        <p className="text-night-700 text-sm">분석 대상 기업</p>
-        <h2 className="text-star-500 text-2xl font-bold">{result.companyName}</h2>
+    <div className="flex flex-col">
+
+      {/* ── 기업명 히어로 ── */}
+      <div
+        style={{
+          textAlign: 'center',
+          paddingBottom: 36,
+          position: 'relative',
+        }}
+      >
+        {/* 배경 glow */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -60%)',
+            width: 280,
+            height: 140,
+            borderRadius: '50%',
+            background: 'radial-gradient(ellipse, rgba(139,92,246,0.18) 0%, transparent 70%)',
+            pointerEvents: 'none',
+          }}
+        />
+        <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.25em', color: '#a78bfa', opacity: 0.6, textTransform: 'uppercase', marginBottom: 14 }}>
+          분석 대상 기업
+        </p>
+        <h2
+          style={{
+            fontSize: 'clamp(2rem, 8vw, 3rem)',
+            fontWeight: 900,
+            color: '#fff',
+            letterSpacing: '-0.02em',
+            textShadow: '0 0 40px rgba(139,92,246,0.4)',
+            lineHeight: 1.1,
+          }}
+        >
+          {result.companyName}
+        </h2>
       </div>
 
-      {/* 종합 점수 + 4개 항목 */}
-      <CompatibilityScore
-        score={result.compatibilityScore}
-        confidenceLevel={result.confidenceLevel}
-        sipShinScore={result.sipShinScore}
-        oHangScore={result.oHangScore}
-        jijangGanScore={result.jijangGanScore}
-        leadershipScore={result.leadershipScore}
-      />
+      {/* 구분선 */}
+      <div style={{ height: 1, background: 'rgba(139,92,246,0.15)', marginBottom: 36 }} />
 
-      {/* 종합 평가 */}
-      <div className="bg-night-800 rounded-lg p-4">
-        <h3 className="text-star-400 text-sm font-medium mb-2">종합 평가</h3>
-        <p className="text-white text-sm leading-relaxed">{result.recommendation}</p>
+      {/* ── 종합 점수 ── */}
+      <div style={{ marginBottom: 36 }}>
+        <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.22em', color: '#a78bfa', opacity: 0.6, textTransform: 'uppercase', marginBottom: 20 }}>
+          궁합 점수
+        </p>
+        <CompatibilityScore
+          score={result.compatibilityScore}
+          confidenceLevel={result.confidenceLevel}
+          sipShinScore={result.sipShinScore}
+          oHangScore={result.oHangScore}
+          jijangGanScore={result.jijangGanScore}
+          leadershipScore={result.leadershipScore}
+        />
       </div>
 
-      {/* 직무별 매칭도 */}
-      <section>
-        <h3 className="text-star-400 text-sm font-medium mb-3">직무별 매칭도</h3>
-        <JobMatchingCards cards={result.jobMatchCards} />
-      </section>
+      {/* 구분선 */}
+      <div style={{ height: 1, background: 'rgba(139,92,246,0.1)', marginBottom: 36 }} />
 
-      {/* 경력 발전 마일스톤 */}
-      <section className="bg-night-800 rounded-lg p-4">
-        <h3 className="text-star-400 text-sm font-medium mb-3">경력 발전 로드맵</h3>
-        <div className="flex flex-col gap-3">
-          <div className="border-l-2 border-star-500 pl-3">
-            <p className="text-star-300 text-xs font-medium mb-1">0 ~ 3개월</p>
-            <p className="text-white text-sm">{result.careerMilestone.shortTerm}</p>
-          </div>
-          <div className="border-l-2 border-star-400 pl-3">
-            <p className="text-star-300 text-xs font-medium mb-1">3 ~ 12개월</p>
-            <p className="text-white text-sm">{result.careerMilestone.midTerm}</p>
-          </div>
-          <div className="border-l-2 border-star-300 pl-3">
-            <p className="text-star-300 text-xs font-medium mb-1">1 ~ 3년</p>
-            <p className="text-white text-sm">{result.careerMilestone.longTerm}</p>
-          </div>
+      {/* ── 종합 평가 ── */}
+      <div style={{ marginBottom: 36 }}>
+        <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.22em', color: '#a78bfa', opacity: 0.6, textTransform: 'uppercase', marginBottom: 18 }}>
+          종합 평가
+        </p>
+        <div style={{ position: 'relative', paddingLeft: 20 }}>
+          <span
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              top: -8,
+              left: 0,
+              fontSize: 40,
+              lineHeight: 1,
+              color: '#a78bfa',
+              opacity: 0.18,
+              fontFamily: 'serif',
+              fontWeight: 900,
+            }}
+          >
+            "
+          </span>
+          <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.82)', lineHeight: 1.8, fontStyle: 'italic' }}>
+            {result.recommendation}
+          </p>
         </div>
-      </section>
+      </div>
 
-      {/* 월별 운세 */}
-      <section>
-        <h3 className="text-star-400 text-sm font-medium mb-3">월별 운세</h3>
+      {/* 구분선 */}
+      <div style={{ height: 1, background: 'rgba(139,92,246,0.1)', marginBottom: 36 }} />
+
+      {/* ── 직무별 매칭도 ── */}
+      <div style={{ marginBottom: 36 }}>
+        <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.22em', color: '#a78bfa', opacity: 0.6, textTransform: 'uppercase', marginBottom: 20 }}>
+          직무별 매칭도
+        </p>
+        <JobMatchingCards cards={result.jobMatchCards} />
+      </div>
+
+      {/* 구분선 */}
+      <div style={{ height: 1, background: 'rgba(139,92,246,0.1)', marginBottom: 36 }} />
+
+      {/* ── 경력 발전 로드맵 — 타임라인 ── */}
+      <div style={{ marginBottom: 36 }}>
+        <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.22em', color: '#a78bfa', opacity: 0.6, textTransform: 'uppercase', marginBottom: 4 }}>
+          경력 발전 로드맵
+        </p>
+        <div className="flex flex-col">
+          {MILESTONE_STAGES.map((stage, i) => (
+            <div key={stage.key}>
+              <div style={{ display: 'flex', gap: 24, padding: '24px 0' }}>
+                {/* 좌측 — 한자 + 라벨 + 기간 */}
+                <div style={{ flexShrink: 0, width: 60, textAlign: 'right' }}>
+                  <span style={{ display: 'block', fontSize: 32, fontWeight: 900, fontFamily: 'serif', color: stage.color, opacity: 0.5, lineHeight: 1, marginBottom: 5 }}>
+                    {stage.numeral}
+                  </span>
+                  <span style={{ display: 'block', fontSize: 11, fontWeight: 700, color: stage.color, letterSpacing: '0.05em' }}>
+                    {stage.label}
+                  </span>
+                  <span style={{ display: 'block', fontSize: 10, color: stage.color, opacity: 0.45, marginTop: 2 }}>
+                    {stage.period}
+                  </span>
+                </div>
+                {/* 세로 구분선 + 점 */}
+                <div style={{ position: 'relative', flexShrink: 0 }}>
+                  <div style={{ width: 1, height: '100%', background: `linear-gradient(180deg, ${stage.color}55, ${stage.color}11)` }} />
+                  <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 6, height: 6, borderRadius: '50%', background: stage.color, boxShadow: `0 0 8px ${stage.color}` }} />
+                </div>
+                {/* 본문 */}
+                <div style={{ flex: 1, paddingTop: 4 }}>
+                  <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.75 }}>
+                    {result.careerMilestone[stage.key]}
+                  </p>
+                </div>
+              </div>
+              {i < MILESTONE_STAGES.length - 1 && (
+                <div style={{ height: 1, background: 'rgba(6,182,212,0.08)', margin: '0 0 0 84px' }} />
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 구분선 */}
+      <div style={{ height: 1, background: 'rgba(139,92,246,0.1)', marginBottom: 36 }} />
+
+      {/* ── 월별 운세 ── */}
+      <div style={{ marginBottom: 36 }}>
+        <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.22em', color: '#a78bfa', opacity: 0.6, textTransform: 'uppercase', marginBottom: 20 }}>
+          월별 운세
+        </p>
         <MonthlyCalendar forecasts={result.monthlyForecasts} />
-      </section>
+      </div>
 
       {/* 새 분석 */}
       <button
         onClick={onReset}
-        className="w-full border border-night-700 hover:border-star-500 text-star-300 text-sm py-2 rounded transition-colors"
+        style={{
+          width: '100%',
+          padding: '12px',
+          borderRadius: 10,
+          border: '1px solid rgba(139,92,246,0.2)',
+          background: 'transparent',
+          color: 'rgba(196,181,253,0.5)',
+          fontSize: 13,
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.borderColor = 'rgba(139,92,246,0.5)';
+          e.currentTarget.style.color = '#c4b5fd';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)';
+          e.currentTarget.style.color = 'rgba(196,181,253,0.5)';
+        }}
       >
         새 분석 시작하기
       </button>

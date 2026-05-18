@@ -2,7 +2,6 @@
 
 import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
-import { GlobalLoadingBar } from '@/components/common/GlobalLoadingBar';
 import { GlobalErrorHandler } from '@/components/common/GlobalErrorHandler';
 import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
 
@@ -22,7 +21,6 @@ export function Providers({ children }: { children: ReactNode }): React.ReactEle
 
   return (
     <ErrorBoundary>
-      <GlobalLoadingBar />
       <GlobalErrorHandler />
       {children}
       <Toaster

@@ -93,7 +93,19 @@ export function CompanyAutocomplete({
         aria-activedescendant={
           highlightedIndex >= 0 ? `autocomplete-item-${highlightedIndex}` : undefined
         }
-        className="w-full bg-night-800 border border-night-700 text-white rounded px-3 py-2 focus:outline-none focus:border-star-500 disabled:opacity-50 disabled:cursor-not-allowed"
+        style={{
+          width: '100%',
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(139,92,246,0.25)',
+          color: '#fff',
+          borderRadius: 12,
+          padding: '12px 16px',
+          fontSize: 14,
+          outline: 'none',
+          transition: 'border-color 0.2s',
+        }}
+        onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.6)')}
+        onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.25)')}
       />
 
       {isOpen && suggestions.length > 0 && (
@@ -101,7 +113,23 @@ export function CompanyAutocomplete({
           id="company-autocomplete-list"
           role="listbox"
           aria-label="기업명 자동완성 목록"
-          className="absolute z-50 top-full left-0 right-0 mt-1 bg-night-800 border border-night-700 rounded shadow-lg max-h-60 overflow-y-auto"
+          style={{
+            position: 'absolute',
+            zIndex: 50,
+            top: '100%',
+            left: 0,
+            right: 0,
+            marginTop: 6,
+            background: 'rgba(10,12,28,0.95)',
+            border: '1px solid rgba(139,92,246,0.2)',
+            borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(12px)',
+            maxHeight: 240,
+            overflowY: 'auto',
+            listStyle: 'none',
+            padding: '6px',
+          }}
         >
           {suggestions.map((suggestion, index) => (
             <li
@@ -110,15 +138,18 @@ export function CompanyAutocomplete({
               role="option"
               aria-selected={index === highlightedIndex}
               onMouseDown={(e) => {
-                // mousedown 시 blur 방지 후 선택
                 e.preventDefault();
                 handleSelect(suggestion);
               }}
-              className={`px-3 py-2 cursor-pointer text-sm transition-colors ${
-                index === highlightedIndex
-                  ? 'bg-night-700 text-star-300'
-                  : 'text-white hover:bg-night-700'
-              }`}
+              style={{
+                padding: '10px 14px',
+                cursor: 'pointer',
+                fontSize: 14,
+                borderRadius: 8,
+                color: index === highlightedIndex ? '#c4b5fd' : 'rgba(255,255,255,0.75)',
+                background: index === highlightedIndex ? 'rgba(139,92,246,0.15)' : 'transparent',
+                transition: 'all 0.12s',
+              }}
             >
               {suggestion}
             </li>

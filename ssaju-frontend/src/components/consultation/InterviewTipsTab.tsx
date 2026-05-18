@@ -39,7 +39,7 @@ export function InterviewTipsTab({ tips }: InterviewTipsTabProps) {
             <p
               className="animate-item"
               style={{
-                fontSize: '0.85rem',
+                fontSize: '1rem',
                 fontWeight: 500,
                 color: 'rgba(255,255,255,0.82)',
                 lineHeight: 1.8,

@@ -37,17 +37,21 @@ function ScoreBar({ label, score }: ScoreBarProps) {
     score >= 80 ? '#22c55e' : score >= 60 ? '#f59e0b' : '#ef4444';
 
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex flex-col gap-2">
       <div className="flex justify-between text-xs">
-        <span className="text-white">{label}</span>
-        <span style={{ color }} className="font-bold">
-          {score}점
-        </span>
+        <span style={{ color: 'rgba(255,255,255,0.7)' }}>{label}</span>
+        <span style={{ color, fontWeight: 700 }}>{score}점</span>
       </div>
-      <div className="h-2 bg-night-700 rounded-full overflow-hidden">
+      <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 999, overflow: 'hidden' }}>
         <div
-          className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${score}%`, backgroundColor: color }}
+          style={{
+            width: `${score}%`,
+            height: '100%',
+            backgroundColor: color,
+            borderRadius: 999,
+            boxShadow: `0 0 6px ${color}66`,
+            transition: 'width 0.7s ease',
+          }}
         />
       </div>
     </div>
@@ -77,10 +81,10 @@ export function CompatibilityScore({
   const radialData = [{ name: '점수', value: score, fill: scoreColor }];
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       {/* 원형 종합 점수 */}
-      <div className="flex flex-col items-center gap-2">
-        <div className="relative w-36 h-36">
+      <div className="flex items-center gap-8">
+        <div className="relative" style={{ width: 120, height: 120, flexShrink: 0 }}>
           <ResponsiveContainer width="100%" height="100%">
             <RadialBarChart
               innerRadius="70%"
@@ -89,30 +93,33 @@ export function CompatibilityScore({
               startAngle={90}
               endAngle={90 - 360 * (score / 100)}
             >
-              <RadialBar dataKey="value" background={{ fill: '#1e1e2e' }} />
+              <RadialBar dataKey="value" background={{ fill: 'rgba(255,255,255,0.04)' }} />
             </RadialBarChart>
           </ResponsiveContainer>
-          {/* 가운데 점수 텍스트 */}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-3xl font-bold" style={{ color: scoreColor }}>
+            <span style={{ fontSize: '2rem', fontWeight: 900, color: scoreColor, lineHeight: 1 }}>
               {score}
             </span>
-            <span className="text-night-700 text-xs">/ 100</span>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>/ 100</span>
           </div>
         </div>
 
         {/* 신뢰도 */}
-        <div className="text-center">
-          <span className="text-night-700 text-sm">신뢰도: </span>
-          <span className={`text-sm font-bold ${CONFIDENCE_COLOR[confidenceLevel]}`}>
+        <div>
+          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.18em', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', marginBottom: 6 }}>
+            신뢰도
+          </p>
+          <p style={{ fontSize: '1.4rem', fontWeight: 800 }} className={CONFIDENCE_COLOR[confidenceLevel]}>
             {CONFIDENCE_LABEL[confidenceLevel]}
-          </span>
+          </p>
         </div>
       </div>
 
       {/* 4개 항목 점수 바 */}
-      <div className="bg-night-800 rounded-lg p-4 flex flex-col gap-3">
-        <h3 className="text-star-400 text-sm font-medium mb-1">점수 분석</h3>
+      <div className="flex flex-col gap-4">
+        <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.22em', color: '#a78bfa', opacity: 0.6, textTransform: 'uppercase' }}>
+          항목별 점수
+        </p>
         <ScoreBar label="십신 궁합" score={sipShinScore} />
         <ScoreBar label="오행 궁합" score={oHangScore} />
         <ScoreBar label="지장간 궁합" score={jijangGanScore} />
