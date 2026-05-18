@@ -142,7 +142,7 @@ export default function LandingPage() {
         </div>
 
         <div className={`page ${pageIndex === 4 ? 'active' : ''}`}>
-          <Page5 onStart={() => router.push('/select')} />
+          <Page5 onStart={() => router.push('/chat')} />
         </div>
       </div>
     </div>

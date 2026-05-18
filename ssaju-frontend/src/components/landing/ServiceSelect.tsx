@@ -72,10 +72,11 @@ export default function ServiceSelect({ birthDate, birthTime }: ServiceSelectPro
       {/* Service Cards Grid */}
       <div className="flex-1 px-6 py-8 flex items-center justify-center overflow-hidden">
         <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-9 h-fit">
-          {services.map((service) => (
+          {services.map((service, i) => (
             <ServiceCard
               key={service.id}
               {...service}
+              index={i}
               isSelected={selectedService === service.id}
               onClick={() => handleServiceClick(service.id)}
             />

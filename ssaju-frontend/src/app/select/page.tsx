@@ -1,12 +1,11 @@
 'use client';
 
 import ServiceSelect from '@/components/landing/ServiceSelect';
+import { useSessionStore } from '@/stores/sessionStore';
 
 export default function SelectPage() {
-  return (
-    <ServiceSelect
-      birthDate=""
-      birthTime=""
-    />
-  );
+  const birthDate = useSessionStore((s) => s.birthDate) ?? '';
+  const birthTime = useSessionStore((s) => s.birthTime) ?? '';
+
+  return <ServiceSelect birthDate={birthDate} birthTime={birthTime} />;
 }
