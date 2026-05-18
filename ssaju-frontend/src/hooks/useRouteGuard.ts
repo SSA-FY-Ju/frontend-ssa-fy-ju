@@ -27,25 +27,18 @@ import { useSessionStore } from '@/stores/sessionStore';
  * @param required - 가드 활성화 여부 (기본값: true)
  */
 export function useRouteGuard(required: boolean = true) {
-  const { birthDate } = useSessionStore();
+  const { birthDate, _hasHydrated } = useSessionStore();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    // 가드 비활성화
-    if (!required) {
-      return;
-    }
+    if (!required) return;
+    if (!_hasHydrated) return; // hydration 완료 전엔 검사 안 함
+    if (pathname?.startsWith('/survey')) return;
 
-    // /survey 페이지는 진입점이므로 보호 안 함 (무한 루프 방지)
-    if (pathname?.startsWith('/survey')) {
-      return;
-    }
-
-    // birthDate 없으면 /survey로 리다이렉트
     if (!birthDate) {
-      router.push('/survey');
-      toast.error('먼저 기본 정보를 입력해주세요');
+      router.push('/chat');
+      toast.error('먼저 생년월일을 입력해주세요');
     }
-  }, [required, birthDate, pathname, router]);
+  }, [required, _hasHydrated, birthDate, pathname, router]);
 }

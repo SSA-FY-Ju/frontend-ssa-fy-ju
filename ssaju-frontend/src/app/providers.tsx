@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, useEffect } from 'react';
+import { ReactNode } from 'react';
 import { Toaster } from 'sonner';
 import { GlobalLoadingBar } from '@/components/common/GlobalLoadingBar';
 import { GlobalErrorHandler } from '@/components/common/GlobalErrorHandler';
@@ -17,23 +17,8 @@ import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
  * - ErrorBoundary (React 렌더링 오류 캐치)
  */
 export function Providers({ children }: { children: ReactNode }): React.ReactElement {
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      const initMSW = async () => {
-        try {
-          const { worker } = await import('@/mocks/browser');
-          await worker.start({
-            onUnhandledRequest: 'bypass',
-          }).catch(() => {
-            // MSW 초기화 실패해도 앱 계속 실행
-          });
-        } catch (error) {
-          // 에러 무시하고 계속 진행
-        }
-      };
-      initMSW();
-    }
-  }, []);
+  // MSW 비활성화 — API 레이어에서 직접 mock 데이터 사용
+  // useEffect(() => { ... }, []);
 
   return (
     <ErrorBoundary>

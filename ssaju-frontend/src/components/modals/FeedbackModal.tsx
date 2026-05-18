@@ -1,15 +1,5 @@
 'use client';
 
-// 파일 크기 예외: 만족도 라디오·글자수 카운터·제출 버튼 등 피드백 모달의 모든
-// 인터랙션이 하나의 UI 단위를 구성하여 분리 시 상태 공유가 복잡해짐
-/**
- * 만족도 피드백 모달 (T093)
- *
- * - 만족도 선택 (필수): 만족함 / 만족하지 않음 라디오
- * - 피드백 유형: 페이지에 따라 자동 결정 (읽기 전용)
- * - 상세 의견: 선택 입력, 최대 500자 + 실시간 카운터
- */
-
 import { useState } from 'react';
 import { useFeedback } from '@/hooks/useFeedback';
 
@@ -26,6 +16,43 @@ interface FeedbackModalProps {
   onClose: () => void;
 }
 
+const OPTIONS = [
+  {
+    value: 'SATISFIED' as const,
+    emoji: '🌟',
+    label: '도움이 됐어요',
+    sub: '분석이 유용했어요',
+    activeStyle: {
+      background: 'linear-gradient(135deg, rgba(250,204,21,0.18) 0%, rgba(234,179,8,0.1) 100%)',
+      border: '1.5px solid rgba(250,204,21,0.55)',
+      boxShadow: '0 0 20px rgba(250,204,21,0.15)',
+    },
+    inactiveStyle: {
+      background: 'rgba(255,255,255,0.03)',
+      border: '1.5px solid rgba(255,255,255,0.08)',
+    },
+    activeColor: '#fde047',
+    inactiveColor: '#475569',
+  },
+  {
+    value: 'UNSATISFIED' as const,
+    emoji: '💫',
+    label: '아쉬웠어요',
+    sub: '개선이 필요해요',
+    activeStyle: {
+      background: 'linear-gradient(135deg, rgba(139,92,246,0.2) 0%, rgba(99,102,241,0.12) 100%)',
+      border: '1.5px solid rgba(139,92,246,0.55)',
+      boxShadow: '0 0 20px rgba(139,92,246,0.15)',
+    },
+    inactiveStyle: {
+      background: 'rgba(255,255,255,0.03)',
+      border: '1.5px solid rgba(255,255,255,0.08)',
+    },
+    activeColor: '#a78bfa',
+    inactiveColor: '#475569',
+  },
+];
+
 export function FeedbackModal({ feedbackType, onClose }: FeedbackModalProps) {
   const [satisfaction, setSatisfaction] = useState<'SATISFIED' | 'UNSATISFIED' | null>(null);
   const [content, setContent] = useState('');
@@ -38,10 +65,7 @@ export function FeedbackModal({ feedbackType, onClose }: FeedbackModalProps) {
   };
 
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    // 500자 초과 입력 자동 방지 (FR-031)
-    if (e.target.value.length <= 500) {
-      setContent(e.target.value);
-    }
+    if (e.target.value.length <= 500) setContent(e.target.value);
   };
 
   return (
@@ -49,95 +73,162 @@ export function FeedbackModal({ feedbackType, onClose }: FeedbackModalProps) {
       role="dialog"
       aria-modal="true"
       aria-labelledby="feedback-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
     >
-      {/* 배경 오버레이 */}
-      <div className="absolute inset-0 bg-black/60" onClick={onClose} aria-hidden="true" />
+      {/* 닫기 배경 */}
+      <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
 
-      <div className="relative bg-night-800 border border-night-700 rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-        {/* 닫기 버튼 */}
-        <button
-          onClick={onClose}
-          aria-label="모달 닫기"
-          className="absolute top-4 right-4 text-night-700 hover:text-white transition-colors text-xl"
-        >
-          ×
-        </button>
+      <div
+        className="relative w-full max-w-md mx-4 mb-4 sm:mb-0 rounded-3xl overflow-hidden"
+        style={{
+          background: 'radial-gradient(ellipse at top, rgba(30,15,60,0.98) 0%, rgba(5,8,20,0.99) 70%)',
+          border: '1px solid rgba(139,92,246,0.2)',
+          boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(109,40,217,0.12)',
+        }}
+      >
+        {/* 배경 별빛 장식 */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-6 left-8 text-violet-400/20 text-xs">✦</div>
+          <div className="absolute top-12 right-12 text-violet-400/15 text-[10px]">★</div>
+          <div className="absolute top-4 right-6 text-blue-400/20 text-[8px]">✦</div>
+          <div className="absolute bottom-24 left-6 text-violet-400/10 text-xs">★</div>
+          <div className="absolute bottom-16 right-8 text-blue-400/15 text-[10px]">✦</div>
+          {/* 상단 글로우 */}
+          <div
+            className="absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-32 rounded-full opacity-30"
+            style={{ background: 'radial-gradient(circle, rgba(109,40,217,0.6) 0%, transparent 70%)' }}
+          />
+        </div>
 
-        <h2 id="feedback-modal-title" className="text-star-400 text-lg font-bold mb-1">
-          분석 결과 피드백
-        </h2>
-        <p className="text-night-700 text-xs mb-5">
-          피드백 대상: {FEEDBACK_TYPE_LABEL[feedbackType]}
-        </p>
+        <div className="relative p-6 pt-7">
+          {/* 닫기 버튼 */}
+          <button
+            onClick={onClose}
+            aria-label="모달 닫기"
+            className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 text-slate-500 hover:text-white"
+            style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            ×
+          </button>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* 만족도 선택 (필수) */}
-          <fieldset>
-            <legend className="text-white text-sm font-medium mb-2">
-              만족도 <span className="text-red-400 text-xs">*필수</span>
-            </legend>
-            <div className="flex flex-col gap-2">
-              {(['SATISFIED', 'UNSATISFIED'] as const).map((value) => (
-                <label
-                  key={value}
-                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    satisfaction === value
-                      ? 'border-star-500 bg-night-700'
-                      : 'border-night-700 hover:border-night-600'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="satisfaction"
-                    value={value}
-                    checked={satisfaction === value}
-                    onChange={() => setSatisfaction(value)}
-                    className="accent-star-500"
-                  />
-                  <span className="text-white text-sm">
-                    {value === 'SATISFIED' ? '만족함' : '만족하지 않음'}
-                  </span>
-                </label>
-              ))}
+          {/* 헤더 */}
+          <div className="mb-7">
+            <div className="flex items-center gap-2 mb-3">
+              <div
+                className="h-px flex-1"
+                style={{ background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.4))' }}
+              />
+              <span className="text-violet-400 text-[11px] tracking-widest font-medium">
+                {FEEDBACK_TYPE_LABEL[feedbackType]}
+              </span>
+              <div
+                className="h-px flex-1"
+                style={{ background: 'linear-gradient(90deg, rgba(139,92,246,0.4), transparent)' }}
+              />
             </div>
-          </fieldset>
-
-          {/* 상세 의견 (선택) */}
-          <div>
-            <label htmlFor="feedback-content" className="block text-white text-sm font-medium mb-1">
-              상세 의견 <span className="text-night-700 text-xs">(선택)</span>
-            </label>
-            <textarea
-              id="feedback-content"
-              value={content}
-              onChange={handleContentChange}
-              placeholder="분석 결과에 대한 의견을 자유롭게 남겨주세요"
-              rows={4}
-              className="w-full bg-night-900 border border-night-700 text-white text-sm rounded px-3 py-2 resize-none focus:outline-none focus:border-star-500"
-            />
-            {/* 실시간 글자수 카운터 (FR-031) */}
-            <p className="text-right text-night-700 text-xs mt-1">
-              {content.length} / 500
+            <h2
+              id="feedback-modal-title"
+              className="text-white text-xl font-bold text-center"
+            >
+              분석이 도움이 됐나요?
+            </h2>
+            <p className="text-slate-500 text-xs text-center mt-1.5">
+              솔직한 피드백이 서비스 개선에 큰 힘이 돼요
             </p>
           </div>
 
-          {/* 에러 메시지 */}
-          {error && (
-            <p role="alert" className="text-red-400 text-sm">
-              {error}
-            </p>
-          )}
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {/* 만족도 선택 */}
+            <fieldset>
+              <legend className="sr-only">만족도</legend>
+              <div className="grid grid-cols-2 gap-3">
+                {OPTIONS.map((opt) => {
+                  const selected = satisfaction === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setSatisfaction(opt.value)}
+                      className="flex flex-col items-center gap-2.5 py-5 rounded-2xl transition-all duration-250"
+                      style={selected ? opt.activeStyle : opt.inactiveStyle}
+                    >
+                      <span
+                        className="text-3xl transition-transform duration-200"
+                        style={{ filter: selected ? 'drop-shadow(0 0 8px currentColor)' : 'none', transform: selected ? 'scale(1.15)' : 'scale(1)' }}
+                      >
+                        {opt.emoji}
+                      </span>
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span
+                          className="text-sm font-semibold transition-colors duration-200"
+                          style={{ color: selected ? opt.activeColor : opt.inactiveColor }}
+                        >
+                          {opt.label}
+                        </span>
+                        <span className="text-[11px]" style={{ color: selected ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.2)' }}>
+                          {opt.sub}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
 
-          {/* 제출 버튼 */}
-          <button
-            type="submit"
-            disabled={!satisfaction || isSubmitting}
-            className="w-full bg-star-500 hover:bg-star-400 disabled:bg-night-700 disabled:cursor-not-allowed text-night-900 font-bold py-3 rounded transition-colors"
-          >
-            {isSubmitting ? '제출 중...' : '제출하기'}
-          </button>
-        </form>
+            {/* 구분선 */}
+            <div className="h-px w-full" style={{ background: 'rgba(255,255,255,0.06)' }} />
+
+            {/* 상세 의견 */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <label htmlFor="feedback-content" className="text-slate-300 text-sm font-medium">
+                  자세한 의견
+                </label>
+                <span className="text-slate-600 text-xs">선택 사항</span>
+              </div>
+              <textarea
+                id="feedback-content"
+                value={content}
+                onChange={handleContentChange}
+                placeholder="어떤 점이 좋았는지, 아쉬웠는지 알려주세요"
+                rows={3}
+                className="w-full text-white text-sm rounded-xl px-4 py-3 resize-none focus:outline-none placeholder:text-slate-600"
+                style={{
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  transition: 'border-color 0.2s',
+                }}
+                onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.5)'; }}
+                onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; }}
+              />
+              <p className="text-right text-slate-700 text-xs mt-1.5">{content.length} / 500</p>
+            </div>
+
+            {/* 에러 */}
+            {error && (
+              <p role="alert" className="text-rose-400 text-sm text-center">{error}</p>
+            )}
+
+            {/* 제출 버튼 */}
+            <button
+              type="submit"
+              disabled={!satisfaction || isSubmitting}
+              className="w-full py-3.5 rounded-xl text-sm font-bold transition-all duration-200"
+              style={
+                !satisfaction || isSubmitting
+                  ? { background: 'rgba(255,255,255,0.05)', color: '#334155', cursor: !satisfaction ? 'not-allowed' : 'default' }
+                  : {
+                      background: 'linear-gradient(90deg, #6d28d9, #2563eb)',
+                      color: '#fff',
+                      boxShadow: '0 0 24px rgba(109,40,217,0.4), 0 4px 16px rgba(0,0,0,0.3)',
+                    }
+              }
+            >
+              {isSubmitting ? '전송 중...' : '피드백 보내기 ✦'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

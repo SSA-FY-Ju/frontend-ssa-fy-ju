@@ -64,7 +64,7 @@ export default function CompatibilityPage() {
   };
 
   return (
-    <main className="min-h-screen bg-night-900 text-white pt-16">
+    <main className="relative z-10 min-h-screen text-white pt-16">
       <DisclaimerOverlay isVisible={disclaimerVisible} isFading={disclaimerFading} />
 
       {showConfirmModal && (

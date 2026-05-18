@@ -10,9 +10,11 @@
  * - IntersectionObserver + window.matchMedia 접근 → dynamic({ ssr: false })로 클라이언트 전용 렌더
  */
 
+import { useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useConsultation } from '@/hooks/useConsultation';
 import { useRouteGuard } from '@/hooks/useRouteGuard';
+import { useSessionStore } from '@/stores/sessionStore';
 import { InputForm } from '@/components/forms/InputForm';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { ConsultationLoading } from '@/components/results/ConsultationLoading';
@@ -28,7 +30,6 @@ const FullPageConsultation = dynamic(
 );
 
 export default function ConsultationPage() {
-  // Route Guard: require birthDate to access this result page
   useRouteGuard(true);
 
   const {
@@ -42,8 +43,18 @@ export default function ConsultationPage() {
     submitConsultation,
     reset,
   } = useConsultation();
+  const birthDate = useSessionStore((s) => s.birthDate);
+  const birthTime = useSessionStore((s) => s.birthTime);
+  const hasHydrated = useSessionStore((s) => s._hasHydrated);
+
+  useEffect(() => {
+    if (hasHydrated && birthDate && phase === 'idle') {
+      submitConsultation(birthDate, birthTime ?? '12:00');
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasHydrated]);
   return (
-    <main className="min-h-screen bg-night-900 text-white pt-16">
+    <main className="relative z-10 min-h-screen text-white pt-16">
       <DisclaimerOverlay isVisible={disclaimerVisible} isFading={disclaimerFading} />
 
       {/* 결과 페이지: fullpage.js가 전체 화면 차지 → 감싸는 컨테이너 없음 */}
