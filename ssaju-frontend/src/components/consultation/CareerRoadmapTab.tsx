@@ -1,6 +1,6 @@
 'use client';
 
-/** 경력로드맵 탭 (T072) */
+/** 경력로드맵 탭 — 가로 타임라인 → 수직 스텝, 라인 기반 */
 
 import type { CareerRoadmap } from '@/types/api';
 
@@ -9,78 +9,110 @@ interface CareerRoadmapTabProps {
 }
 
 const STAGES = [
-  { key: 'shortTerm' as const, label: '단기', period: '0 — 2년', icon: '🌱', color: '#67e8f9' },
-  { key: 'midTerm'   as const, label: '중기', period: '3 — 5년', icon: '🌿', color: '#22d3ee' },
-  { key: 'longTerm'  as const, label: '장기', period: '최종 목표', icon: '🌟', color: '#06b6d4' },
+  { key: 'shortTerm' as const, label: '단기', period: '0 — 2년',  numeral: '一', color: '#34d399' },
+  { key: 'midTerm'   as const, label: '중기', period: '3 — 5년',  numeral: '二', color: '#22d3ee' },
+  { key: 'longTerm'  as const, label: '장기', period: '최종 목표', numeral: '三', color: '#c4b5fd' },
 ];
 
 export function CareerRoadmapTab({ roadmap }: CareerRoadmapTabProps) {
   return (
-    <div className="flex flex-col gap-0">
-      {STAGES.map(({ key, label, period, icon, color }, i) => (
-        <div
-          key={key}
-          className="animate-item flex gap-5"
-          style={{ animationDelay: `${i * 0.12}s` }}
-        >
-          {/* Timeline column */}
-          <div className="flex flex-col items-center" style={{ width: 48, flexShrink: 0 }}>
-            {/* Node */}
-            <div
-              style={{
-                width: 44,
-                height: 44,
-                borderRadius: '50%',
-                background: 'rgba(6,182,212,0.12)',
-                border: `2px solid ${color}55`,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 20,
-                boxShadow: `0 0 16px ${color}33`,
-                flexShrink: 0,
-              }}
-            >
-              {icon}
-            </div>
-            {/* Connector line */}
-            {i < STAGES.length - 1 && (
-              <div
-                style={{
-                  width: 2,
-                  flexGrow: 1,
-                  minHeight: 24,
-                  background: `linear-gradient(180deg, ${color}55, rgba(6,182,212,0.1))`,
-                  margin: '4px 0',
-                }}
-              />
-            )}
-          </div>
-
-          {/* Content card */}
+    <div className="flex flex-col">
+      {STAGES.map((stage, i) => (
+        <div key={stage.key}>
           <div
+            className="animate-item"
             style={{
-              flex: 1,
-              backdropFilter: 'blur(12px)',
-              background: 'rgba(6,182,212,0.04)',
-              border: '1px solid rgba(6,182,212,0.18)',
-              borderRadius: 18,
-              padding: '18px 22px',
-              marginBottom: i < STAGES.length - 1 ? 12 : 0,
+              display: 'flex',
+              gap: 28,
+              padding: '24px 0',
+              animationDelay: `${i * 0.12}s`,
             }}
           >
-            <div className="flex items-baseline gap-2 mb-2">
-              <h3 className="font-black text-base" style={{ color }}>
-                {label}
-              </h3>
-              <span className="text-xs font-medium" style={{ color, opacity: 0.55 }}>
-                {period}
+            {/* 좌측 컬럼 — 한자 + 라벨 + 기간 */}
+            <div className="animate-item" style={{ flexShrink: 0, width: 64, textAlign: 'right', animationDelay: `${i * 0.12}s` }}>
+              <span
+                aria-hidden="true"
+                style={{
+                  display: 'block',
+                  fontSize: 36,
+                  fontWeight: 900,
+                  fontFamily: 'serif',
+                  color: stage.color,
+                  opacity: 0.5,
+                  lineHeight: 1,
+                  marginBottom: 6,
+                }}
+              >
+                {stage.numeral}
+              </span>
+              <span
+                style={{
+                  display: 'block',
+                  fontSize: 11,
+                  fontWeight: 700,
+                  color: stage.color,
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {stage.label}
+              </span>
+              <span
+                style={{
+                  display: 'block',
+                  fontSize: 10,
+                  color: stage.color,
+                  opacity: 0.45,
+                  marginTop: 2,
+                  letterSpacing: '0.03em',
+                }}
+              >
+                {stage.period}
               </span>
             </div>
-            <p className="text-white text-sm leading-relaxed" style={{ opacity: 0.85 }}>
-              {roadmap[key]}
-            </p>
+
+            {/* 세로 구분선 */}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+              <div
+                style={{
+                  width: 1,
+                  height: '100%',
+                  background: `linear-gradient(180deg, ${stage.color}55, ${stage.color}11)`,
+                }}
+              />
+              {/* 점 */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: stage.color,
+                  boxShadow: `0 0 8px ${stage.color}`,
+                }}
+              />
+            </div>
+
+            {/* 본문 */}
+            <div className="animate-item" style={{ flex: 1, paddingTop: 4, animationDelay: `${i * 0.12 + 0.1}s` }}>
+              <p
+                style={{
+                  fontSize: '0.92rem',
+                  color: 'rgba(255,255,255,0.8)',
+                  lineHeight: 1.75,
+                }}
+              >
+                {roadmap[stage.key]}
+              </p>
+            </div>
           </div>
+
+          {/* 수평 구분선 (마지막 제외) */}
+          {i < STAGES.length - 1 && (
+            <div style={{ height: 1, background: 'rgba(6,182,212,0.08)', margin: '0 0 0 92px' }} />
+          )}
         </div>
       ))}
     </div>

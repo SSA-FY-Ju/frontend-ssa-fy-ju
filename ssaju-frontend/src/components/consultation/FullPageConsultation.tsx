@@ -28,14 +28,62 @@ import { BrandingTab } from './BrandingTab';
 import { MonthlyForecastTab } from './MonthlyForecastTab';
 
 const SECTIONS = [
-  { label: '추천산업',   icon: '🏢', accentColor: '#10b981', accentBg: 'rgba(16,185,129,0.06)' },
-  { label: '면접팁',    icon: '💬', accentColor: '#3b82f6', accentBg: 'rgba(59,130,246,0.06)' },
-  { label: '강점',      icon: '⚡', accentColor: '#f59e0b', accentBg: 'rgba(245,158,11,0.06)' },
-  { label: '사주프로필', icon: '✦',  accentColor: '#8b5cf6', accentBg: 'rgba(139,92,246,0.06)' },
-  { label: '부의운',    icon: '💰', accentColor: '#eab308', accentBg: 'rgba(234,179,8,0.06)' },
-  { label: '경력로드맵', icon: '🗺️', accentColor: '#06b6d4', accentBg: 'rgba(6,182,212,0.06)' },
-  { label: '브랜딩',    icon: '✨', accentColor: '#f43f5e', accentBg: 'rgba(244,63,94,0.06)' },
-  { label: '월별운세',  icon: '🌙', accentColor: '#a855f7', accentBg: 'rgba(168,85,247,0.06)' },
+  {
+    label: '추천산업',
+    icon: '🏢',
+    accentColor: '#10b981',
+    accentBg: 'rgba(16,185,129,0.06)',
+    subtitle: '당신의 사주가 빛나는 무대',
+  },
+  {
+    label: '면접팁',
+    icon: '💬',
+    accentColor: '#3b82f6',
+    accentBg: 'rgba(59,130,246,0.06)',
+    subtitle: '천기가 내린 면접의 비결',
+  },
+  {
+    label: '강점',
+    icon: '⚡',
+    accentColor: '#f59e0b',
+    accentBg: 'rgba(245,158,11,0.06)',
+    subtitle: '하늘이 새긴 타고난 재능',
+  },
+  {
+    label: '사주프로필',
+    icon: '✦',
+    accentColor: '#8b5cf6',
+    accentBg: 'rgba(139,92,246,0.06)',
+    subtitle: '운명의 근원, 당신의 일주',
+  },
+  {
+    label: '부의운',
+    icon: '💰',
+    accentColor: '#eab308',
+    accentBg: 'rgba(234,179,8,0.06)',
+    subtitle: '재성이 흐르는 방향',
+  },
+  {
+    label: '경력로드맵',
+    icon: '🗺️',
+    accentColor: '#06b6d4',
+    accentBg: 'rgba(6,182,212,0.06)',
+    subtitle: '별이 인도하는 성장의 길',
+  },
+  {
+    label: '브랜딩',
+    icon: '✨',
+    accentColor: '#f43f5e',
+    accentBg: 'rgba(244,63,94,0.06)',
+    subtitle: '세상에 보여줄 나만의 인상',
+  },
+  {
+    label: '월별운세',
+    icon: '🌙',
+    accentColor: '#a855f7',
+    accentBg: 'rgba(168,85,247,0.06)',
+    subtitle: '달이 전하는 한 해의 흐름',
+  },
 ] as const;
 
 const SECTION_COUNT = SECTIONS.length;
@@ -127,6 +175,7 @@ export function FullPageConsultation({
                   label={section.label}
                   icon={section.icon}
                   accentColor={section.accentColor}
+                  subtitle={section.subtitle}
                   index={index}
                 />
                 {slides[index]}
@@ -148,24 +197,43 @@ function SectionTitle({
   label,
   icon,
   accentColor,
+  subtitle,
   index,
 }: {
   label: string;
   icon: string;
   accentColor: string;
+  subtitle: string;
   index: number;
 }) {
+  const num = String(index + 1).padStart(2, '0');
+
   return (
     <div className="mb-8">
-      {/* 섹션 번호 */}
+      {/* Ornamental section counter: ✦ — 01 — ✦ */}
       <p
-        className="text-xs font-bold tracking-widest mb-3 uppercase"
-        style={{ color: accentColor, opacity: 0.65, letterSpacing: '0.18em' }}
+        style={{
+          color: accentColor,
+          opacity: 0.6,
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: '0.22em',
+          textTransform: 'uppercase',
+          marginBottom: 14,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}
       >
-        {String(index + 1).padStart(2, '0')} &mdash; {String(SECTION_COUNT).padStart(2, '0')}
+        <span style={{ opacity: 0.8 }}>✦</span>
+        <span style={{ letterSpacing: '0.18em' }}>
+          &mdash;&nbsp;{num}&nbsp;&mdash;
+        </span>
+        <span style={{ opacity: 0.8 }}>✦</span>
       </p>
-      {/* 메인 타이틀 */}
-      <div className="flex items-center gap-4">
+
+      {/* Main title row */}
+      <div className="flex items-center gap-4 mb-3">
         <span aria-hidden="true" style={{ fontSize: 36, lineHeight: 1, flexShrink: 0 }}>
           {icon}
         </span>
@@ -176,10 +244,25 @@ function SectionTitle({
           {label}
         </h2>
       </div>
-      {/* Accent 구분선 */}
+
+      {/* Subtitle / tagline */}
+      <p
+        style={{
+          fontSize: '0.82rem',
+          color: accentColor,
+          opacity: 0.7,
+          fontStyle: 'italic',
+          letterSpacing: '0.04em',
+          paddingLeft: 52, /* align with title text */
+          marginBottom: 16,
+        }}
+      >
+        {subtitle}
+      </p>
+
+      {/* Accent divider */}
       <div
         style={{
-          marginTop: 18,
           height: 1,
           background: `linear-gradient(90deg, ${accentColor}99 0%, ${accentColor}22 50%, transparent 100%)`,
         }}
