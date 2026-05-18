@@ -19,8 +19,8 @@ export function Header() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const pathname = usePathname();
 
-  // 홈 페이지와 채팅 입력 페이지에서는 헤더 숨김
-  if (pathname === '/' || pathname === '/chat') return null;
+  // 홈 페이지, 채팅 입력 페이지, AI 컨설팅 페이지에서는 헤더 숨김
+  if (pathname === '/' || pathname === '/chat' || pathname === '/consultation') return null;
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 h-16">

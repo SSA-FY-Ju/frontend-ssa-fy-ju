@@ -10,5 +10,18 @@ interface MonthlyForecastTabProps {
 }
 
 export function MonthlyForecastTab({ forecasts }: MonthlyForecastTabProps) {
-  return <MonthlyCalendar forecasts={forecasts} />;
+  return (
+    <div
+      className="animate-item"
+      style={{
+        backdropFilter: 'blur(12px)',
+        background: 'rgba(168,85,247,0.04)',
+        border: '1px solid rgba(168,85,247,0.18)',
+        borderRadius: 20,
+        padding: '24px',
+      }}
+    >
+      <MonthlyCalendar forecasts={forecasts} />
+    </div>
+  );
 }

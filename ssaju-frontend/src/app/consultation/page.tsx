@@ -54,7 +54,7 @@ export default function ConsultationPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasHydrated]);
   return (
-    <main className="relative z-10 min-h-screen text-white pt-16">
+    <main className="relative z-10 min-h-screen text-white">
       <DisclaimerOverlay isVisible={disclaimerVisible} isFading={disclaimerFading} />
 
       {/* 결과 페이지: fullpage.js가 전체 화면 차지 → 감싸는 컨테이너 없음 */}
@@ -75,26 +75,31 @@ export default function ConsultationPage() {
           </button>
         </>
       ) : (
-        <div className="max-w-3xl mx-auto px-4 py-12">
-          <h1 className="text-star-500 text-3xl font-bold text-center mb-2">AI 커리어 컨설팅</h1>
-          <p className="text-star-300 text-sm text-center mb-8">
-            생년월일과 시간으로 맞춤 커리어 컨설팅을 받아보세요
-          </p>
+        <div
+          className="flex flex-col items-center justify-center min-h-screen px-4"
+          style={{ visibility: disclaimerVisible ? 'hidden' : 'visible' }}
+        >
+          <div className="w-full max-w-lg">
+            <h1 className="text-star-500 text-3xl font-bold text-center mb-2">AI 커리어 컨설팅</h1>
+            <p className="text-star-300 text-sm text-center mb-8">
+              생년월일과 시간으로 맞춤 커리어 컨설팅을 받아보세요
+            </p>
 
-          {/* 입력 폼 */}
-          {(phase === 'idle' || phase === 'error') && (
-            <>
-              <InputForm onSubmit={(date, time) => submitConsultation(date, time)} isLoading={false} />
-              {phase === 'error' && error && (
-                <div className="mt-4">
-                  <ErrorMessage message={error} onRetry={reset} retryLabel="다시 시도" />
-                </div>
-              )}
-            </>
-          )}
+            {/* 입력 폼 */}
+            {(phase === 'idle' || phase === 'error') && (
+              <>
+                <InputForm onSubmit={(date, time) => submitConsultation(date, time)} isLoading={false} />
+                {phase === 'error' && error && (
+                  <div className="mt-4">
+                    <ErrorMessage message={error} onRetry={reset} retryLabel="다시 시도" />
+                  </div>
+                )}
+              </>
+            )}
 
-          {/* AI 로딩 */}
-          {phase === 'loading' && <ConsultationLoading />}
+            {/* AI 로딩 */}
+            {phase === 'loading' && <ConsultationLoading />}
+          </div>
         </div>
       )}
     </main>
