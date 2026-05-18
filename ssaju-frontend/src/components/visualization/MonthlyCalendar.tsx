@@ -81,10 +81,10 @@ export function MonthlyCalendar({ forecasts }: MonthlyCalendarProps) {
       </div>
 
       {/* 범례 */}
-      <div className="flex gap-4 text-xs text-night-700 justify-center">
+      <div className="flex gap-4 text-xs justify-center" style={{ color: 'rgba(255,255,255,0.45)' }}>
         <span><span className="text-star-500">★</span> 행운</span>
         <span><span className="text-red-400">⚠</span> 주의</span>
-        <span className="text-night-700">● 일반</span>
+        <span style={{ color: 'rgba(255,255,255,0.35)' }}>● 일반</span>
       </div>
     </div>
   );
