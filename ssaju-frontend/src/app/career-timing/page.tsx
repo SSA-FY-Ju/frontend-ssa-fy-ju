@@ -48,7 +48,7 @@ export default function CareerTimingPage() {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setNudgeVisible(true));
       });
-    }, 3000);
+    }, 1000);
     return () => clearTimeout(showTimer);
   }, [phase]);
 
@@ -83,9 +83,7 @@ export default function CareerTimingPage() {
           )}
 
           {/* 결과 */}
-          {phase === 'result' && result && (
-            <CareerTimingResult result={result} />
-          )}
+          {phase === 'result' && result && <CareerTimingResult result={result} />}
         </div>
       </div>
 
@@ -113,7 +111,11 @@ export default function CareerTimingPage() {
             <div className="flex items-center justify-between">
               <span
                 aria-hidden="true"
-                style={{ fontSize: 18, color: '#a78bfa', filter: 'drop-shadow(0 0 6px rgba(167,139,250,0.5))' }}
+                style={{
+                  fontSize: 18,
+                  color: '#a78bfa',
+                  filter: 'drop-shadow(0 0 6px rgba(167,139,250,0.5))',
+                }}
               >
                 ✦
               </span>
@@ -154,10 +156,7 @@ export default function CareerTimingPage() {
       )}
 
       {feedbackModalOpen && (
-        <FeedbackModal
-          feedbackType="CAREER_TIMING"
-          onClose={() => setFeedbackModalOpen(false)}
-        />
+        <FeedbackModal feedbackType="CAREER_TIMING" onClose={() => setFeedbackModalOpen(false)} />
       )}
     </main>
   );
