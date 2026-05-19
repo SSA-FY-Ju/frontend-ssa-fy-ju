@@ -74,7 +74,7 @@ export function FeedbackModal({ feedbackType, onClose }: FeedbackModalProps) {
       aria-modal="true"
       aria-labelledby="feedback-modal-title"
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(8px)' }}
+      style={{ background: 'rgba(4,2,18,0.5)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
     >
       {/* 닫기 배경 */}
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
@@ -82,9 +82,11 @@ export function FeedbackModal({ feedbackType, onClose }: FeedbackModalProps) {
       <div
         className="relative w-full max-w-md mx-4 mb-4 sm:mb-0 rounded-3xl overflow-hidden"
         style={{
-          background: 'radial-gradient(ellipse at top, rgba(30,15,60,0.98) 0%, rgba(5,8,20,0.99) 70%)',
+          background: 'radial-gradient(ellipse at top, rgba(30,15,60,0.92) 0%, rgba(5,8,20,0.95) 70%)',
           border: '1px solid rgba(139,92,246,0.2)',
           boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(109,40,217,0.12)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
         }}
       >
         {/* 배경 별빛 장식 */}

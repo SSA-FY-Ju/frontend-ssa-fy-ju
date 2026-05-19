@@ -27,7 +27,7 @@ export function PageExitModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(10px)' }}
+      style={{ background: 'rgba(4,2,18,0.5)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
       role="dialog"
       aria-modal="true"
       aria-labelledby="exit-modal-title"
@@ -36,9 +36,11 @@ export function PageExitModal({
       <div
         className="w-full max-w-sm rounded-3xl overflow-hidden"
         style={{
-          background: 'radial-gradient(ellipse at 60% 0%, rgba(40,10,80,0.98) 0%, rgba(5,8,22,0.99) 65%)',
+          background: 'linear-gradient(150deg, rgba(30,20,60,0.72) 0%, rgba(15,10,35,0.78) 100%)',
           border: '1px solid rgba(255,255,255,0.07)',
           boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 40px 80px rgba(0,0,0,0.7), 0 0 80px rgba(239,68,68,0.08)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
         }}
       >
         {/* 상단 경고 그라디언트 바 */}

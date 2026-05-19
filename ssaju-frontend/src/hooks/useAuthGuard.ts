@@ -2,7 +2,6 @@
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { toast } from 'sonner';
 import { useAuthStore } from '@/stores/authStore';
 
 /**
@@ -27,25 +26,17 @@ import { useAuthStore } from '@/stores/authStore';
  * @param required - 가드 활성화 여부 (기본값: true)
  */
 export function useAuthGuard(required: boolean = true) {
-  const { isLoggedIn } = useAuthStore();
+  const { isLoggedIn, openLoginModal } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    // 가드 비활성화
-    if (!required) {
-      return;
-    }
+    if (!required) return;
+    if (pathname === '/') return;
 
-    // 루트('/') 페이지는 로그인 유도 페이지이므로 보호 안 함 (무한 루프 방지)
-    if (pathname === '/') {
-      return;
-    }
-
-    // 로그인 안 되어 있으면 /로 리다이렉트
     if (!isLoggedIn) {
+      openLoginModal();
       router.push('/');
-      toast.info('로그인 후 이용해주세요');
     }
-  }, [required, isLoggedIn, pathname, router]);
+  }, [required, isLoggedIn, pathname, router, openLoginModal]);
 }

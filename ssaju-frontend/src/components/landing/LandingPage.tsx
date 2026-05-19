@@ -2,7 +2,7 @@
 
 /**\n * 파일 역할: 랜딩 5페이지 전환, 입력 진입 상태, 페이지 네비게이션을 총괄하는 메인 컨테이너입니다.\n */
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Brand from './Brand';
 import Page1 from './pages/Page1';
@@ -10,6 +10,9 @@ import Page2 from './pages/Page2';
 import Page3 from './pages/Page3';
 import Page4 from './pages/Page4';
 import Page5 from './pages/Page5';
+import { LoginModal } from '@/components/auth/LoginModal';
+import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/hooks/useAuth';
 
 type PageState = 'landing' | 'chat';
 
@@ -45,6 +48,19 @@ export default function LandingPage() {
   const router = useRouter();
   const [pageIndex, setPageIndex] = useState(0);
   const [state, setState] = useState<PageState>('landing');
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const loginModalOpen = useAuthStore((s) => s.isLoginModalOpen);
+  const closeLoginModal = useAuthStore((s) => s.closeLoginModal);
+  const openLoginModal = useAuthStore((s) => s.openLoginModal);
+  const { loginWithKakao, loginWithGoogle, isLoading, loginError } = useAuth();
+
+  const handleStart = () => {
+    if (isLoggedIn) {
+      router.push('/chat');
+    } else {
+      openLoginModal();
+    }
+  };
   const totalPages = PAGES.length;
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -101,6 +117,7 @@ export default function LandingPage() {
   }, [state, totalPages]);
 
   return (
+    <>
     <div ref={containerRef} className="landing-no-drag relative w-screen h-screen overflow-hidden">
       <Brand
         onClick={() => {
@@ -142,9 +159,19 @@ export default function LandingPage() {
         </div>
 
         <div className={`page ${pageIndex === 4 ? 'active' : ''}`}>
-          <Page5 onStart={() => router.push('/chat')} />
+          <Page5 onStart={handleStart} />
         </div>
       </div>
     </div>
+
+    <LoginModal
+      isOpen={loginModalOpen}
+      onClose={closeLoginModal}
+      onKakaoLogin={async () => { await loginWithKakao(); closeLoginModal(); }}
+      onGoogleLogin={async () => { await loginWithGoogle(); closeLoginModal(); }}
+      isLoading={isLoading}
+      error={loginError}
+    />
+    </>
   );
 }
