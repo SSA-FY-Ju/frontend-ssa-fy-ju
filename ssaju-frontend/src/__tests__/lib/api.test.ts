@@ -7,7 +7,7 @@
  */
 
 import { fetchCareerTiming, fetchConsultation } from '@/lib/api/career';
-import { fetchAuthStatus, logout } from '@/lib/api/auth';
+import { login, logout } from '@/lib/api/auth';
 import { submitFeedback } from '@/lib/api/feedback';
 
 // apiFetch 전체 모킹
@@ -90,38 +90,27 @@ describe('fetchConsultation', () => {
 // auth.ts
 // ─────────────────────────────────────────────────────────────
 
-describe('fetchAuthStatus', () => {
+describe('login', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('로그인 상태 확인 — 비로그인 응답', async () => {
-    apiFetch.mockResolvedValueOnce({ isLoggedIn: false, user: null });
+  it('올바른 경로와 옵션으로 apiFetch 호출', async () => {
+    apiFetch.mockResolvedValueOnce({ accessToken: 'tok', accessTokenExpiresIn: 3600 });
 
-    const result = await fetchAuthStatus();
+    const result = await login({ email: 'a@b.com', password: 'password1' });
 
-    expect(apiFetch).toHaveBeenCalledWith('/api/auth/status', {
-      method: 'GET',
-      timeout: 5000,
-      retry: { maxAttempts: 1 },
-    });
-    expect(result).toEqual({ isLoggedIn: false, user: null });
-  });
-
-  it('로그인 상태 확인 — 로그인 응답', async () => {
-    const mockUser = { userId: 'user-001', name: '테스트', socialProvider: 'KAKAO' as const };
-    apiFetch.mockResolvedValueOnce({ isLoggedIn: true, user: mockUser });
-
-    const result = await fetchAuthStatus();
-
-    expect(result.isLoggedIn).toBe(true);
-    expect(result.user?.userId).toBe('user-001');
+    expect(apiFetch).toHaveBeenCalledWith('/api/auth/login', expect.objectContaining({
+      method: 'POST',
+      body: { email: 'a@b.com', password: 'password1' },
+    }));
+    expect(result.accessToken).toBe('tok');
   });
 
   it('apiFetch 실패 시 에러 전파', async () => {
-    apiFetch.mockRejectedValueOnce(new Error('네트워크 오류'));
+    apiFetch.mockRejectedValueOnce(new Error('이메일 또는 비밀번호 오류'));
 
-    await expect(fetchAuthStatus()).rejects.toThrow('네트워크 오류');
+    await expect(login({ email: 'a@b.com', password: 'wrong' })).rejects.toThrow('이메일 또는 비밀번호 오류');
   });
 });
 

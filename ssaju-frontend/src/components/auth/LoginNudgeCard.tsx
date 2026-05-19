@@ -1,18 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { LoginModal } from './LoginModal';
+import { AuthModal } from './AuthModal';
 import { useAuth } from '@/hooks/useAuth';
 
 /**
  * 비로그인 사용자 로그인 유도 카드
- *
- * 결과 페이지 하단에 표시:
- * "로그인하지 않으면 이 결과는 페이지를 나갈 때 사라집니다"
  */
 export function LoginNudgeCard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { isLoggedIn, loginWithKakao, loginWithGoogle, isLoading, loginError } = useAuth();
+  const { isLoggedIn } = useAuth();
 
   if (isLoggedIn) return null;
 
@@ -40,20 +37,7 @@ export function LoginNudgeCard() {
         </div>
       </div>
 
-      <LoginModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onKakaoLogin={async () => {
-          await loginWithKakao();
-          setIsModalOpen(false);
-        }}
-        onGoogleLogin={async () => {
-          await loginWithGoogle();
-          setIsModalOpen(false);
-        }}
-        isLoading={isLoading}
-        error={loginError}
-      />
+      <AuthModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   );
 }

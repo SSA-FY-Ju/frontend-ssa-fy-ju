@@ -58,7 +58,7 @@ describe('mockUser', () => {
   it('필수 사용자 정보 존재', () => {
     expect(mockUser.userId).toBeTruthy();
     expect(mockUser.name).toBeTruthy();
-    expect(['KAKAO', 'GOOGLE']).toContain(mockUser.socialProvider);
+    expect(mockUser.email).toBeTruthy();
   });
 
   it('이메일 형식 유효', () => {

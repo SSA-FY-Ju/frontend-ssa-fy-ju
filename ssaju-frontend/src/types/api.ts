@@ -181,11 +181,10 @@ export interface FeedbackResponse {
  */
 export interface User {
   userId: string;
-  socialProvider: 'KAKAO' | 'GOOGLE';
-  email?: string;
+  email: string;
   name: string;
   profileImage?: string;
-  createdAt: number; // Unix timestamp
+  createdAt?: number; // Unix timestamp
 }
 
 /**

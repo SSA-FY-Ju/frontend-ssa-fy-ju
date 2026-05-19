@@ -15,10 +15,6 @@ import { DeleteConfirmModal } from '@/components/history/DeleteConfirmModal';
 import { HistoryDetailPage } from '@/components/results/HistoryDetailPage';
 import type { AnalysisRecord } from '@/types/api';
 
-const PROVIDER_LABEL: Record<string, { label: string; color: string; bg: string }> = {
-  KAKAO: { label: '카카오', color: '#3A1D1D', bg: '#FEE500' },
-  GOOGLE: { label: 'Google', color: '#fff', bg: 'rgba(66,133,244,0.8)' },
-};
 
 const QUICK_ANALYSIS = [
   { href: '/career-timing', icon: '🌟', label: '관운 분석', desc: '올해의 커리어 운세' },
@@ -68,7 +64,6 @@ export default function MyPage() {
     router.push('/');
   };
 
-  const provider = user?.socialProvider ? PROVIDER_LABEL[user.socialProvider] : null;
   const initial = user?.name?.charAt(0)?.toUpperCase() ?? '?';
 
   return (
@@ -119,14 +114,6 @@ export default function MyPage() {
               <p className="text-white font-bold text-lg leading-tight truncate">{user?.name ?? '-'}</p>
               {user?.email && (
                 <p className="text-xs truncate mt-0.5" style={{ color: 'rgba(196,181,253,0.45)' }}>{user.email}</p>
-              )}
-              {provider && (
-                <span
-                  className="inline-block mt-1.5 px-2 py-0.5 rounded-full text-xs font-bold"
-                  style={{ background: provider.bg, color: provider.color }}
-                >
-                  {provider.label} 로그인
-                </span>
               )}
             </div>
           </div>

@@ -10,9 +10,8 @@ import Page2 from './pages/Page2';
 import Page3 from './pages/Page3';
 import Page4 from './pages/Page4';
 import Page5 from './pages/Page5';
-import { LoginModal } from '@/components/auth/LoginModal';
+import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuthStore } from '@/stores/authStore';
-import { useAuth } from '@/hooks/useAuth';
 
 type PageState = 'landing' | 'chat';
 
@@ -52,7 +51,6 @@ export default function LandingPage() {
   const loginModalOpen = useAuthStore((s) => s.isLoginModalOpen);
   const closeLoginModal = useAuthStore((s) => s.closeLoginModal);
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
-  const { loginWithKakao, loginWithGoogle, isLoading, loginError } = useAuth();
 
   const handleStart = () => {
     if (isLoggedIn) {
@@ -164,13 +162,9 @@ export default function LandingPage() {
       </div>
     </div>
 
-    <LoginModal
+    <AuthModal
       isOpen={loginModalOpen}
       onClose={closeLoginModal}
-      onKakaoLogin={async () => { await loginWithKakao(); closeLoginModal(); }}
-      onGoogleLogin={async () => { await loginWithGoogle(); closeLoginModal(); }}
-      isLoading={isLoading}
-      error={loginError}
     />
     </>
   );

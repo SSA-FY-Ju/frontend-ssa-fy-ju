@@ -128,14 +128,26 @@ export async function apiFetch<T>(
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), timeout);
 
+        // authStore에서 accessToken 읽어 Authorization 헤더 자동 주입
+        let authHeader: Record<string, string> = {};
+        try {
+          if (typeof window !== 'undefined') {
+            const { useAuthStore } = require('@/stores/authStore');
+            const token = useAuthStore.getState().accessToken;
+            if (token) authHeader = { Authorization: `Bearer ${token}` };
+          }
+        } catch {
+          // 스토어 접근 실패 시 무시
+        }
+
         const response = await fetch(url, {
           method,
           headers: {
             'Content-Type': 'application/json',
+            ...authHeader,
             ...headers,
           },
           body: body ? JSON.stringify(body) : null,
-          credentials: 'include', // HttpOnly 쿠키 자동 전송
           signal: controller.signal,
         });
 
