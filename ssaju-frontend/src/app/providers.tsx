@@ -10,14 +10,12 @@ import { ErrorBoundary } from '@/components/errors/ErrorBoundary';
  *
  * 제공하는 기능:
  * - MSW 개발용 API 목업 (개발 환경에서만)
- * - 전역 로딩 진행 바 (API 요청 추적)
  * - Sonner 토스트 시스템
  * - 전역 에러 핸들러 (window.onerror, unhandledrejection)
  * - ErrorBoundary (React 렌더링 오류 캐치)
  */
 export function Providers({ children }: { children: ReactNode }): React.ReactElement {
-  // MSW 비활성화 — API 레이어에서 직접 mock 데이터 사용
-  // useEffect(() => { ... }, []);
+  // MSW 비활성화 — 실제 API 사용 (Next.js 프록시 → https://api.ssaju.net)
 
   return (
     <ErrorBoundary>

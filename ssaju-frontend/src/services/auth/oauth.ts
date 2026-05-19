@@ -8,10 +8,10 @@
  * 기기 감지: 768px 기준 팝업/리다이렉트 자동 선택
  */
 
-import { config } from '@/lib/config/env';
-
 const KAKAO_CLIENT_ID = process.env.NEXT_PUBLIC_KAKAO_CLIENT_ID || '';
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+const OAUTH_REDIRECT_URI =
+  process.env.NEXT_PUBLIC_OAUTH_REDIRECT_URI || 'http://localhost:3000/api/auth/callback';
 
 /**
  * PKCE code verifier 생성 (43-128자 랜덤 문자열)
@@ -61,7 +61,7 @@ export async function getKakaoAuthUrl(): Promise<string> {
 
   const params = new URLSearchParams({
     client_id: KAKAO_CLIENT_ID,
-    redirect_uri: config.oauthRedirectUri,
+    redirect_uri: OAUTH_REDIRECT_URI,
     response_type: 'code',
     state,
     code_challenge: challenge,
@@ -84,7 +84,7 @@ export async function getGoogleAuthUrl(): Promise<string> {
 
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
-    redirect_uri: config.oauthRedirectUri,
+    redirect_uri: OAUTH_REDIRECT_URI,
     response_type: 'code',
     scope: 'openid email profile',
     state,

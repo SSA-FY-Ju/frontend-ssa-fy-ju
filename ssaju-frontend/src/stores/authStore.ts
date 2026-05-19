@@ -7,7 +7,7 @@
  * - JWT accessToken
  *
  * 영속화: accessToken + isLoggedIn + user → localStorage (새로고침 후에도 로그인 유지)
- * 비영속: loginError, isLoading, isLoginModalOpen → 세션 메모리만
+ * 비영속: loginError, isLoading, isLoginModalOpen, _hasHydrated → 세션 메모리만
  */
 
 import { create } from 'zustand';
@@ -27,6 +27,7 @@ interface AuthStore {
   accessToken: string | null;
 
   // 비영속 상태
+  _hasHydrated: boolean;
   loginError: string | null;
   isLoading: boolean;
   isLoginModalOpen: boolean;
@@ -50,6 +51,7 @@ export const useAuthStore = create<AuthStore>()(
       isLoggedIn: false,
       user: null,
       accessToken: null,
+      _hasHydrated: false,
       loginError: null,
       isLoading: false,
       isLoginModalOpen: false,
@@ -94,12 +96,15 @@ export const useAuthStore = create<AuthStore>()(
     {
       name: 'ssaju-auth',
       storage: createJSONStorage(() => localStorage),
-      // localStorage에 저장할 필드만 선택 — 에러/로딩/모달 상태는 제외
+      // localStorage에 저장할 필드만 선택 — 에러/로딩/모달/_hasHydrated 상태는 제외
       partialize: (state) => ({
         isLoggedIn: state.isLoggedIn,
         user: state.user,
         accessToken: state.accessToken,
       }),
+      onRehydrateStorage: () => (state) => {
+        if (state) state._hasHydrated = true;
+      },
     },
   ),
 );

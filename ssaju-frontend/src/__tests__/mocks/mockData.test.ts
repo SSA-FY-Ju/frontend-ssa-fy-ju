@@ -10,7 +10,7 @@
  */
 
 import { mockCareerTimingResult, mockConsultationData } from '@/mocks/data/career';
-import { mockUser, mockAuthStatus } from '@/mocks/data/auth';
+import { mockUser } from '@/mocks/data/auth';
 import { mockCompatibilityResult, mockCompanyAutocomplete } from '@/mocks/data/company';
 
 describe('mockCareerTimingResult', () => {
@@ -66,16 +66,6 @@ describe('mockUser', () => {
   });
 });
 
-describe('mockAuthStatus', () => {
-  it('로그인 상태 true', () => {
-    expect(mockAuthStatus.isLoggedIn).toBe(true);
-  });
-
-  it('user 객체 포함', () => {
-    expect(mockAuthStatus.user).toBeDefined();
-    expect(mockAuthStatus.user.userId).toBe(mockUser.userId);
-  });
-});
 
 describe('mockCompatibilityResult', () => {
   it('필수 필드 존재', () => {

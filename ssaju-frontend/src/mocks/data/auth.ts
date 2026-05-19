@@ -9,10 +9,4 @@ export const mockUser: User = {
   email: 'test@example.com',
   name: '테스트 사용자',
   profileImage: 'https://example.com/profile.jpg',
-  createdAt: Date.now(),
-};
-
-export const mockAuthStatus = {
-  isLoggedIn: true,
-  user: mockUser,
 };

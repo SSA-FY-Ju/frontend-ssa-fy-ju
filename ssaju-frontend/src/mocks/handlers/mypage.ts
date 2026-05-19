@@ -10,8 +10,6 @@
 import { http, HttpResponse, delay } from 'msw';
 import type { AnalysisRecord, AnalysisHistoryResponse } from '@/types/api';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
-
 /** 목 분석 기록 데이터 (CAREER_TIMING 3개) */
 export const mockAnalysisRecords: AnalysisRecord[] = [
   {
@@ -51,7 +49,7 @@ export const mockAnalysisRecords: AnalysisRecord[] = [
 
 export const mypageHandlers = [
   /** 분석 기록 목록 */
-  http.post(`${BASE_URL}/api/my-page/history`, async () => {
+  http.post('/api/my-page/history', async () => {
     await delay(300);
     const response: AnalysisHistoryResponse = {
       records: mockAnalysisRecords,
@@ -67,7 +65,7 @@ export const mypageHandlers = [
   }),
 
   /** 분석 기록 상세 */
-  http.get(`${BASE_URL}/api/my-page/history/:id`, async ({ params }) => {
+  http.get('/api/my-page/history/:id', async ({ params }) => {
     await delay(200);
     const { id } = params;
     const record = mockAnalysisRecords.find((r) => r.recordId === id);
@@ -93,7 +91,7 @@ export const mypageHandlers = [
   }),
 
   /** 분석 기록 삭제 */
-  http.delete(`${BASE_URL}/api/my-page/history/:id`, async () => {
+  http.delete('/api/my-page/history/:id', async () => {
     await delay(200);
     return HttpResponse.json({
       success: true,

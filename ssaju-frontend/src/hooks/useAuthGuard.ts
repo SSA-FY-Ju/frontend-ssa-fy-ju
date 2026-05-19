@@ -26,17 +26,18 @@ import { useAuthStore } from '@/stores/authStore';
  * @param required - 가드 활성화 여부 (기본값: true)
  */
 export function useAuthGuard(required: boolean = true) {
-  const { isLoggedIn, openLoginModal } = useAuthStore();
+  const { isLoggedIn, _hasHydrated, openLoginModal } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     if (!required) return;
+    if (!_hasHydrated) return; // localStorage 복원 전에는 판단하지 않음
     if (pathname === '/') return;
 
     if (!isLoggedIn) {
       openLoginModal();
       router.push('/');
     }
-  }, [required, isLoggedIn, pathname, router, openLoginModal]);
+  }, [required, _hasHydrated, isLoggedIn, pathname, router, openLoginModal]);
 }

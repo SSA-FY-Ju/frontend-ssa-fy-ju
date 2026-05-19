@@ -140,6 +140,10 @@ export async function apiFetch<T>(
           // 스토어 접근 실패 시 무시
         }
 
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[API →] ${method} ${url}`, body ?? '');
+        }
+
         const response = await fetch(url, {
           method,
           headers: {
@@ -156,6 +160,10 @@ export async function apiFetch<T>(
         // 성공 응답 처리
         if (response.ok) {
           const json = (await response.json()) as ApiResponse<T>;
+
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`[API ←] ${method} ${url} ${response.status}`, json);
+          }
 
           if (json.success) {
             return json.data as T;
@@ -186,6 +194,9 @@ export async function apiFetch<T>(
         // 4xx 에러 (재시도 하지 않음)
         if (response.status >= 400 && response.status < 500) {
           const json = (await response.json()) as ApiResponse<T>;
+          if (process.env.NODE_ENV === 'development') {
+            console.warn(`[API ←] ${method} ${url} ${response.status}`, json);
+          }
           throw new ApiError(
             response.status,
             json.error?.code || 'CLIENT_ERROR',
