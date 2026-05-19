@@ -27,6 +27,10 @@ interface SessionState {
   lastAnalysisType: 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY' | null;
   currentAnalysisData: Record<string, unknown> | null;
   isAnalyzing: boolean;
+  // 피드백 제출 완료된 resultId 목록
+  feedbackGivenIds: string[];
+  // 헤더 "처음으로" 버튼 → 결과 페이지에 나가기 요청 전달용
+  exitRequestPending: boolean;
 }
 
 interface SessionActions {
@@ -41,6 +45,9 @@ interface SessionActions {
   setLastAnalysisType: (type: SessionState['lastAnalysisType']) => void;
   setCurrentAnalysisData: (data: Record<string, unknown> | null) => void;
   setIsAnalyzing: (isAnalyzing: boolean) => void;
+  setFeedbackGiven: (resultId: string, feedbackType: string) => void;
+  requestExit: () => void;
+  clearExitRequest: () => void;
   clearSession: () => void;
   reset: () => void;
 }
@@ -58,6 +65,8 @@ const initialState: SessionState = {
   lastAnalysisType: null,
   currentAnalysisData: null,
   isAnalyzing: false,
+  feedbackGivenIds: [],
+  exitRequestPending: false,
 };
 
 export const useSessionStore = create<SessionStore>()(
@@ -110,6 +119,18 @@ export const useSessionStore = create<SessionStore>()(
         set({ isAnalyzing });
       },
 
+      requestExit: () => set({ exitRequestPending: true }),
+      clearExitRequest: () => set({ exitRequestPending: false }),
+
+      setFeedbackGiven: (resultId: string, feedbackType: string) => {
+        const key = `${resultId}_${feedbackType}`;
+        set((state) => ({
+          feedbackGivenIds: state.feedbackGivenIds.includes(key)
+            ? state.feedbackGivenIds
+            : [...state.feedbackGivenIds, key],
+        }));
+      },
+
       clearSession: () => {
         set({
           birthDate: null,
@@ -134,6 +155,7 @@ export const useSessionStore = create<SessionStore>()(
         selectedService: state.selectedService,
         sajuResultId: state.sajuResultId,
         lastAnalysisType: state.lastAnalysisType,
+        feedbackGivenIds: state.feedbackGivenIds,
       }),
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCompatibility } from '@/hooks/useCompatibility';
@@ -13,7 +13,6 @@ import { CompanyConfirmModal } from '@/components/modals/CompanyConfirmModal';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { LoadingProgress } from '@/components/results/LoadingProgress';
 import { ErrorMessage } from '@/components/errors/ErrorMessage';
-import { PageExitModal } from '@/components/common/PageExitModal';
 import { FeedbackModal } from '@/components/modals/FeedbackModal';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 
@@ -35,6 +34,12 @@ export default function CompatibilityPage() {
   const sessionBirthDate = useSessionStore((s) => s.birthDate);
   const sessionBirthTime = useSessionStore((s) => s.birthTime);
   const hasHydrated = useSessionStore((s) => s._hasHydrated);
+  const sajuResultId = useSessionStore((s) => s.sajuResultId);
+  const feedbackGivenIds = useSessionStore((s) => s.feedbackGivenIds);
+  const setFeedbackGiven = useSessionStore((s) => s.setFeedbackGiven);
+  const exitRequestPending = useSessionStore((s) => s.exitRequestPending);
+  const clearExitRequest = useSessionStore((s) => s.clearExitRequest);
+  const hasFeedback = !!sajuResultId && feedbackGivenIds.includes(`${sajuResultId}_COMPATIBILITY`);
 
   useEffect(() => {
     if (hasHydrated && !sessionBirthDate) {
@@ -46,15 +51,27 @@ export default function CompatibilityPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingCompany, setPendingCompany] = useState('');
 
-  const { shouldShowExitModal, confirmExit, cancelExit } = usePageExitGuard();
+  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [feedbackIsExitMode, setFeedbackIsExitMode] = useState(false);
+
+  const { confirmExit } = usePageExitGuard({
+    onExitAttempt: () => {
+      if (!hasFeedback) {
+        setFeedbackIsExitMode(true);
+        setFeedbackModalOpen(true);
+      } else {
+        confirmExit();
+      }
+    },
+  });
+
   const { getDisplayMessage } = useErrorHandler();
 
   // 피드백 넛지 — 마지막 섹션 도달 시 표시
   const [showFeedbackNudge, setShowFeedbackNudge] = useState(false);
   const [nudgeVisible, setNudgeVisible] = useState(false);
-  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [activeSectionIndex, setActiveSectionIndex] = useState(0);
-  const nudgeShownRef = useState(false);
+  const nudgeShownRef = useRef(false);
   const LAST_SECTION = 5;
 
   useEffect(() => {
@@ -67,14 +84,39 @@ export default function CompatibilityPage() {
 
   useEffect(() => {
     if (activeSectionIndex !== LAST_SECTION) return;
-    if (nudgeShownRef[0]) return;
-    nudgeShownRef[0] = true;
+    if (nudgeShownRef.current) return;
+    nudgeShownRef.current = true;
     const t = setTimeout(() => {
       setShowFeedbackNudge(true);
-      requestAnimationFrame(() => requestAnimationFrame(() => setNudgeVisible(true)));
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        setNudgeVisible(true);
+        setTimeout(() => setNudgeVisible(false), 5000);
+        setTimeout(() => setShowFeedbackNudge(false), 5500);
+      }));
     }, 800);
     return () => clearTimeout(t);
   }, [activeSectionIndex, nudgeShownRef]);
+
+  const handleFeedbackSubmitted = () => {
+    if (sajuResultId) setFeedbackGiven(sajuResultId, 'COMPATIBILITY');
+    if (feedbackIsExitMode) confirmExit();
+  };
+
+  const handleFeedbackClose = () => {
+    setFeedbackModalOpen(false);
+    setFeedbackIsExitMode(false);
+  };
+
+  useEffect(() => {
+    if (!exitRequestPending) return;
+    clearExitRequest();
+    if (!hasFeedback) {
+      setFeedbackIsExitMode(true);
+      setFeedbackModalOpen(true);
+    } else {
+      confirmExit();
+    }
+  }, [exitRequestPending, hasFeedback, clearExitRequest, confirmExit]);
 
   const handleCompanySelect = async (name: string) => {
     const trimmed = name.trim();
@@ -102,27 +144,20 @@ export default function CompatibilityPage() {
     setShowConfirmModal(false);
   };
 
-  // hydration 전이거나 birthDate 없으면 아무것도 렌더링하지 않음 (redirect 진행 중)
   if (!hasHydrated || !sessionBirthDate) return null;
 
   // 결과 단계에서는 FullPageCompatibility가 전체 화면을 제어
   if (phase === 'result' && result) {
     return (
       <main className="relative z-10 text-white" style={{ height: '100vh', overflow: 'hidden' }}>
-        <PageExitModal
-          isOpen={shouldShowExitModal}
-          onConfirmExit={confirmExit}
-          onCancelExit={cancelExit}
-          onLoginAndStay={cancelExit}
-        />
         <FullPageCompatibility
           result={result}
           onReset={handleReset}
           onSectionChange={setActiveSectionIndex}
         />
 
-        {/* 피드백 넛지 */}
-        {showFeedbackNudge && (
+        {/* 피드백 넛지 — 피드백 완료 전에만 표시 */}
+        {showFeedbackNudge && !hasFeedback && (
           <div
             role="complementary"
             aria-label="피드백 요청"
@@ -158,7 +193,7 @@ export default function CompatibilityPage() {
                 <p style={{ fontSize: 11, color: 'rgba(196,181,253,0.55)', marginTop: 3 }}>피드백이 서비스 개선에 도움이 됩니다</p>
               </div>
               <button
-                onClick={() => setFeedbackModalOpen(true)}
+                onClick={() => { setFeedbackIsExitMode(false); setFeedbackModalOpen(true); }}
                 style={{
                   width: '100%', padding: '7px', borderRadius: 10, border: 'none',
                   background: 'linear-gradient(90deg, #6d28d9, #4f46e5)',
@@ -173,7 +208,12 @@ export default function CompatibilityPage() {
         )}
 
         {feedbackModalOpen && (
-          <FeedbackModal feedbackType="COMPATIBILITY" onClose={() => setFeedbackModalOpen(false)} />
+          <FeedbackModal
+            feedbackType="COMPATIBILITY"
+            onClose={handleFeedbackClose}
+            onSubmitted={handleFeedbackSubmitted}
+            exitAction={feedbackIsExitMode ? { onExit: confirmExit } : undefined}
+          />
         )}
       </main>
     );
@@ -184,12 +224,6 @@ export default function CompatibilityPage() {
       className="relative z-10 text-white"
       style={{ height: '100vh', overflowY: 'auto', paddingTop: '4rem' }}
     >
-      <PageExitModal
-        isOpen={shouldShowExitModal}
-        onConfirmExit={confirmExit}
-        onCancelExit={cancelExit}
-        onLoginAndStay={cancelExit}
-      />
       <DisclaimerOverlay isVisible={disclaimerVisible} isFading={disclaimerFading} />
       {showConfirmModal && (
         <CompanyConfirmModal

@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { toast } from 'sonner';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -34,6 +35,7 @@ export function useRouteGuard(required: boolean = true) {
 
     if (!birthDate) {
       router.push('/chat');
+      toast.info('생년월일을 먼저 입력해주세요');
     }
   }, [required, _hasHydrated, isLoggedIn, birthDate, pathname, router]);
 }
