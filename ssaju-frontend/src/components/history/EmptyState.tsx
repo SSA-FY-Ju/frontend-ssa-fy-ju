@@ -12,16 +12,16 @@ import Link from 'next/link';
 
 export function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-6 text-center">
+    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
       {/* 별 아이콘 장식 */}
-      <div className="flex gap-3 mb-6 text-star-400 text-2xl">
+      <div className="flex gap-3 mb-5" style={{ color: 'rgba(167,139,250,0.4)', fontSize: 20 }}>
         <span>✦</span>
-        <span className="text-star-300 text-lg self-center">✦</span>
+        <span style={{ fontSize: 14, alignSelf: 'center' }}>✦</span>
         <span>✦</span>
       </div>
 
       {/* 안내 메시지 */}
-      <p className="text-night-700 text-base leading-relaxed mb-8">
+      <p className="text-sm leading-relaxed mb-6" style={{ color: 'rgba(148,163,184,0.5)' }}>
         아직 분석 기록이 없습니다.
         <br />
         지금 분석을 시작해보세요!
@@ -29,14 +29,16 @@ export function EmptyState() {
 
       {/* 분석 시작 버튼 */}
       <Link
-        href="/career-timing"
-        className="px-8 py-3 bg-star-500 hover:bg-star-400 text-night-900 font-bold rounded-lg transition-colors"
+        href="/select"
+        className="px-6 py-2.5 text-sm font-semibold rounded-xl transition-all"
+        style={{
+          background: 'rgba(139,92,246,0.15)',
+          border: '1px solid rgba(139,92,246,0.35)',
+          color: '#a78bfa',
+        }}
       >
         분석 시작하기
       </Link>
-
-      {/* 하단 별 장식 */}
-      <div className="mt-10 text-star-300 text-sm opacity-50">✦ ✦ ✦</div>
     </div>
   );
 }
