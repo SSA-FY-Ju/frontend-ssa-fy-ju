@@ -1,13 +1,16 @@
-import { NextResponse } from 'next/server';
-import { mockCompatibilityResult } from '@/mocks/data/company';
+import { NextRequest, NextResponse } from 'next/server';
 
-/** 기업 궁합 분석 목업 (1초 지연) */
-export async function POST() {
-  await new Promise((r) => setTimeout(r, 1000));
-  return NextResponse.json({
-    success: true,
-    data: mockCompatibilityResult,
-    error: null,
-    timestamp: Date.now(),
+const BACKEND_URL = 'https://api.ssaju.net';
+
+/** 기업 궁합 분석 — 실제 백엔드 프록시 */
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const res = await fetch(`${BACKEND_URL}/api/company/compatibility`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    credentials: 'include',
   });
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }

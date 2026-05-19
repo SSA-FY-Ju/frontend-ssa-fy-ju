@@ -1,13 +1,16 @@
-import { NextResponse } from 'next/server';
-import { mockConsultationData } from '@/mocks/data/career';
+import { NextRequest, NextResponse } from 'next/server';
 
-/** AI 컨설팅 목업 (1.5초 지연) */
-export async function POST() {
-  await new Promise((r) => setTimeout(r, 1500));
-  return NextResponse.json({
-    success: true,
-    data: mockConsultationData,
-    error: null,
-    timestamp: Date.now(),
+const BACKEND_URL = 'https://api.ssaju.net';
+
+/** AI 커리어 상담 — 실제 백엔드 프록시 */
+export async function POST(req: NextRequest) {
+  const body = await req.json();
+  const res = await fetch(`${BACKEND_URL}/api/career/consultation`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    credentials: 'include',
   });
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }

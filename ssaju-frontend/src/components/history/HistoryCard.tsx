@@ -43,7 +43,7 @@ function getPreviewText(record: AnalysisRecord): string {
   switch (record.analysisType) {
     case 'CAREER_TIMING': {
       const data = record.data as CareerTimingResult;
-      return `${data.h1Period} · H1 신뢰도 ${data.h1Confidence}%`;
+      return `${data.favoredPeriod} · 신뢰도 ${data.confidenceScore}%`;
     }
     case 'CONSULTATION': {
       const data = record.data as ConsultationData;

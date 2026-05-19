@@ -51,11 +51,13 @@ export function useCareerTiming() {
       };
 
       const data = await fetchCareerTiming(request);
+      console.log('[관운 분석] API 응답:', data);
       setResult(data);
       setPhase('result');
 
-      // sessionStore에 sajuResultId 저장 (피드백 제출 시 사용)
-      useSessionStore.getState().setSajuResultId(data.sajuResultId);
+      // API 응답에 sajuResultId가 없으므로 입력값 기반 로컬 키 생성 (피드백 연동용)
+      const localResultId = `CAREER_TIMING_${args.birthDate}_${args.birthTime}`;
+      useSessionStore.getState().setSajuResultId(localResultId);
       useSessionStore.getState().setLastAnalysisType('CAREER_TIMING');
 
       // 비로그인 시 analysisStore에 휘발성 저장
