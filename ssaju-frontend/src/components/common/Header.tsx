@@ -24,7 +24,7 @@ export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-40 h-16">
       <div className="mx-auto max-w-6xl flex items-center justify-between px-4 py-4">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/select" className="flex items-center gap-2">
           <span className="font-serif italic text-lg font-semibold text-yellow-300/70 hover:text-yellow-300 transition-colors">✦ SSAju</span>
           <span className="hidden text-xs text-gray-400/50 sm:block">사주 기반 커리어 컨설팅</span>
         </Link>
@@ -55,6 +55,34 @@ export function Header() {
             }}
           >
             처음으로
+          </button>
+        ) : pathname === '/select' && isLoggedIn ? (
+          <button
+            onClick={() => router.push('/my-page')}
+            className="btn-mypage-sparkle"
+            style={{
+              padding: '7px 16px',
+              borderRadius: 10,
+              border: '1px solid rgba(139,92,246,0.3)',
+              background: 'rgba(139,92,246,0.08)',
+              color: 'rgba(196,181,253,0.8)',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'background 0.2s, color 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 5,
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(139,92,246,0.22)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(139,92,246,0.08)';
+            }}
+          >
+            <span className="sparkle-icon" style={{ fontSize: 10 }}>✦</span>
+            마이페이지
           </button>
         ) : (
           isLoggedIn ? <ProfileMenu /> : <LoginButton />

@@ -484,3 +484,36 @@ button {
 .swiper-slide-active .animate-item {
   animation: slide-up-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+
+/* 마이페이지 버튼 반짝이기 */
+@keyframes myPageSparkle {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(139,92,246,0), 0 0 0 rgba(167,139,250,0);
+    border-color: rgba(139,92,246,0.3);
+    color: rgba(196,181,253,0.8);
+  }
+  40% {
+    box-shadow: 0 0 10px rgba(139,92,246,0.55), 0 0 22px rgba(167,139,250,0.25);
+    border-color: rgba(167,139,250,0.75);
+    color: #e9d5ff;
+  }
+  60% {
+    box-shadow: 0 0 14px rgba(139,92,246,0.7), 0 0 30px rgba(167,139,250,0.35);
+    border-color: #a78bfa;
+    color: #fff;
+  }
+}
+
+@keyframes sparkleIcon {
+  0%, 100% { opacity: 0.35; transform: scale(0.8) rotate(0deg); }
+  50%       { opacity: 1;    transform: scale(1.2) rotate(20deg); }
+}
+
+.btn-mypage-sparkle {
+  animation: myPageSparkle 2.2s ease-in-out infinite;
+}
+
+.sparkle-icon {
+  display: inline-block;
+  animation: sparkleIcon 2.2s ease-in-out infinite;
+}

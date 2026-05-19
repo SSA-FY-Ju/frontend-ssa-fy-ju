@@ -24,7 +24,7 @@ const TABS: { id: AnalysisTab; label: string }[] = [
 
 export function HistoryTabs({ activeTab, onTabChange }: HistoryTabsProps) {
   return (
-    <div className="flex border-b border-night-700">
+    <div className="flex" style={{ borderBottom: '1px solid rgba(139,92,246,0.15)' }}>
       {TABS.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
@@ -32,12 +32,25 @@ export function HistoryTabs({ activeTab, onTabChange }: HistoryTabsProps) {
             key={tab.id}
             type="button"
             onClick={() => onTabChange(tab.id)}
-            className={[
-              'flex-1 py-3 text-sm font-medium transition-colors',
+            className="flex-1 py-3 text-sm font-medium transition-all"
+            style={
               isActive
-                ? 'border-b-2 border-star-400 text-star-400'
-                : 'text-gray-400 hover:text-gray-300',
-            ].join(' ')}
+                ? {
+                    borderBottom: '2px solid #a78bfa',
+                    color: '#a78bfa',
+                    background: 'rgba(139,92,246,0.06)',
+                  }
+                : {
+                    borderBottom: '2px solid transparent',
+                    color: 'rgba(148,163,184,0.5)',
+                  }
+            }
+            onMouseEnter={(e) => {
+              if (!isActive) e.currentTarget.style.color = 'rgba(196,181,253,0.7)';
+            }}
+            onMouseLeave={(e) => {
+              if (!isActive) e.currentTarget.style.color = 'rgba(148,163,184,0.5)';
+            }}
           >
             {tab.label}
           </button>

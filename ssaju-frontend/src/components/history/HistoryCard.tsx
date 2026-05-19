@@ -70,26 +70,48 @@ export function HistoryCard({ record, onDelete, onView }: HistoryCardProps) {
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') onView(record.recordId);
       }}
-      className="relative bg-night-800 border border-night-700 hover:border-star-400 rounded-xl p-5 cursor-pointer transition-colors"
+      className="relative rounded-xl p-4 cursor-pointer transition-all"
+      style={{
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(139,92,246,0.15)',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.background = 'rgba(139,92,246,0.08)';
+        e.currentTarget.style.borderColor = 'rgba(139,92,246,0.35)';
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+        e.currentTarget.style.borderColor = 'rgba(139,92,246,0.15)';
+      }}
     >
       {/* 우상단 삭제 버튼 */}
       <button
         type="button"
         aria-label="기록 삭제"
         onClick={(e) => {
-          e.stopPropagation(); // 카드 클릭 이벤트 전파 방지
+          e.stopPropagation();
           onDelete(record.recordId);
         }}
-        className="absolute top-4 right-4 text-night-600 hover:text-red-400 transition-colors text-lg"
+        className="absolute top-3 right-3 text-base transition-all"
+        style={{ color: 'rgba(148,163,184,0.35)', lineHeight: 1 }}
+        onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(248,113,113,0.7)'; }}
+        onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(148,163,184,0.35)'; }}
       >
-        🗑️
+        ✕
       </button>
 
       {/* 날짜 */}
-      <p className="text-night-600 text-xs mb-2">{formatDate(record.createdAt)}</p>
+      <p className="text-xs mb-2" style={{ color: 'rgba(148,163,184,0.4)' }}>{formatDate(record.createdAt)}</p>
 
       {/* 분석 타입 뱃지 */}
-      <span className="inline-block px-2 py-0.5 bg-night-700 text-star-400 text-xs rounded-full mb-3">
+      <span
+        className="inline-block px-2 py-0.5 text-xs rounded-full mb-2"
+        style={{
+          background: 'rgba(139,92,246,0.15)',
+          color: '#a78bfa',
+          border: '1px solid rgba(139,92,246,0.25)',
+        }}
+      >
         {TYPE_LABEL[record.analysisType]}
       </span>
 
