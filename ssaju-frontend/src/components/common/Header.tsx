@@ -1,26 +1,22 @@
 'use client';
 
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { LoginButton } from '@/components/auth/LoginButton';
 import { ProfileMenu } from '@/components/auth/ProfileMenu';
 import { useAuthStore } from '@/stores/authStore';
 
-/**
- * 글로벌 헤더
- *
- * 로그인 상태에 따라:
- * - 비로그인: LoginButton 표시
- * - 로그인됨: ProfileMenu 표시
- *
- * 홈 페이지(/)에서는 숨김
- */
+const RESULT_PAGES = ['/career-timing', '/consultation', '/compatibility'];
+
 export function Header() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const pathname = usePathname();
+  const router = useRouter();
 
-  // 홈 페이지, 채팅 입력 페이지, AI 컨설팅 페이지에서는 헤더 숨김
-  if (pathname === '/' || pathname === '/chat' || pathname === '/consultation') return null;
+  // 홈, 채팅 입력 페이지에서는 헤더 숨김
+  if (pathname === '/' || pathname === '/chat') return null;
+
+  const isResultPage = RESULT_PAGES.includes(pathname);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 h-16">
@@ -30,7 +26,36 @@ export function Header() {
           <span className="hidden text-xs text-gray-400/50 sm:block">사주 기반 커리어 컨설팅</span>
         </Link>
 
-        {isLoggedIn ? <ProfileMenu /> : <LoginButton />}
+        {isResultPage ? (
+          <button
+            onClick={() => router.push('/chat')}
+            style={{
+              padding: '7px 16px',
+              borderRadius: 10,
+              border: '1px solid rgba(139,92,246,0.3)',
+              background: 'rgba(139,92,246,0.08)',
+              color: 'rgba(196,181,253,0.8)',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(139,92,246,0.18)';
+              e.currentTarget.style.color = '#c4b5fd';
+              e.currentTarget.style.borderColor = 'rgba(139,92,246,0.5)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(139,92,246,0.08)';
+              e.currentTarget.style.color = 'rgba(196,181,253,0.8)';
+              e.currentTarget.style.borderColor = 'rgba(139,92,246,0.3)';
+            }}
+          >
+            처음으로
+          </button>
+        ) : (
+          isLoggedIn ? <ProfileMenu /> : <LoginButton />
+        )}
       </div>
     </header>
   );

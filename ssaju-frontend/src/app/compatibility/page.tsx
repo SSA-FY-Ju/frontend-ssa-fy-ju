@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCompatibility } from '@/hooks/useCompatibility';
 import { useCompanyInfo } from '@/hooks/useCompanyInfo';
@@ -11,11 +12,16 @@ import { CompanyConfirmModal } from '@/components/modals/CompanyConfirmModal';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { LoadingProgress } from '@/components/results/LoadingProgress';
 import { ErrorMessage } from '@/components/errors/ErrorMessage';
-import { CompatibilityResult } from '@/components/results/CompatibilityResult';
 import { PageExitModal } from '@/components/common/PageExitModal';
 import { FeedbackModal } from '@/components/modals/FeedbackModal';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { toast } from 'sonner';
+
+// Swiper는 브라우저 전용 — SSR 비활성화
+const FullPageCompatibility = dynamic(
+  () => import('@/components/compatibility/FullPageCompatibility').then((m) => ({ default: m.FullPageCompatibility })),
+  { ssr: false }
+);
 
 export default function CompatibilityPage() {
   const router = useRouter();
@@ -44,10 +50,13 @@ export default function CompatibilityPage() {
   const { shouldShowExitModal, confirmExit, cancelExit } = usePageExitGuard();
   const { getDisplayMessage } = useErrorHandler();
 
-  // 피드백 넛지
+  // 피드백 넛지 — 마지막 섹션 도달 시 표시
   const [showFeedbackNudge, setShowFeedbackNudge] = useState(false);
   const [nudgeVisible, setNudgeVisible] = useState(false);
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
+  const [activeSectionIndex, setActiveSectionIndex] = useState(0);
+  const nudgeShownRef = useState(false);
+  const LAST_SECTION = 5;
 
   useEffect(() => {
     if (phase !== 'result') {
@@ -55,12 +64,18 @@ export default function CompatibilityPage() {
       setNudgeVisible(false);
       return;
     }
+  }, [phase]);
+
+  useEffect(() => {
+    if (activeSectionIndex !== LAST_SECTION) return;
+    if (nudgeShownRef[0]) return;
+    nudgeShownRef[0] = true;
     const t = setTimeout(() => {
       setShowFeedbackNudge(true);
       requestAnimationFrame(() => requestAnimationFrame(() => setNudgeVisible(true)));
-    }, 1000);
+    }, 800);
     return () => clearTimeout(t);
-  }, [phase]);
+  }, [activeSectionIndex, nudgeShownRef]);
 
   const handleCompanySelect = async (name: string) => {
     const trimmed = name.trim();
@@ -91,8 +106,81 @@ export default function CompatibilityPage() {
   // hydration 전이거나 birthDate 없으면 아무것도 렌더링하지 않음 (redirect 진행 중)
   if (!hasHydrated || !sessionBirthDate) return null;
 
+  // 결과 단계에서는 FullPageCompatibility가 전체 화면을 제어
+  if (phase === 'result' && result) {
+    return (
+      <main className="relative z-10 text-white" style={{ height: '100vh', overflow: 'hidden' }}>
+        <PageExitModal
+          isOpen={shouldShowExitModal}
+          onConfirmExit={confirmExit}
+          onCancelExit={cancelExit}
+          onLoginAndStay={cancelExit}
+        />
+        <FullPageCompatibility
+          result={result}
+          onReset={handleReset}
+          onSectionChange={setActiveSectionIndex}
+        />
+
+        {/* 피드백 넛지 */}
+        {showFeedbackNudge && (
+          <div
+            role="complementary"
+            aria-label="피드백 요청"
+            style={{
+              position: 'fixed', bottom: 24, right: 24, zIndex: 200,
+              transition: 'opacity 500ms ease, transform 500ms cubic-bezier(0.22,1,0.36,1)',
+              opacity: nudgeVisible ? 1 : 0,
+              transform: nudgeVisible ? 'translateY(0)' : 'translateY(20px)',
+            }}
+          >
+            <div
+              style={{
+                width: 220,
+                display: 'flex', flexDirection: 'column', gap: 10,
+                borderRadius: 16, padding: 14,
+                backdropFilter: 'blur(12px)',
+                background: 'rgba(10,12,28,0.9)',
+                border: '1px solid rgba(139,92,246,0.3)',
+                boxShadow: '0 16px 40px rgba(0,0,0,0.4)',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: 16, color: '#a78bfa' }}>✦</span>
+                <button
+                  onClick={() => setShowFeedbackNudge(false)}
+                  style={{ color: 'rgba(148,163,184,0.45)', fontSize: 16, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(148,163,184,0.45)')}
+                >×</button>
+              </div>
+              <div>
+                <p style={{ fontSize: 12, fontWeight: 700, color: '#fff', lineHeight: 1.4 }}>이 결과에 대해 의견을 알려주세요</p>
+                <p style={{ fontSize: 11, color: 'rgba(196,181,253,0.55)', marginTop: 3 }}>피드백이 서비스 개선에 도움이 됩니다</p>
+              </div>
+              <button
+                onClick={() => setFeedbackModalOpen(true)}
+                style={{
+                  width: '100%', padding: '7px', borderRadius: 10, border: 'none',
+                  background: 'linear-gradient(90deg, #6d28d9, #4f46e5)',
+                  color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+                  boxShadow: '0 0 10px rgba(109,40,217,0.4)',
+                }}
+              >
+                의견 남기기
+              </button>
+            </div>
+          </div>
+        )}
+
+        {feedbackModalOpen && (
+          <FeedbackModal feedbackType="COMPATIBILITY" onClose={() => setFeedbackModalOpen(false)} />
+        )}
+      </main>
+    );
+  }
+
   return (
-    // 2. main을 스크롤 컨테이너로: body에 overflow:hidden이 걸려 있어도 내부 스크롤 가능
     <main
       className="relative z-10 text-white"
       style={{ height: '100vh', overflowY: 'auto', paddingTop: '4rem' }}
@@ -130,7 +218,6 @@ export default function CompatibilityPage() {
           >
             <div style={{ width: '100%', maxWidth: 460 }}>
 
-              {/* 상단 레이블 */}
               <p style={{
                 fontSize: 10, fontWeight: 800, letterSpacing: '0.28em',
                 color: '#a78bfa', opacity: 0.55, textTransform: 'uppercase',
@@ -139,7 +226,6 @@ export default function CompatibilityPage() {
                 COMPATIBILITY ANALYSIS
               </p>
 
-              {/* 타이틀 */}
               <h1 style={{
                 fontSize: 'clamp(1.8rem, 5vw, 2.6rem)',
                 fontWeight: 900,
@@ -162,7 +248,6 @@ export default function CompatibilityPage() {
                 사주로 보는 나와 기업의 별빛 인연
               </p>
 
-              {/* 입력 카드 */}
               <div
                 style={{
                   backdropFilter: 'blur(16px)',
@@ -173,7 +258,6 @@ export default function CompatibilityPage() {
                   boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
                 }}
               >
-                {/* 검색 아이콘 + 레이블 */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                   <div style={{
                     width: 32, height: 32, borderRadius: '50%',
@@ -189,7 +273,6 @@ export default function CompatibilityPage() {
                   </p>
                 </div>
 
-                {/* 자동완성 입력 */}
                 <div style={{ marginBottom: 14 }}>
                   <CompanyAutocomplete
                     value={companyName}
@@ -199,7 +282,6 @@ export default function CompatibilityPage() {
                   />
                 </div>
 
-                {/* 분석 버튼 */}
                 <button
                   onClick={() => handleCompanySelect(companyName)}
                   disabled={!companyName.trim() || companyStatus === 'loading'}
@@ -219,19 +301,15 @@ export default function CompatibilityPage() {
                     transition: 'all 0.2s',
                     letterSpacing: '0.02em',
                   }}
-                  onMouseEnter={(e) => { if (companyName.trim()) e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; }}
                 >
                   {companyStatus === 'loading' ? '기업 정보 확인 중...' : '궁합 분석 시작하기 →'}
                 </button>
 
-                {/* 힌트 */}
                 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', textAlign: 'center', marginTop: 12 }}>
                   예: 삼성전자, 카카오, 토스, 네이버
                 </p>
               </div>
 
-              {/* 에러 */}
               {phase === 'error' && error && (
                 <div style={{ marginTop: 20 }}>
                   <ErrorMessage
@@ -256,72 +334,7 @@ export default function CompatibilityPage() {
             </div>
           </div>
         )}
-
-        {/* ── 결과 ── */}
-        {phase === 'result' && result && (
-          <div style={{ maxWidth: 512, margin: '0 auto', padding: '48px 16px' }}>
-            <CompatibilityResult result={result} onReset={handleReset} />
-          </div>
-        )}
       </div>
-
-      {/* 피드백 넛지 */}
-      {showFeedbackNudge && (
-        <div
-          role="complementary"
-          aria-label="피드백 요청"
-          style={{
-            position: 'fixed', bottom: 24, right: 24, zIndex: 50,
-            transition: 'opacity 500ms ease, transform 500ms cubic-bezier(0.22,1,0.36,1)',
-            opacity: nudgeVisible ? 1 : 0,
-            transform: nudgeVisible ? 'translateY(0)' : 'translateY(20px)',
-          }}
-        >
-          <div
-            style={{
-              width: 240,
-              display: 'flex', flexDirection: 'column', gap: 12,
-              borderRadius: 16, padding: 16,
-              backdropFilter: 'blur(12px)',
-              background: 'rgba(10,12,28,0.9)',
-              border: '1px solid rgba(139,92,246,0.3)',
-              boxShadow: '0 16px 40px rgba(0,0,0,0.4)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span style={{ fontSize: 18, color: '#a78bfa', filter: 'drop-shadow(0 0 6px rgba(167,139,250,0.5))' }}>✦</span>
-              <button
-                onClick={() => setShowFeedbackNudge(false)}
-                style={{ color: 'rgba(148,163,184,0.45)', fontSize: 18, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}
-                onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(148,163,184,0.45)')}
-              >×</button>
-            </div>
-            <div>
-              <p style={{ fontSize: 12, fontWeight: 700, color: '#fff', lineHeight: 1.4 }}>이 결과에 대해 의견을 알려주세요</p>
-              <p style={{ fontSize: 11, color: 'rgba(196,181,253,0.55)', marginTop: 4 }}>피드백이 서비스 개선에 도움이 됩니다</p>
-            </div>
-            <button
-              onClick={() => setFeedbackModalOpen(true)}
-              style={{
-                width: '100%', padding: '8px', borderRadius: 10, border: 'none',
-                background: 'linear-gradient(90deg, #6d28d9, #4f46e5)',
-                color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                boxShadow: '0 0 10px rgba(109,40,217,0.4)',
-                transition: 'transform 0.2s',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.03)')}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-            >
-              의견 남기기
-            </button>
-          </div>
-        </div>
-      )}
-
-      {feedbackModalOpen && (
-        <FeedbackModal feedbackType="COMPATIBILITY" onClose={() => setFeedbackModalOpen(false)} />
-      )}
     </main>
   );
 }

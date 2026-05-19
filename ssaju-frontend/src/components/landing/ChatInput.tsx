@@ -167,7 +167,7 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
                           background: 'rgba(255,255,255,0.05)',
                           border: '1px solid rgba(255,255,255,0.1)',
                           borderLeft: '2px solid rgba(139,92,246,0.5)',
-                          borderRadius: '4px 18px 18px 18px',
+                          borderRadius: '18px 18px 18px 18px',
                           padding: '13px 16px',
                           color: 'rgba(255,255,255,0.88)',
                           fontSize: 14,
@@ -176,7 +176,7 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
                         }
                       : {
                           background: 'linear-gradient(135deg, #fcd34d, #f9c846)',
-                          borderRadius: '18px 4px 18px 18px',
+                          borderRadius: '18px 18px 18px 18px',
                           padding: '13px 16px',
                           color: '#0a1230',
                           fontSize: 14,
@@ -387,7 +387,7 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
                     background: 'rgba(255,255,255,0.05)',
                     border: '1px solid rgba(255,255,255,0.1)',
                     borderLeft: '2px solid rgba(139,92,246,0.5)',
-                    borderRadius: '4px 18px 18px 18px',
+                    borderRadius: '18px 18px 18px 18px',
                     padding: '14px 18px',
                     backdropFilter: 'blur(8px)',
                   }}

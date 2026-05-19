@@ -8,7 +8,7 @@ interface TimePickerFieldProps {
   onSubmit: (time: string) => void;
 }
 
-const quickTimes = ['00:00', '06:00', '12:00', '18:00'];
+const quickTimes = ['12:00', '00:00', '06:00', '18:00'];
 
 export default function TimePickerField({ birthTime, onChange, onSubmit }: TimePickerFieldProps) {
   return (
