@@ -33,12 +33,9 @@ export interface CareerTimingRequest {
  * 관운 분석 결과
  */
 export interface CareerTimingResult {
-  sajuResultId: string;
-  h1Period: string;
-  h2Period: string;
-  h1Confidence: number; // 0-100
-  h2Confidence: number; // 0-100
-  recommendation: string;
+  favoredPeriod: string;    // 채용 운이 좋은 시기 (예: "2025년 상반기")
+  confidenceScore: number;  // 신뢰도 0-100
+  reasoning: string;        // 분석 근거
 }
 
 /**
@@ -184,11 +181,10 @@ export interface FeedbackResponse {
  */
 export interface User {
   userId: string;
-  socialProvider: 'KAKAO' | 'GOOGLE';
-  email?: string;
+  email: string;
   name: string;
   profileImage?: string;
-  createdAt: number; // Unix timestamp
+  createdAt?: number; // Unix timestamp
 }
 
 /**

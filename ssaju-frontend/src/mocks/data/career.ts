@@ -5,13 +5,10 @@
 import type { CareerTimingResult, ConsultationData } from '@/types/api';
 
 export const mockCareerTimingResult: CareerTimingResult = {
-  sajuResultId: 'mock-saju-result-001',
-  h1Period: '2025년 상반기',
-  h2Period: '2026년 하반기',
-  h1Confidence: 82,
-  h2Confidence: 65,
-  recommendation:
-    '귀하의 사주를 분석한 결과, 2025년 상반기가 취업 활동에 가장 유리한 시기입니다.',
+  favoredPeriod: '2025년 상반기',
+  confidenceScore: 82,
+  reasoning:
+    '귀하의 사주를 분석한 결과, 2025년 상반기가 취업 활동에 가장 유리한 시기입니다. 목(木) 기운이 강하게 작용하여 새로운 시작과 성장에 적합한 에너지가 집중됩니다.',
 };
 
 export const mockConsultationData: ConsultationData = {

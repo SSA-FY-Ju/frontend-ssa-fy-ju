@@ -6,7 +6,6 @@ import type { User } from '@/types/api';
 
 export const mockUser: User = {
   userId: 'mock-user-001',
-  socialProvider: 'KAKAO',
   email: 'test@example.com',
   name: '테스트 사용자',
   profileImage: 'https://example.com/profile.jpg',

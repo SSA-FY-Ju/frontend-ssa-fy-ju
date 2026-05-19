@@ -19,12 +19,9 @@ export const mockAnalysisRecords: AnalysisRecord[] = [
     userId: 'user-001',
     analysisType: 'CAREER_TIMING',
     data: {
-      sajuResultId: 'saju-001',
-      h1Period: '2025년 상반기',
-      h2Period: '2026년 하반기',
-      h1Confidence: 82,
-      h2Confidence: 65,
-      recommendation: '2025년 상반기가 취업 활동에 가장 유리한 시기입니다.',
+      favoredPeriod: '2025년 상반기',
+      confidenceScore: 82,
+      reasoning: '2025년 상반기가 취업 활동에 가장 유리한 시기입니다.',
     },
     createdAt: Date.now() - 1000 * 60 * 60 * 24 * 3, // 3일 전
   },
@@ -33,12 +30,9 @@ export const mockAnalysisRecords: AnalysisRecord[] = [
     userId: 'user-001',
     analysisType: 'CAREER_TIMING',
     data: {
-      sajuResultId: 'saju-002',
-      h1Period: '2025년 하반기',
-      h2Period: '2026년 상반기',
-      h1Confidence: 70,
-      h2Confidence: 88,
-      recommendation: '2026년 상반기에 더 큰 기회가 열립니다.',
+      favoredPeriod: '2026년 상반기',
+      confidenceScore: 88,
+      reasoning: '2026년 상반기에 더 큰 기회가 열립니다.',
     },
     createdAt: Date.now() - 1000 * 60 * 60 * 24 * 10, // 10일 전
   },
@@ -47,12 +41,9 @@ export const mockAnalysisRecords: AnalysisRecord[] = [
     userId: 'user-001',
     analysisType: 'CAREER_TIMING',
     data: {
-      sajuResultId: 'saju-003',
-      h1Period: '2024년 하반기',
-      h2Period: '2025년 하반기',
-      h1Confidence: 55,
-      h2Confidence: 75,
-      recommendation: '2025년 하반기를 목표로 준비하세요.',
+      favoredPeriod: '2025년 하반기',
+      confidenceScore: 75,
+      reasoning: '2025년 하반기를 목표로 준비하세요.',
     },
     createdAt: Date.now() - 1000 * 60 * 60 * 24 * 30, // 30일 전
   },

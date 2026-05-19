@@ -16,12 +16,9 @@ const mockCareerRecord: AnalysisRecord = {
   userId: 'user-001',
   analysisType: 'CAREER_TIMING',
   data: {
-    sajuResultId: 'saju-001',
-    h1Period: '2025년 상반기',
-    h2Period: '2026년 하반기',
-    h1Confidence: 82,
-    h2Confidence: 65,
-    recommendation: '상반기가 유리합니다.',
+    favoredPeriod: '2025년 상반기',
+    confidenceScore: 82,
+    reasoning: '상반기가 유리합니다.',
   },
   createdAt: new Date('2025-01-15').getTime(),
 };
@@ -90,7 +87,7 @@ describe('HistoryCard', () => {
     expect(screen.getByText('관운 분석')).toBeInTheDocument();
   });
 
-  it('CAREER_TIMING 카드: h1Period와 신뢰도 표시', () => {
+  it('CAREER_TIMING 카드: favoredPeriod와 신뢰도 표시', () => {
     render(
       <HistoryCard
         record={mockCareerRecord}
@@ -100,7 +97,7 @@ describe('HistoryCard', () => {
     );
 
     expect(screen.getByText(/2025년 상반기/)).toBeInTheDocument();
-    expect(screen.getByText(/H1 신뢰도 82%/)).toBeInTheDocument();
+    expect(screen.getByText(/신뢰도 82%/)).toBeInTheDocument();
   });
 
   it('CONSULTATION 카드: 첫 번째 추천 산업명 표시', () => {

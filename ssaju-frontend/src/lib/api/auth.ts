@@ -2,36 +2,75 @@
  * 인증 API 래퍼
  *
  * 엔드포인트:
- * - GET  /api/auth/status  - 현재 인증 상태 확인
- * - POST /api/auth/logout  - 로그아웃 (HttpOnly 쿠키 삭제)
+ * - POST /api/auth/login      - 이메일/패스워드 로그인 → accessToken 반환
+ * - POST /api/auth/signup     - 회원가입
+ * - POST /api/auth/check-email - 이메일 중복 확인
+ * - POST /api/auth/logout     - 로그아웃
  */
 
 import { apiFetch } from './client';
-import type { User } from '@/types/api';
 
-export interface AuthStatusResponse {
-  isLoggedIn: boolean;
-  user: User | null;
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface LoginResult {
+  accessToken: string;
+  accessTokenExpiresIn: number;
+}
+
+export interface SignupRequest {
+  email: string;
+  password: string;
+  name: string;
+  termsAgreed: boolean;
+  privacyAgreed: boolean;
+}
+
+export interface CheckEmailResult {
+  available: boolean;
 }
 
 /**
- * 현재 인증 상태 확인
- * 타임아웃: 5초
+ * 이메일/패스워드 로그인
+ * 성공 시 accessToken 반환
  */
-export async function fetchAuthStatus(): Promise<AuthStatusResponse> {
-  if (process.env.NODE_ENV === 'development') {
-    return { isLoggedIn: false, user: null };
-  }
-  return apiFetch<AuthStatusResponse>('/api/auth/status', {
-    method: 'GET',
+export async function login(req: LoginRequest): Promise<LoginResult> {
+  return apiFetch<LoginResult>('/api/auth/login', {
+    method: 'POST',
+    body: req,
+    timeout: 10000,
+    retry: { maxAttempts: 1 },
+  });
+}
+
+/**
+ * 회원가입
+ */
+export async function signup(req: SignupRequest): Promise<void> {
+  await apiFetch<unknown>('/api/auth/signup', {
+    method: 'POST',
+    body: req,
+    timeout: 10000,
+    retry: { maxAttempts: 1 },
+  });
+}
+
+/**
+ * 이메일 중복 확인
+ */
+export async function checkEmail(email: string): Promise<CheckEmailResult> {
+  return apiFetch<CheckEmailResult>('/api/auth/check-email', {
+    method: 'POST',
+    body: { email },
     timeout: 5000,
     retry: { maxAttempts: 1 },
   });
 }
 
 /**
- * 로그아웃 (백엔드에서 HttpOnly 쿠키 삭제)
- * 타임아웃: 5초
+ * 로그아웃
  */
 export async function logout(): Promise<void> {
   await apiFetch<void>('/api/auth/logout', {

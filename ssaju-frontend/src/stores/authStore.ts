@@ -3,32 +3,37 @@
  *
  * 저장하는 정보:
  * - 로그인 여부 (isLoggedIn)
- * - 사용자 정보 (userId, name, profileImage 등)
- * - 소셜 제공자 (KAKAO, GOOGLE)
+ * - 사용자 정보 (userId, name, email)
+ * - JWT accessToken
  *
- * 참고: 로그인 토큰은 HttpOnly 쿠키에만 저장 (sessionStore에 저장하지 않음)
+ * 영속화: accessToken + isLoggedIn + user → localStorage (새로고침 후에도 로그인 유지)
+ * 비영속: loginError, isLoading, isLoginModalOpen → 세션 메모리만
  */
 
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface User {
   userId: string;
+  email: string;
   name: string;
   profileImage?: string;
-  socialProvider: 'KAKAO' | 'GOOGLE';
-  email?: string;
 }
 
 interface AuthStore {
-  // State
+  // 영속 상태
   isLoggedIn: boolean;
   user: User | null;
+  accessToken: string | null;
+
+  // 비영속 상태
   loginError: string | null;
   isLoading: boolean;
   isLoginModalOpen: boolean;
 
   // Actions
   setUser: (user: User) => void;
+  setAccessToken: (token: string | null) => void;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   setLoginError: (error: string | null) => void;
   setIsLoading: (isLoading: boolean) => void;
@@ -38,52 +43,63 @@ interface AuthStore {
   closeLoginModal: () => void;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
-  // Initial state
-  // TODO: 개발용 — 배포 전 false로 변경
-  isLoggedIn: true,
-  user: null,
-  loginError: null,
-  isLoading: false,
-  isLoginModalOpen: false,
-
-  // Actions
-  setUser: (user: User) => {
-    set({
-      user,
-      isLoggedIn: true,
-      loginError: null,
-    });
-  },
-
-  setIsLoggedIn: (isLoggedIn: boolean) => {
-    set({ isLoggedIn });
-  },
-
-  setLoginError: (error: string | null) => {
-    set({ loginError: error });
-  },
-
-  setIsLoading: (isLoading: boolean) => {
-    set({ isLoading });
-  },
-
-  logout: () => {
-    set({
+export const useAuthStore = create<AuthStore>()(
+  persist(
+    (set) => ({
+      // 초기 상태
       isLoggedIn: false,
       user: null,
-      loginError: null,
-    });
-  },
-
-  reset: () => {
-    set({
-      isLoggedIn: false,
-      user: null,
+      accessToken: null,
       loginError: null,
       isLoading: false,
-    });
-  },
-  openLoginModal: () => set({ isLoginModalOpen: true }),
-  closeLoginModal: () => set({ isLoginModalOpen: false }),
-}));
+      isLoginModalOpen: false,
+
+      setUser: (user: User) => {
+        set({ user, isLoggedIn: true, loginError: null });
+      },
+
+      setAccessToken: (token: string | null) => {
+        set({ accessToken: token });
+      },
+
+      setIsLoggedIn: (isLoggedIn: boolean) => {
+        set({ isLoggedIn });
+      },
+
+      setLoginError: (error: string | null) => {
+        set({ loginError: error });
+      },
+
+      setIsLoading: (isLoading: boolean) => {
+        set({ isLoading });
+      },
+
+      logout: () => {
+        set({ isLoggedIn: false, user: null, accessToken: null, loginError: null });
+      },
+
+      reset: () => {
+        set({
+          isLoggedIn: false,
+          user: null,
+          accessToken: null,
+          loginError: null,
+          isLoading: false,
+        });
+      },
+
+      openLoginModal: () => set({ isLoginModalOpen: true }),
+      closeLoginModal: () => set({ isLoginModalOpen: false }),
+    }),
+    {
+      name: 'ssaju-auth',
+      storage: createJSONStorage(() => localStorage),
+      // localStorage에 저장할 필드만 선택 — 에러/로딩/모달 상태는 제외
+      partialize: (state) => ({
+        isLoggedIn: state.isLoggedIn,
+        user: state.user,
+        accessToken: state.accessToken,
+      }),
+    },
+  ),
+);

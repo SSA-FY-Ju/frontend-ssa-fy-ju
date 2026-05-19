@@ -1,7 +1,6 @@
 'use client';
 
 import { useAuthStore } from '@/stores/authStore';
-import { useAuth } from '@/hooks/useAuth';
 
 interface LoginNudgeCardProps {
   show: boolean;
@@ -10,7 +9,6 @@ interface LoginNudgeCardProps {
 export function LoginNudgeCard({ show }: LoginNudgeCardProps) {
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
-  const { loginWithKakao, loginWithGoogle } = useAuth();
 
   if (isLoggedIn || !show) return null;
 
@@ -27,31 +25,13 @@ export function LoginNudgeCard({ show }: LoginNudgeCardProps) {
         </p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-2">
-        <button
-          type="button"
-          onClick={() => {
-            openLoginModal();
-            void loginWithKakao();
-          }}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-[#FEE500] text-[#3A1D1D] font-semibold text-sm hover:bg-[#F5DC00] transition-colors"
-        >
-          <span>💬</span>
-          카카오로 로그인
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            openLoginModal();
-            void loginWithGoogle();
-          }}
-          className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-white text-gray-800 font-semibold text-sm hover:bg-gray-100 transition-colors border border-gray-200"
-        >
-          <span>G</span>
-          구글로 로그인
-        </button>
-      </div>
+      <button
+        type="button"
+        onClick={openLoginModal}
+        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-purple-600/70 text-white font-semibold text-sm hover:bg-purple-600 transition-colors"
+      >
+        로그인 / 회원가입
+      </button>
     </div>
   );
 }

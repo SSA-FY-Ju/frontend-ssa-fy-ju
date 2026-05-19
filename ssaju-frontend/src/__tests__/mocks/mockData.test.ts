@@ -15,21 +15,19 @@ import { mockCompatibilityResult, mockCompanyAutocomplete } from '@/mocks/data/c
 
 describe('mockCareerTimingResult', () => {
   it('필수 필드 존재', () => {
-    expect(mockCareerTimingResult.sajuResultId).toBeTruthy();
-    expect(mockCareerTimingResult.h1Period).toBeTruthy();
-    expect(mockCareerTimingResult.h2Period).toBeTruthy();
+    expect(mockCareerTimingResult.favoredPeriod).toBeTruthy();
+    expect(typeof mockCareerTimingResult.confidenceScore).toBe('number');
+    expect(mockCareerTimingResult.reasoning).toBeTruthy();
   });
 
   it('신뢰도 점수는 0-100 범위', () => {
-    expect(mockCareerTimingResult.h1Confidence).toBeGreaterThanOrEqual(0);
-    expect(mockCareerTimingResult.h1Confidence).toBeLessThanOrEqual(100);
-    expect(mockCareerTimingResult.h2Confidence).toBeGreaterThanOrEqual(0);
-    expect(mockCareerTimingResult.h2Confidence).toBeLessThanOrEqual(100);
+    expect(mockCareerTimingResult.confidenceScore).toBeGreaterThanOrEqual(0);
+    expect(mockCareerTimingResult.confidenceScore).toBeLessThanOrEqual(100);
   });
 
-  it('recommendation 텍스트 존재', () => {
-    expect(typeof mockCareerTimingResult.recommendation).toBe('string');
-    expect(mockCareerTimingResult.recommendation.length).toBeGreaterThan(0);
+  it('reasoning 텍스트 존재', () => {
+    expect(typeof mockCareerTimingResult.reasoning).toBe('string');
+    expect(mockCareerTimingResult.reasoning.length).toBeGreaterThan(0);
   });
 });
 
@@ -40,8 +38,8 @@ describe('mockConsultationData', () => {
     expect(mockConsultationData.monthlyForecasts).toHaveLength(12);
   });
 
-  it('CareerTiming과 동일한 sajuResultId 사용', () => {
-    expect(mockConsultationData.sajuResultId).toBe(mockCareerTimingResult.sajuResultId);
+  it('sajuResultId 존재', () => {
+    expect(mockConsultationData.sajuResultId).toBeTruthy();
   });
 
   it('8개 탭 데이터 모두 존재', () => {
@@ -60,7 +58,7 @@ describe('mockUser', () => {
   it('필수 사용자 정보 존재', () => {
     expect(mockUser.userId).toBeTruthy();
     expect(mockUser.name).toBeTruthy();
-    expect(['KAKAO', 'GOOGLE']).toContain(mockUser.socialProvider);
+    expect(mockUser.email).toBeTruthy();
   });
 
   it('이메일 형식 유효', () => {

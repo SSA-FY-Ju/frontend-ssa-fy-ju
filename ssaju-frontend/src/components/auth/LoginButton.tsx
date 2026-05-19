@@ -1,29 +1,17 @@
 'use client';
 
-import { LoginModal } from './LoginModal';
-import { useAuth } from '@/hooks/useAuth';
+import { AuthModal } from './AuthModal';
 import { useAuthStore } from '@/stores/authStore';
 
 /**
  * 헤더 로그인 버튼
  *
- * 클릭 시 LoginModal 오픈 (authStore.isLoginModalOpen으로 전역 제어 가능)
+ * 클릭 시 AuthModal 오픈 (authStore.isLoginModalOpen으로 전역 제어 가능)
  */
 export function LoginButton() {
   const isModalOpen = useAuthStore((s) => s.isLoginModalOpen);
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
   const closeLoginModal = useAuthStore((s) => s.closeLoginModal);
-  const { loginWithKakao, loginWithGoogle, isLoading, loginError } = useAuth();
-
-  const handleKakaoLogin = async () => {
-    await loginWithKakao();
-    closeLoginModal();
-  };
-
-  const handleGoogleLogin = async () => {
-    await loginWithGoogle();
-    closeLoginModal();
-  };
 
   return (
     <>
@@ -34,14 +22,7 @@ export function LoginButton() {
         로그인
       </button>
 
-      <LoginModal
-        isOpen={isModalOpen}
-        onClose={closeLoginModal}
-        onKakaoLogin={handleKakaoLogin}
-        onGoogleLogin={handleGoogleLogin}
-        isLoading={isLoading}
-        error={loginError}
-      />
+      <AuthModal isOpen={isModalOpen} onClose={closeLoginModal} />
     </>
   );
 }

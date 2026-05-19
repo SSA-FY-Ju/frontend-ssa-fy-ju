@@ -88,7 +88,7 @@ describe('useCompatibility', () => {
 
   it('로그인 시 analysisStore에 저장 안 함', async () => {
     fetchCompatibility.mockResolvedValueOnce(mockCompatibilityResult);
-    useAuthStore.getState().setUser({ userId: 'u1', name: '테스트', socialProvider: 'KAKAO' });
+    useAuthStore.getState().setUser({ userId: 'u1', email: 'a@b.com', name: '테스트' });
 
     const { result } = renderHook(() => useCompatibility());
 

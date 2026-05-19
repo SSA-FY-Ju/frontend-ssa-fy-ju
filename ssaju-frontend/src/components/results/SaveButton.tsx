@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
-import { LoginModal } from '@/components/auth/LoginModal';
-import { useAuth } from '@/hooks/useAuth';
+import { AuthModal } from '@/components/auth/AuthModal';
 import { useSave } from '@/hooks/useSave';
 
 interface SaveButtonProps {
@@ -20,7 +19,6 @@ interface SaveButtonProps {
 export function SaveButton({ analysisType }: SaveButtonProps) {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { loginWithKakao, loginWithGoogle, isLoading, loginError } = useAuth();
   const { save, isSaving } = useSave(analysisType);
 
   if (isLoggedIn) {
@@ -45,14 +43,7 @@ export function SaveButton({ analysisType }: SaveButtonProps) {
         결과를 저장하려면 로그인해주세요
       </button>
 
-      <LoginModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onKakaoLogin={async () => { await loginWithKakao(); setIsModalOpen(false); }}
-        onGoogleLogin={async () => { await loginWithGoogle(); setIsModalOpen(false); }}
-        isLoading={isLoading}
-        error={loginError}
-      />
+      <AuthModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </>
   );
 }

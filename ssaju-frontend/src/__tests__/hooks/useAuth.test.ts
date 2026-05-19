@@ -2,31 +2,29 @@
  * useAuth 훅 테스트
  */
 
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, act } from '@testing-library/react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/stores/authStore';
 
 jest.mock('@/lib/api/auth', () => ({
-  fetchAuthStatus: jest.fn(),
+  login: jest.fn(),
+  signup: jest.fn(),
   logout: jest.fn(),
 }));
 
-jest.mock('@/services/auth/oauth', () => ({
-  getKakaoAuthUrl: jest.fn().mockResolvedValue('https://kakao.oauth.url'),
-  getGoogleAuthUrl: jest.fn().mockResolvedValue('https://google.oauth.url'),
-  clearOAuthStorage: jest.fn(),
+jest.mock('@/stores/analysisStore', () => ({
+  useAnalysisStore: { getState: () => ({ reset: jest.fn() }) },
 }));
 
-jest.mock('@/hooks/usePlatformDetect', () => ({
-  usePlatformDetect: () => ({
-    isMobile: jest.fn().mockReturnValue(false),
-    openOAuthWindow: jest.fn().mockImplementation((_url: string, onSuccess?: () => void) => {
-      onSuccess?.();
-    }),
-  }),
+jest.mock('@/stores/consultationStore', () => ({
+  useConsultationStore: { getState: () => ({ clearData: jest.fn() }) },
 }));
 
-const { fetchAuthStatus, logout: logoutApi } = jest.requireMock('@/lib/api/auth');
+jest.mock('@/stores/sessionStore', () => ({
+  useSessionStore: { getState: () => ({ reset: jest.fn() }) },
+}));
+
+const { login: loginApi, logout: logoutApi } = jest.requireMock('@/lib/api/auth');
 
 describe('useAuth', () => {
   beforeEach(() => {
@@ -34,86 +32,70 @@ describe('useAuth', () => {
     jest.clearAllMocks();
   });
 
-  it('초기 상태는 비로그인', async () => {
-    fetchAuthStatus.mockResolvedValueOnce({ isLoggedIn: false, user: null });
+  it('초기 상태는 비로그인', () => {
     const { result } = renderHook(() => useAuth());
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-    });
-
     expect(result.current.isLoggedIn).toBe(false);
     expect(result.current.user).toBeNull();
   });
 
-  it('fetchAuthStatus 성공 시 로그인 상태 설정', async () => {
-    const mockUser = {
-      userId: 'user-001',
-      name: '테스트 유저',
-      socialProvider: 'KAKAO' as const,
-    };
-    fetchAuthStatus.mockResolvedValueOnce({ isLoggedIn: true, user: mockUser });
+  it('login 성공 시 로그인 상태로 전환', async () => {
+    loginApi.mockResolvedValueOnce({
+      accessToken: 'test-token-123',
+      accessTokenExpiresIn: 3600,
+    });
 
     const { result } = renderHook(() => useAuth());
 
-    await waitFor(() => {
-      expect(result.current.isLoggedIn).toBe(true);
+    await act(async () => {
+      await result.current.login({ email: 'test@test.com', password: 'password1' });
     });
 
-    expect(result.current.user?.userId).toBe('user-001');
+    expect(useAuthStore.getState().isLoggedIn).toBe(true);
+    expect(useAuthStore.getState().accessToken).toBe('test-token-123');
   });
 
-  it('fetchAuthStatus 실패 시 비로그인 상태 유지', async () => {
-    fetchAuthStatus.mockRejectedValueOnce(new Error('Network error'));
+  it('login 실패 시 loginError 설정', async () => {
+    loginApi.mockRejectedValueOnce(new Error('이메일 또는 비밀번호가 올바르지 않습니다.'));
 
     const { result } = renderHook(() => useAuth());
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+    await act(async () => {
+      try {
+        await result.current.login({ email: 'test@test.com', password: 'wrong' });
+      } catch {
+        // expected
+      }
     });
 
-    expect(result.current.isLoggedIn).toBe(false);
+    expect(useAuthStore.getState().isLoggedIn).toBe(false);
+    expect(useAuthStore.getState().loginError).toBeTruthy();
   });
 
-  it('logout 호출 시 모든 스토어 초기화', async () => {
-    fetchAuthStatus.mockResolvedValueOnce({ isLoggedIn: false, user: null });
+  it('logout 호출 시 스토어 초기화', async () => {
     logoutApi.mockResolvedValueOnce(undefined);
-
-    useAuthStore.getState().setUser({
-      userId: 'user-001',
-      name: '테스트',
-      socialProvider: 'KAKAO',
-    });
+    useAuthStore.getState().setUser({ userId: 'u1', email: 'a@b.com', name: '테스트' });
+    useAuthStore.getState().setAccessToken('some-token');
 
     const { result } = renderHook(() => useAuth());
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+    await act(async () => {
+      await result.current.logout();
     });
-
-    await result.current.logout();
 
     expect(useAuthStore.getState().isLoggedIn).toBe(false);
     expect(useAuthStore.getState().user).toBeNull();
+    expect(useAuthStore.getState().accessToken).toBeNull();
   });
 
   it('logout API 실패해도 클라이언트 상태 초기화', async () => {
-    fetchAuthStatus.mockResolvedValueOnce({ isLoggedIn: false, user: null });
     logoutApi.mockRejectedValueOnce(new Error('Server error'));
-
-    useAuthStore.getState().setUser({
-      userId: 'user-001',
-      name: '테스트',
-      socialProvider: 'GOOGLE',
-    });
+    useAuthStore.getState().setUser({ userId: 'u1', email: 'a@b.com', name: '테스트' });
 
     const { result } = renderHook(() => useAuth());
 
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
+    await act(async () => {
+      await result.current.logout();
     });
-
-    await result.current.logout();
 
     expect(useAuthStore.getState().isLoggedIn).toBe(false);
   });

@@ -111,7 +111,7 @@ describe('useCareerTiming', () => {
 
   it('로그인 시 성공해도 analysisStore에 저장 안 함', async () => {
     fetchCareerTiming.mockResolvedValueOnce(mockResult);
-    useAuthStore.getState().setUser({ userId: 'u1', name: '테스트', socialProvider: 'KAKAO' });
+    useAuthStore.getState().setUser({ userId: 'u1', email: 'a@b.com', name: '테스트' });
 
     const { result } = renderHook(() => useCareerTiming());
     act(() => { result.current.submitAnalysis('1990-10-10', '14:30'); });
