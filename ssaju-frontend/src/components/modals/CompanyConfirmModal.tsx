@@ -54,8 +54,9 @@ export function CompanyConfirmModal({
         aria-hidden="true"
         style={{
           position: 'absolute', inset: 0,
-          background: 'rgba(0,0,0,0.65)',
-          backdropFilter: 'blur(8px)',
+          background: 'rgba(4,2,18,0.5)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
         }}
       />
 
@@ -65,11 +66,13 @@ export function CompanyConfirmModal({
           position: 'relative',
           width: '100%',
           maxWidth: 420,
-          background: 'linear-gradient(160deg, rgba(15,10,35,0.98) 0%, rgba(10,8,28,0.98) 100%)',
-          border: '1px solid rgba(139,92,246,0.2)',
+          background: 'linear-gradient(150deg, rgba(30,20,60,0.75) 0%, rgba(15,10,35,0.8) 100%)',
+          border: '1px solid rgba(139,92,246,0.3)',
           borderRadius: 24,
           overflow: 'hidden',
-          boxShadow: '0 40px 100px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          boxShadow: '0 32px 80px rgba(0,0,0,0.4), 0 0 60px rgba(109,40,217,0.1)',
           transition: 'opacity 0.28s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1)',
           opacity: mounted ? 1 : 0,
           transform: mounted ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.97)',

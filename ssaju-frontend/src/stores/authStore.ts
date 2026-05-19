@@ -40,7 +40,8 @@ interface AuthStore {
 
 export const useAuthStore = create<AuthStore>((set) => ({
   // Initial state
-  isLoggedIn: false,
+  // TODO: 개발용 — 배포 전 false로 변경
+  isLoggedIn: true,
   user: null,
   loginError: null,
   isLoading: false,

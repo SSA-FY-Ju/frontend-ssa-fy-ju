@@ -28,7 +28,7 @@ export function Header() {
 
         {isResultPage ? (
           <button
-            onClick={() => router.push('/chat')}
+            onClick={() => router.push('/select')}
             style={{
               padding: '7px 16px',
               borderRadius: 10,

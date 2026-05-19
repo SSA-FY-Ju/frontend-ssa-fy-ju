@@ -7,6 +7,7 @@ import { useCompatibility } from '@/hooks/useCompatibility';
 import { useCompanyInfo } from '@/hooks/useCompanyInfo';
 import { usePageExitGuard } from '@/hooks/usePageExitGuard';
 import { useSessionStore } from '@/stores/sessionStore';
+import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { CompanyAutocomplete } from '@/components/forms/CompanyAutocomplete';
 import { CompanyConfirmModal } from '@/components/modals/CompanyConfirmModal';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
@@ -15,7 +16,6 @@ import { ErrorMessage } from '@/components/errors/ErrorMessage';
 import { PageExitModal } from '@/components/common/PageExitModal';
 import { FeedbackModal } from '@/components/modals/FeedbackModal';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
-import { toast } from 'sonner';
 
 // Swiper는 브라우저 전용 — SSR 비활성화
 const FullPageCompatibility = dynamic(
@@ -24,6 +24,7 @@ const FullPageCompatibility = dynamic(
 );
 
 export default function CompatibilityPage() {
+  useRouteGuard(true);
   const router = useRouter();
 
   const { phase, result, error, disclaimerVisible, disclaimerFading, submitCompatibility, reset } =
@@ -35,10 +36,8 @@ export default function CompatibilityPage() {
   const sessionBirthTime = useSessionStore((s) => s.birthTime);
   const hasHydrated = useSessionStore((s) => s._hasHydrated);
 
-  // 사용자 정보 없으면 /chat으로 라우팅 + 경고 toast
   useEffect(() => {
     if (hasHydrated && !sessionBirthDate) {
-      toast.error('먼저 생년월일을 입력해주세요');
       router.push('/chat');
     }
   }, [hasHydrated, sessionBirthDate, router]);
