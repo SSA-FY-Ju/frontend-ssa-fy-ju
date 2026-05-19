@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useFeedback } from '@/hooks/useFeedback';
 
 type FeedbackType = 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
@@ -14,6 +14,10 @@ const FEEDBACK_TYPE_LABEL: Record<FeedbackType, string> = {
 interface FeedbackModalProps {
   feedbackType: FeedbackType;
   onClose: () => void;
+  /** 피드백 제출 성공 시 추가로 호출되는 콜백 */
+  onSubmitted?: () => void;
+  /** 제공 시 하단에 "그냥 나가기" 버튼을 표시 */
+  exitAction?: { onExit: () => void };
 }
 
 const OPTIONS = [
@@ -53,10 +57,27 @@ const OPTIONS = [
   },
 ];
 
-export function FeedbackModal({ feedbackType, onClose }: FeedbackModalProps) {
+export function FeedbackModal({ feedbackType, onClose, onSubmitted, exitAction }: FeedbackModalProps) {
   const [satisfaction, setSatisfaction] = useState<'SATISFIED' | 'UNSATISFIED' | null>(null);
   const [content, setContent] = useState('');
-  const { submit, isSubmitting, error } = useFeedback(feedbackType, onClose);
+  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
+
+  // 열릴 때 마운트 → 다음 프레임에서 visible=true (슬라이드업 트리거)
+  useEffect(() => {
+    setMounted(true);
+    requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
+  }, []);
+
+  const handleClose = () => {
+    setVisible(false);
+    setTimeout(onClose, 280);
+  };
+
+  const { submit, isSubmitting, error } = useFeedback(feedbackType, () => {
+    onSubmitted?.();
+    handleClose();
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,16 +89,24 @@ export function FeedbackModal({ feedbackType, onClose }: FeedbackModalProps) {
     if (e.target.value.length <= 500) setContent(e.target.value);
   };
 
+  if (!mounted) return null;
+
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-labelledby="feedback-modal-title"
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-      style={{ background: 'rgba(4,2,18,0.5)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
+      style={{
+        background: 'rgba(4,2,18,0.4)',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
+        transition: 'opacity 0.28s ease',
+        opacity: visible ? 1 : 0,
+      }}
     >
       {/* 닫기 배경 */}
-      <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-0" onClick={handleClose} aria-hidden="true" />
 
       <div
         className="relative w-full max-w-md mx-4 mb-4 sm:mb-0 rounded-3xl overflow-hidden"
@@ -87,6 +116,9 @@ export function FeedbackModal({ feedbackType, onClose }: FeedbackModalProps) {
           boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(109,40,217,0.12)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
+          transition: 'transform 0.32s cubic-bezier(0.22,1,0.36,1), opacity 0.28s ease',
+          transform: visible ? 'translateY(0) scale(1)' : 'translateY(32px) scale(0.97)',
+          opacity: visible ? 1 : 0,
         }}
       >
         {/* 배경 별빛 장식 */}
@@ -96,7 +128,6 @@ export function FeedbackModal({ feedbackType, onClose }: FeedbackModalProps) {
           <div className="absolute top-4 right-6 text-blue-400/20 text-[8px]">✦</div>
           <div className="absolute bottom-24 left-6 text-violet-400/10 text-xs">★</div>
           <div className="absolute bottom-16 right-8 text-blue-400/15 text-[10px]">✦</div>
-          {/* 상단 글로우 */}
           <div
             className="absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-32 rounded-full opacity-30"
             style={{ background: 'radial-gradient(circle, rgba(109,40,217,0.6) 0%, transparent 70%)' }}
@@ -106,7 +137,7 @@ export function FeedbackModal({ feedbackType, onClose }: FeedbackModalProps) {
         <div className="relative p-6 pt-7">
           {/* 닫기 버튼 */}
           <button
-            onClick={onClose}
+            onClick={handleClose}
             aria-label="모달 닫기"
             className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 text-slate-500 hover:text-white"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
@@ -229,6 +260,20 @@ export function FeedbackModal({ feedbackType, onClose }: FeedbackModalProps) {
             >
               {isSubmitting ? '전송 중...' : '피드백 보내기 ✦'}
             </button>
+
+            {/* 나가기 버튼 (exit mode에서만 표시) */}
+            {exitAction && (
+              <button
+                type="button"
+                onClick={exitAction.onExit}
+                className="w-full py-2 text-xs font-medium transition-colors duration-200"
+                style={{ color: '#475569' }}
+                onMouseEnter={(e) => { e.currentTarget.style.color = '#94a3b8'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.color = '#475569'; }}
+              >
+                피드백 없이 나가기
+              </button>
+            )}
           </form>
         </div>
       </div>

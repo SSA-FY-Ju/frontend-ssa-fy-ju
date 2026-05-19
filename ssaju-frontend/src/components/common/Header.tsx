@@ -5,11 +5,14 @@ import Link from 'next/link';
 import { LoginButton } from '@/components/auth/LoginButton';
 import { ProfileMenu } from '@/components/auth/ProfileMenu';
 import { useAuthStore } from '@/stores/authStore';
+import { useSessionStore } from '@/stores/sessionStore';
 
 const RESULT_PAGES = ['/career-timing', '/consultation', '/compatibility'];
 
 export function Header() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const requestExit = useSessionStore((s) => s.requestExit);
+  const sajuResultId = useSessionStore((s) => s.sajuResultId);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -28,7 +31,7 @@ export function Header() {
 
         {isResultPage ? (
           <button
-            onClick={() => router.push('/select')}
+            onClick={() => sajuResultId ? requestExit() : router.push('/select')}
             style={{
               padding: '7px 16px',
               borderRadius: 10,

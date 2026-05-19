@@ -1,9 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/stores/authStore';
 import { useSessionStore } from '@/stores/sessionStore';
+
+interface UsePageExitGuardOptions {
+  /** 뒤로가기 감지 시 기본 모달 대신 호출할 콜백 */
+  onExitAttempt?: () => void;
+}
 
 interface UsePageExitGuardReturn {
   shouldShowExitModal: boolean;
@@ -12,49 +16,38 @@ interface UsePageExitGuardReturn {
 }
 
 /**
- * 비로그인 + 분석 결과 있는 경우 페이지 이탈 방지 훅
+ * 분석 결과 페이지 이탈 방지 훅
  *
- * - window.beforeunload: 탭 닫기/새로고침 시 브라우저 기본 이탈 방지 다이얼로그
- * - popstate: 브라우저 뒤로가기/앞으로가기 감지 → 커스텀 모달 표시
+ * - popstate: 뒤로가기 감지 → onExitAttempt 콜백 또는 기본 모달 표시
+ * - confirmExit(): sajuResultId 초기화 후 /select 이동
  */
-export function usePageExitGuard(): UsePageExitGuardReturn {
+export function usePageExitGuard(options?: UsePageExitGuardOptions): UsePageExitGuardReturn {
   const router = useRouter();
-  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const sajuResultId = useSessionStore((s) => s.sajuResultId);
   const setSajuResultId = useSessionStore((s) => s.setSajuResultId);
 
   const [shouldShowExitModal, setShouldShowExitModal] = useState(false);
 
-  const isActive = !isLoggedIn && !!sajuResultId;
-
-  // 탭 닫기 / 새로고침 시 브라우저 기본 이탈 방지
+  // 콜백을 ref로 보관해 useEffect 재실행 없이 최신값 유지
+  const onExitAttemptRef = useRef(options?.onExitAttempt);
   useEffect(() => {
-    if (!isActive) return;
+    onExitAttemptRef.current = options?.onExitAttempt;
+  });
 
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      e.preventDefault();
-      // Chrome 계열은 returnValue 설정 필요
-      e.returnValue = '분석 결과가 사라집니다. 정말 나가시겠습니까?';
-      return e.returnValue;
-    };
+  const isActive = !!sajuResultId;
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [isActive]);
-
-  // 브라우저 뒤로가기/앞으로가기 감지 (Next.js App Router — popstate 기반)
   useEffect(() => {
     if (!isActive) return;
 
     const handlePopState = () => {
-      // 뒤로가기 감지 시 히스토리 엔트리를 다시 push해 이탈을 막고 모달 표시
       window.history.pushState(null, '', window.location.href);
-      setShouldShowExitModal(true);
+      if (onExitAttemptRef.current) {
+        onExitAttemptRef.current();
+      } else {
+        setShouldShowExitModal(true);
+      }
     };
 
-    // 현재 페이지를 히스토리에 push해 popstate가 발화될 수 있도록 준비
     window.history.pushState(null, '', window.location.href);
     window.addEventListener('popstate', handlePopState);
 
@@ -73,9 +66,5 @@ export function usePageExitGuard(): UsePageExitGuardReturn {
     setShouldShowExitModal(false);
   };
 
-  return {
-    shouldShowExitModal,
-    confirmExit,
-    cancelExit,
-  };
+  return { shouldShowExitModal, confirmExit, cancelExit };
 }

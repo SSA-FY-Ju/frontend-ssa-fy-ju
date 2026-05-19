@@ -11,13 +11,12 @@
  * - 마지막 섹션 최초 도달 시 비로그인 사용자에게 회원가입 모달 표시
  */
 
-import { useRef, useEffect, useState } from 'react';
+import { useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel, Keyboard, A11y } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import type { ConsultationData } from '@/types/api';
 import { SectionNavigator } from './SectionNavigator';
-import { FeedbackPromptCard } from './FeedbackPromptCard';
 import { IndustriesTab } from './IndustriesTab';
 import { InterviewTipsTab } from './InterviewTipsTab';
 import { StrengthsTab } from './StrengthsTab';
@@ -86,8 +85,6 @@ const SECTIONS = [
   },
 ] as const;
 
-const SECTION_COUNT = SECTIONS.length;
-const LAST_SECTION = SECTION_COUNT - 1;
 
 interface FullPageConsultationProps {
   data: ConsultationData;
@@ -101,19 +98,6 @@ export function FullPageConsultation({
   onSectionChange,
 }: FullPageConsultationProps) {
   const swiperRef = useRef<SwiperType | null>(null);
-
-  const [showFeedbackPrompt, setShowFeedbackPrompt] = useState(false);
-  const feedbackShownRef = useRef(false);
-
-  /** currentSectionIndex가 바뀔 때 마지막 섹션 도달 감지 → 피드백 카드 표시 */
-  useEffect(() => {
-    if (currentSectionIndex !== LAST_SECTION) return;
-    if (feedbackShownRef.current) return;
-
-    feedbackShownRef.current = true;
-    const t = setTimeout(() => setShowFeedbackPrompt(true), 800);
-    return () => clearTimeout(t);
-  }, [currentSectionIndex]);
 
   /** 네비게이터 클릭 → Swiper 슬라이드 이동 */
   const handleNavigate = (index: number) => {
@@ -185,10 +169,7 @@ export function FullPageConsultation({
         ))}
       </Swiper>
 
-      {/* 피드백 유도 카드 (마지막 섹션 도달 시 슬라이드업) */}
-      {showFeedbackPrompt && (
-        <FeedbackPromptCard onClose={() => setShowFeedbackPrompt(false)} />
-      )}
+
     </div>
   );
 }
