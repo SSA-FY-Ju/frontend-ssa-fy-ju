@@ -17,6 +17,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface SessionState {
+  _hasHydrated: boolean;
   // User Input (Route Guard)
   birthDate: string | null; // YYYY-MM-DD format
   birthTime: string | null; // HH:mm format
@@ -29,6 +30,7 @@ interface SessionState {
 }
 
 interface SessionActions {
+  setHasHydrated: (v: boolean) => void;
   // User Input
   initSession: (data: { birthDate: string; birthTime: string }) => void;
   setBirthDate: (birthDate: string | null) => void;
@@ -46,6 +48,7 @@ interface SessionActions {
 type SessionStore = SessionState & SessionActions;
 
 const initialState: SessionState = {
+  _hasHydrated: false,
   // User Input
   birthDate: null,
   birthTime: null,
@@ -61,6 +64,8 @@ export const useSessionStore = create<SessionStore>()(
   persist(
     (set) => ({
       ...initialState,
+
+      setHasHydrated: (v: boolean) => set({ _hasHydrated: v }),
 
       // User Input Actions
       initSession: (data: { birthDate: string; birthTime: string }) => {
@@ -121,9 +126,8 @@ export const useSessionStore = create<SessionStore>()(
       },
     }),
     {
-      name: 'ssaju-session', // sessionStorage key
-      storage: createJSONStorage(() => sessionStorage), // sessionStorage 사용 (탭 닫으면 삭제)
-      // persist할 필드만 선택 (currentAnalysisData, isAnalyzing은 메모리만)
+      name: 'ssaju-session',
+      storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         birthDate: state.birthDate,
         birthTime: state.birthTime,
@@ -131,6 +135,9 @@ export const useSessionStore = create<SessionStore>()(
         sajuResultId: state.sajuResultId,
         lastAnalysisType: state.lastAnalysisType,
       }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     },
   ),
 );

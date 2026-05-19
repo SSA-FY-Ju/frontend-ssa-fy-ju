@@ -35,16 +35,6 @@ export function SectionNavigator({ sections, currentIndex, onNavigate }: Section
               aria-current={isActive ? 'true' : undefined}
               className="flex items-center gap-2 group py-1 focus:outline-none"
             >
-              {/* 달 모양 인디케이터 — 활성일 때만 표시 */}
-              <span
-                className={[
-                  'text-star-400 text-sm transition-opacity duration-200 w-4 text-center',
-                  isActive ? 'opacity-100' : 'opacity-0',
-                ].join(' ')}
-              >
-                🌙
-              </span>
-
               {/* 레이블 */}
               <span
                 className={[
@@ -55,15 +45,15 @@ export function SectionNavigator({ sections, currentIndex, onNavigate }: Section
                 {label}
               </span>
 
-              {/* 도트 */}
+              {/* 달 모양 인디케이터 — 활성일 때만 표시 */}
               <span
                 className={[
-                  'flex-shrink-0 rounded-full transition-all duration-200',
-                  isActive
-                    ? 'w-2.5 h-2.5 bg-star-500 ring-2 ring-star-500/40'
-                    : 'w-1.5 h-1.5 bg-night-600 group-hover:bg-star-400',
+                  'text-star-400 text-sm transition-opacity duration-200 w-4 text-center',
+                  isActive ? 'opacity-100' : 'opacity-0',
                 ].join(' ')}
-              />
+              >
+                🌙
+              </span>
             </button>
           );
         })}

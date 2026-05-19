@@ -1,10 +1,7 @@
 'use client';
 
 /**
- * 직무별 매칭도 카드 (T089)
- *
- * - 직무명, 점수, 진행 바, 이유, 추천/주의 문구
- * - 3-5개 카드 표시
+ * 직무별 매칭도 — 번호 리스트 에디토리얼 스타일
  */
 
 import type { JobMatchCard } from '@/types/api';
@@ -15,48 +12,75 @@ interface JobMatchingCardsProps {
 
 export function JobMatchingCards({ cards }: JobMatchingCardsProps) {
   return (
-    <div className="flex flex-col gap-3">
-      {cards.map((card) => {
+    <div className="flex flex-col">
+      {cards.map((card, i) => {
         const scoreColor =
-          card.score >= 80 ? '#22c55e' : card.score >= 60 ? '#f59e0b' : '#ef4444';
+          card.score >= 80 ? '#34d399' : card.score >= 60 ? '#fbbf24' : '#f87171';
 
         return (
-          <div
-            key={card.jobTitle}
-            className="bg-night-800 border border-night-700 rounded-lg p-4 flex flex-col gap-2"
-          >
-            {/* 헤더: 직무명 + 추천/주의 뱃지 */}
-            <div className="flex items-center justify-between">
-              <span className="text-white font-medium">{card.jobTitle}</span>
-              <span
-                className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                  card.isRecommended
-                    ? 'bg-star-500/20 text-star-400 border border-star-500/40'
-                    : 'bg-red-900/30 text-red-400 border border-red-500/40'
-                }`}
-              >
-                {card.recommendation}
-              </span>
-            </div>
-
-            {/* 점수 + 진행 바 */}
-            <div className="flex flex-col gap-1">
-              <div className="flex justify-between text-xs">
-                <span className="text-night-700">매칭도</span>
-                <span style={{ color: scoreColor }} className="font-bold">
-                  {card.score} / 100
+          <div key={card.jobTitle}>
+            <div style={{ display: 'flex', gap: 20, padding: '22px 0' }}>
+              {/* 번호 */}
+              <div style={{ flexShrink: 0, width: 28, textAlign: 'right', paddingTop: 2 }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(196,181,253,0.3)', letterSpacing: '0.05em' }}>
+                  {String(i + 1).padStart(2, '0')}
                 </span>
               </div>
-              <div className="h-2 bg-night-700 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${card.score}%`, backgroundColor: scoreColor }}
-                />
+
+              {/* 본문 */}
+              <div style={{ flex: 1 }}>
+                {/* 직무명 + 뱃지 */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <span style={{ fontSize: '1rem', fontWeight: 700, color: '#fff' }}>
+                    {card.jobTitle}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: 11,
+                      fontWeight: 700,
+                      padding: '3px 10px',
+                      borderRadius: 999,
+                      background: card.isRecommended ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.12)',
+                      border: `1px solid ${card.isRecommended ? 'rgba(52,211,153,0.35)' : 'rgba(248,113,113,0.35)'}`,
+                      color: card.isRecommended ? '#34d399' : '#f87171',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {card.recommendation}
+                  </span>
+                </div>
+
+                {/* 점수 + 바 */}
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>매칭도</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor }}>{card.score} / 100</span>
+                  </div>
+                  <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 999, overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        width: `${card.score}%`,
+                        height: '100%',
+                        background: scoreColor,
+                        borderRadius: 999,
+                        boxShadow: `0 0 6px ${scoreColor}66`,
+                        transition: 'width 0.7s ease',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* 이유 */}
+                <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.65 }}>
+                  {card.reason}
+                </p>
               </div>
             </div>
 
-            {/* 이유 */}
-            <p className="text-night-700 text-xs leading-relaxed">{card.reason}</p>
+            {/* 구분선 */}
+            {i < cards.length - 1 && (
+              <div style={{ height: 1, background: 'rgba(139,92,246,0.08)', margin: '0 0 0 48px' }} />
+            )}
           </div>
         );
       })}

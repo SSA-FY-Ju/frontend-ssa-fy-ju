@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { useSessionStore } from '@/stores/sessionStore';
 
@@ -17,6 +18,7 @@ interface UsePageExitGuardReturn {
  * - popstate: 브라우저 뒤로가기/앞으로가기 감지 → 커스텀 모달 표시
  */
 export function usePageExitGuard(): UsePageExitGuardReturn {
+  const router = useRouter();
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const sajuResultId = useSessionStore((s) => s.sajuResultId);
   const setSajuResultId = useSessionStore((s) => s.setSajuResultId);
@@ -64,8 +66,7 @@ export function usePageExitGuard(): UsePageExitGuardReturn {
   const confirmExit = () => {
     setSajuResultId(null);
     setShouldShowExitModal(false);
-    // popstate 리스너가 제거된 상태에서 뒤로가기 재실행
-    window.history.back();
+    router.push('/select');
   };
 
   const cancelExit = () => {

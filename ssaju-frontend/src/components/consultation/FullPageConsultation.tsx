@@ -16,9 +16,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel, Keyboard, A11y } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
 import type { ConsultationData } from '@/types/api';
-import { useAuth } from '@/hooks/useAuth';
 import { SectionNavigator } from './SectionNavigator';
-import { SignupPromptModal } from './SignupPromptModal';
 import { FeedbackPromptCard } from './FeedbackPromptCard';
 import { IndustriesTab } from './IndustriesTab';
 import { InterviewTipsTab } from './InterviewTipsTab';
@@ -29,18 +27,66 @@ import { CareerRoadmapTab } from './CareerRoadmapTab';
 import { BrandingTab } from './BrandingTab';
 import { MonthlyForecastTab } from './MonthlyForecastTab';
 
-const SECTION_LABELS = [
-  '추천산업',
-  '면접팁',
-  '강점',
-  '사주프로필',
-  '부의운',
-  '경력로드맵',
-  '브랜딩',
-  '월별운세',
+const SECTIONS = [
+  {
+    label: '추천산업',
+    icon: '🏢',
+    accentColor: '#10b981',
+    accentBg: 'rgba(16,185,129,0.06)',
+    subtitle: '당신의 사주가 빛나는 무대',
+  },
+  {
+    label: '면접팁',
+    icon: '💬',
+    accentColor: '#3b82f6',
+    accentBg: 'rgba(59,130,246,0.06)',
+    subtitle: '천기가 내린 면접의 비결',
+  },
+  {
+    label: '강점',
+    icon: '⚡',
+    accentColor: '#f59e0b',
+    accentBg: 'rgba(245,158,11,0.06)',
+    subtitle: '하늘이 새긴 타고난 재능',
+  },
+  {
+    label: '사주프로필',
+    icon: '✦',
+    accentColor: '#8b5cf6',
+    accentBg: 'rgba(139,92,246,0.06)',
+    subtitle: '운명의 근원, 당신의 일주',
+  },
+  {
+    label: '부의운',
+    icon: '💰',
+    accentColor: '#eab308',
+    accentBg: 'rgba(234,179,8,0.06)',
+    subtitle: '재성이 흐르는 방향',
+  },
+  {
+    label: '경력로드맵',
+    icon: '🗺️',
+    accentColor: '#06b6d4',
+    accentBg: 'rgba(6,182,212,0.06)',
+    subtitle: '별이 인도하는 성장의 길',
+  },
+  {
+    label: '브랜딩',
+    icon: '✨',
+    accentColor: '#f43f5e',
+    accentBg: 'rgba(244,63,94,0.06)',
+    subtitle: '세상에 보여줄 나만의 인상',
+  },
+  {
+    label: '월별운세',
+    icon: '🌙',
+    accentColor: '#a855f7',
+    accentBg: 'rgba(168,85,247,0.06)',
+    subtitle: '달이 전하는 한 해의 흐름',
+  },
 ] as const;
 
-const SECTION_COUNT = SECTION_LABELS.length;
+const SECTION_COUNT = SECTIONS.length;
 const LAST_SECTION = SECTION_COUNT - 1;
 
 interface FullPageConsultationProps {
@@ -56,31 +102,18 @@ export function FullPageConsultation({
 }: FullPageConsultationProps) {
   const swiperRef = useRef<SwiperType | null>(null);
 
-  const { isLoggedIn, loginWithKakao, loginWithGoogle } = useAuth();
-  const [showSignupModal, setShowSignupModal] = useState(false);
   const [showFeedbackPrompt, setShowFeedbackPrompt] = useState(false);
-  /** 세션 중 모달/카드를 이미 보여줬으면 다시 보여주지 않음 */
-  const signupShownRef = useRef(false);
   const feedbackShownRef = useRef(false);
 
-  /** currentSectionIndex가 바뀔 때 마지막 섹션 도달 감지 */
+  /** currentSectionIndex가 바뀔 때 마지막 섹션 도달 감지 → 피드백 카드 표시 */
   useEffect(() => {
     if (currentSectionIndex !== LAST_SECTION) return;
+    if (feedbackShownRef.current) return;
 
-    // 비로그인 사용자 → 회원가입 모달 (600ms 딜레이)
-    if (!isLoggedIn && !signupShownRef.current) {
-      signupShownRef.current = true;
-      const t = setTimeout(() => setShowSignupModal(true), 600);
-      return () => clearTimeout(t);
-    }
-
-    // 모든 사용자 → 피드백 카드 (800ms 딜레이)
-    if (!feedbackShownRef.current) {
-      feedbackShownRef.current = true;
-      const t = setTimeout(() => setShowFeedbackPrompt(true), 800);
-      return () => clearTimeout(t);
-    }
-  }, [currentSectionIndex, isLoggedIn]);
+    feedbackShownRef.current = true;
+    const t = setTimeout(() => setShowFeedbackPrompt(true), 800);
+    return () => clearTimeout(t);
+  }, [currentSectionIndex]);
 
   /** 네비게이터 클릭 → Swiper 슬라이드 이동 */
   const handleNavigate = (index: number) => {
@@ -102,7 +135,7 @@ export function FullPageConsultation({
     <div className="relative">
       {/* 섹션 네비게이터 (데스크톱: 우측 플로팅, 모바일: 상단 고정) */}
       <SectionNavigator
-        sections={[...SECTION_LABELS]}
+        sections={SECTIONS.map((s) => s.label)}
         currentIndex={currentSectionIndex}
         onNavigate={handleNavigate}
       />
@@ -111,42 +144,46 @@ export function FullPageConsultation({
       <Swiper
         direction="vertical"
         slidesPerView={1}
-        speed={600}
+        speed={900}
         modules={[Mousewheel, Keyboard, A11y]}
-        mousewheel={{ thresholdDelta: 10, forceToAxis: true }}
+        mousewheel={{ thresholdDelta: 50, forceToAxis: true, releaseOnEdges: false }}
         keyboard={{ enabled: true }}
         a11y={{ enabled: true }}
         onSwiper={(swiper) => {
           swiperRef.current = swiper;
         }}
         onSlideChange={(swiper) => onSectionChange(swiper.activeIndex)}
-        style={{ height: '100vh' }}
+        style={{ height: '100vh', willChange: 'transform' }}
         data-testid="fullpage-container"
       >
-        {SECTION_LABELS.map((label, index) => (
+        {SECTIONS.map((section, index) => (
           <SwiperSlide
-            key={label}
-            style={{ height: '100vh', overflowY: 'auto' }}
+            key={section.label}
+            style={{ height: '100vh', overflow: 'hidden' }}
             data-testid={`fullpage-section-${index}`}
           >
-            <div className="bg-night-900 min-h-full flex flex-col justify-center">
+            <div
+              className="min-h-full flex flex-col justify-center"
+              style={{
+                height: '100vh',
+                overflowY: 'auto',
+                background: `radial-gradient(ellipse at 60% 30%, ${section.accentBg} 0%, transparent 65%)`,
+              }}
+            >
               <div className="max-w-3xl mx-auto px-4 py-8 w-full">
-                <SectionTitle label={label} />
+                <SectionTitle
+                  label={section.label}
+                  icon={section.icon}
+                  accentColor={section.accentColor}
+                  subtitle={section.subtitle}
+                  index={index}
+                />
                 {slides[index]}
               </div>
             </div>
           </SwiperSlide>
         ))}
       </Swiper>
-
-      {/* 회원가입 유도 모달 (비로그인 사용자, 마지막 섹션 도달 시) */}
-      {showSignupModal && (
-        <SignupPromptModal
-          onKakao={() => { setShowSignupModal(false); loginWithKakao(); }}
-          onGoogle={() => { setShowSignupModal(false); loginWithGoogle(); }}
-          onClose={() => setShowSignupModal(false)}
-        />
-      )}
 
       {/* 피드백 유도 카드 (마지막 섹션 도달 시 슬라이드업) */}
       {showFeedbackPrompt && (
@@ -156,11 +193,80 @@ export function FullPageConsultation({
   );
 }
 
-function SectionTitle({ label }: { label: string }) {
+function SectionTitle({
+  label,
+  icon,
+  accentColor,
+  subtitle,
+  index,
+}: {
+  label: string;
+  icon: string;
+  accentColor: string;
+  subtitle: string;
+  index: number;
+}) {
+  const num = String(index + 1).padStart(2, '0');
+
   return (
-    <h2 className="text-star-400 text-xl font-bold mb-6 flex items-center gap-2">
-      <span className="text-star-500 text-sm">★</span>
-      {label}
-    </h2>
+    <div className="mb-8">
+      {/* Ornamental section counter: ✦ — 01 — ✦ */}
+      <p
+        style={{
+          color: accentColor,
+          opacity: 0.6,
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: '0.22em',
+          textTransform: 'uppercase',
+          marginBottom: 14,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+        }}
+      >
+        <span style={{ opacity: 0.8 }}>✦</span>
+        <span style={{ letterSpacing: '0.18em' }}>
+          &mdash;&nbsp;{num}&nbsp;&mdash;
+        </span>
+        <span style={{ opacity: 0.8 }}>✦</span>
+      </p>
+
+      {/* Main title row */}
+      <div className="flex items-center gap-4 mb-3">
+        <span aria-hidden="true" style={{ fontSize: 36, lineHeight: 1, flexShrink: 0 }}>
+          {icon}
+        </span>
+        <h2
+          className="font-black text-white tracking-tight"
+          style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', lineHeight: 1.1 }}
+        >
+          {label}
+        </h2>
+      </div>
+
+      {/* Subtitle / tagline */}
+      <p
+        style={{
+          fontSize: '0.82rem',
+          color: accentColor,
+          opacity: 0.7,
+          fontStyle: 'italic',
+          letterSpacing: '0.04em',
+          paddingLeft: 52, /* align with title text */
+          marginBottom: 16,
+        }}
+      >
+        {subtitle}
+      </p>
+
+      {/* Accent divider */}
+      <div
+        style={{
+          height: 1,
+          background: `linear-gradient(90deg, ${accentColor}99 0%, ${accentColor}22 50%, transparent 100%)`,
+        }}
+      />
+    </div>
   );
 }

@@ -1,10 +1,5 @@
 'use client';
 
-/**
- * 채팅형 입력 플로우에서 생년월일/시간을 수집하고 다음 단계(서비스 선택)로 전환합니다.
- * 기반: /sample/chat-input.jsx
- */
-
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSessionStore } from '@/stores/sessionStore';
@@ -21,13 +16,10 @@ interface ChatInputProps {
 }
 
 const ArrowIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M5 12h14M13 5l7 7-7 7" />
   </svg>
 );
-
-const selectClass =
-  'flex-1 appearance-none bg-[rgba(244,236,216,0.06)] border border-[rgba(244,236,216,0.2)] text-[#f4ecd8] px-5 py-[14px] rounded-xl text-sm outline-none [color-scheme:dark] cursor-pointer text-center';
 
 export default function ChatInput({ onStateChange: _onStateChange }: ChatInputProps) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -59,9 +51,23 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
   }, []);
 
   useEffect(() => {
-    if (flowRef.current) {
-      flowRef.current.scrollTo({ top: flowRef.current.scrollHeight, behavior: 'smooth' });
-    }
+    const el = flowRef.current;
+    if (!el) return;
+    const start = el.scrollTop;
+    const end = el.scrollHeight - el.clientHeight;
+    const change = end - start;
+    if (change <= 0) return;
+    const duration = 1400;
+    const easeOut = (t: number) => 1 - Math.pow(1 - t, 3);
+    const startTime = performance.now();
+    let rafId: number;
+    const step = (now: number) => {
+      const progress = Math.min((now - startTime) / duration, 1);
+      el.scrollTop = start + change * easeOut(progress);
+      if (progress < 1) rafId = requestAnimationFrame(step);
+    };
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
   }, [messages]);
 
   const submitDate = () => {
@@ -71,14 +77,13 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
     setBirthDate(draftDate);
     setMessages((prev) => [...prev, { who: 'user' as const, text: display }]);
     setStep(0);
-
     setTimeout(() => {
       setMessages((prev) => [...prev, { who: 'bot' as const, text: '좋아요. 이제 태어난 시간도 알려주세요.' }]);
     }, 600);
     setTimeout(() => {
       setMessages((prev) => [
         ...prev,
-        { who: 'bot' as const, text: '한 시간 차이로도 별이 달라져요. 모르시면 정오(12시)로 두셔도 괜찮아요.', input: 'time' as const },
+        { who: 'bot' as const, text: '한 시간 차이로도 별이 달라져요.\n모르시면 정오(12시)로 두셔도 괜찮아요.', input: 'time' as const },
       ]);
       setStep(2);
     }, 1500);
@@ -89,7 +94,6 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
     const displayTime = `${parseInt(draftHour)}시 ${parseInt(draftMinute)}분`;
     setMessages((prev) => [...prev, { who: 'user' as const, text: displayTime }]);
     setStep(0);
-
     setTimeout(() => {
       setMessages((prev) => [...prev, { who: 'bot' as const, text: '고마워요. 별을 펼쳐드릴게요. 🌌' }]);
     }, 600);
@@ -104,134 +108,298 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
     }, 1700);
   };
 
-  const goToSelect = () => {
-    router.push('/select');
-  };
-
   const quickTimes = [
-    { label: '자정', h: '00', m: '00' },
+    { label: '자정 0시', h: '00', m: '00' },
     { label: '새벽 6시', h: '06', m: '00' },
-    { label: '정오', h: '12', m: '00' },
+    { label: '정오 12시', h: '12', m: '00' },
     { label: '저녁 6시', h: '18', m: '00' },
   ];
 
   return (
-    <div className="relative z-10 w-screen h-screen flex items-center justify-center">
-      <div className="w-full max-w-[640px] h-full max-h-[80vh] flex flex-col py-[4vh]">
+    <div className="relative z-10 w-screen h-screen flex items-center justify-center px-4">
+      <div
+        className="w-full flex flex-col"
+        style={{ maxWidth: 600, height: 'min(80vh, 720px)' }}
+      >
         <div
           ref={flowRef}
-          className="chat-flow-no-scroll flex-1 flex flex-col gap-[18px] px-1 py-5 overflow-y-auto"
+          className="chat-flow-no-scroll"
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+            padding: '20px 20px 24px',
+          }}
         >
-          {messages.map((m, i) => (
-            <div
-              key={i}
-              className={`animate-bubble-in max-w-[85%] px-5 py-[14px] rounded-[22px] text-[15px] leading-[1.55] ${
-                m.who === 'bot'
-                  ? 'self-start bg-[rgba(244,236,216,0.08)] border border-[rgba(244,236,216,0.15)] text-[#f4ecd8] backdrop-blur-md'
-                  : 'self-end bg-gradient-to-br from-[#fcd34d] to-[#f9d976] font-medium text-[#0a1230] shadow-[0_4px_20px_rgba(252,211,77,0.25)]'
-              }`}
-            >
-              {m.who === 'bot' && (
+            {messages.map((m, i) => (
+              <div
+                key={i}
+                className="animate-bubble-in"
+                style={{
+                  alignSelf: m.who === 'bot' ? 'flex-start' : 'flex-end',
+                  maxWidth: '82%',
+                }}
+              >
+                {/* 봇 이름 레이블 (첫 번째 봇 메시지 또는 이전이 유저인 경우) */}
+                {m.who === 'bot' && (i === 0 || messages[i - 1]?.who === 'user') && (
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      marginBottom: 5,
+                      paddingLeft: 4,
+                    }}
+                  >
+                    <span style={{ fontSize: 11, color: 'rgba(196,181,253,0.55)', fontWeight: 600 }}>
+                      SSAju
+                    </span>
+                  </div>
+                )}
+
+                {/* 버블 */}
                 <div
-                  className="flex items-center gap-2 mb-[6px] italic text-[12px] text-[#f9d976] tracking-[0.05em]"
-                  style={{ fontFamily: 'var(--serif-en)' }}
+                  style={
+                    m.who === 'bot'
+                      ? {
+                          background: 'rgba(255,255,255,0.05)',
+                          border: '1px solid rgba(255,255,255,0.1)',
+                          borderLeft: '2px solid rgba(139,92,246,0.5)',
+                          borderRadius: '18px 18px 18px 18px',
+                          padding: '13px 16px',
+                          color: 'rgba(255,255,255,0.88)',
+                          fontSize: 14,
+                          lineHeight: 1.65,
+                          backdropFilter: 'blur(8px)',
+                        }
+                      : {
+                          background: 'linear-gradient(135deg, #fcd34d, #f9c846)',
+                          borderRadius: '18px 18px 18px 18px',
+                          padding: '13px 16px',
+                          color: '#0a1230',
+                          fontSize: 14,
+                          fontWeight: 600,
+                          lineHeight: 1.55,
+                          boxShadow: '0 4px 20px rgba(252,211,77,0.25), inset 0 1px 0 rgba(255,255,255,0.3)',
+                        }
+                  }
                 >
-                  <svg width="14" height="14" viewBox="0 0 16 16" className="flex-shrink-0">
-                    <circle cx="8" cy="8" r="3" fill="#fcd34d" />
-                    <circle cx="8" cy="8" r="6" fill="none" stroke="#fcd34d" strokeWidth="0.4" opacity="0.5" />
-                  </svg>
-                  SSAju
-                </div>
-              )}
+                  <span className="whitespace-pre-line">{m.text}</span>
 
-              {m.text}
-
-              {m.input === 'date' && (
-                <div className="flex gap-[10px] pt-3 items-center">
-                  <input
-                    type="date"
-                    className="flex-1 bg-[rgba(244,236,216,0.06)] border border-[rgba(244,236,216,0.2)] text-[#f4ecd8] px-[14px] py-[14px] rounded-xl text-sm outline-none [color-scheme:dark] hover:border-[rgba(244,236,216,0.45)] transition-colors"
-                    value={draftDate}
-                    onChange={(e) => setDraftDate(e.target.value)}
-                    max={new Date().toISOString().split('T')[0]}
-                    min="1900-01-01"
-                  />
-                  <button
-                    onClick={submitDate}
-                    disabled={!draftDate}
-                    className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-[#fcd34d] to-[#f9d976] flex items-center justify-center text-[#0a1230] shadow-[0_4px_20px_rgba(252,211,77,0.35)] disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105 transition-transform"
-                  >
-                    <ArrowIcon />
-                  </button>
-                </div>
-              )}
-
-              {m.input === 'time' && (
-                <div className="pt-3 space-y-2">
-                  <div className="flex gap-2">
-                    <select
-                      value={draftHour}
-                      onChange={(e) => setDraftHour(e.target.value)}
-                      className={selectClass}
-                    >
-                      {Array.from({ length: 24 }, (_, i) => (
-                        <option key={i} value={String(i).padStart(2, '0')}>{i}시</option>
-                      ))}
-                    </select>
-                    <select
-                      value={draftMinute}
-                      onChange={(e) => setDraftMinute(e.target.value)}
-                      className={selectClass}
-                    >
-                      {Array.from({ length: 12 }, (_, i) => (
-                        <option key={i} value={String(i * 5).padStart(2, '0')}>{i * 5}분</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="flex justify-end">
-                    <button
-                      onClick={submitTime}
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-[#fcd34d] to-[#f9d976] flex items-center justify-center text-[#0a1230] shadow-[0_4px_20px_rgba(252,211,77,0.35)] hover:scale-105 transition-transform"
-                    >
-                      <ArrowIcon />
-                    </button>
-                  </div>
-                  <div className="flex gap-2 flex-wrap">
-                    {quickTimes.map(({ label, h, m: min }) => (
+                  {/* 날짜 입력 */}
+                  {m.input === 'date' && (
+                    <div style={{ display: 'flex', gap: 8, paddingTop: 12, alignItems: 'center' }}>
+                      <input
+                        type="date"
+                        style={{
+                          flex: 1,
+                          background: 'rgba(255,255,255,0.06)',
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          color: '#f4ecd8',
+                          padding: '10px 14px',
+                          borderRadius: 12,
+                          fontSize: 13,
+                          outline: 'none',
+                          colorScheme: 'dark',
+                          cursor: 'pointer',
+                          transition: 'border-color 0.2s',
+                        }}
+                        value={draftDate}
+                        onChange={(e) => setDraftDate(e.target.value)}
+                        max={new Date().toISOString().split('T')[0]}
+                        min="1900-01-01"
+                        onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.6)')}
+                        onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)')}
+                      />
                       <button
-                        key={label}
-                        onClick={() => { setDraftHour(h); setDraftMinute(min); }}
-                        className="px-[14px] py-2 rounded-full bg-[rgba(244,236,216,0.06)] border border-[rgba(244,236,216,0.2)] text-[#f4ecd8] text-[13px] hover:border-[#f9d976] hover:bg-[rgba(252,211,77,0.1)] transition-all"
+                        onClick={submitDate}
+                        disabled={!draftDate}
+                        style={{
+                          width: 38,
+                          height: 38,
+                          borderRadius: '50%',
+                          background: draftDate
+                            ? 'linear-gradient(135deg, #fcd34d, #f9c846)'
+                            : 'rgba(255,255,255,0.08)',
+                          border: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: draftDate ? '#0a1230' : 'rgba(255,255,255,0.3)',
+                          cursor: draftDate ? 'pointer' : 'not-allowed',
+                          flexShrink: 0,
+                          boxShadow: draftDate ? '0 4px 16px rgba(252,211,77,0.4)' : 'none',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => draftDate && (e.currentTarget.style.transform = 'scale(1.08)')}
+                        onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
                       >
-                        {label}
+                        <ArrowIcon />
                       </button>
-                    ))}
+                    </div>
+                  )}
+
+                  {/* 시간 입력 */}
+                  {m.input === 'time' && (
+                    <div style={{ paddingTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      {/* 시/분 셀렉트 */}
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <select
+                          value={draftHour}
+                          onChange={(e) => setDraftHour(e.target.value)}
+                          style={{
+                            flex: 1,
+                            appearance: 'none',
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            color: '#f4ecd8',
+                            padding: '9px 12px',
+                            borderRadius: 12,
+                            fontSize: 13,
+                            outline: 'none',
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            colorScheme: 'dark',
+                          }}
+                        >
+                          {Array.from({ length: 24 }, (_, i) => (
+                            <option key={i} value={String(i).padStart(2, '0')}>{i}시</option>
+                          ))}
+                        </select>
+                        <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 16, fontWeight: 300 }}>:</span>
+                        <select
+                          value={draftMinute}
+                          onChange={(e) => setDraftMinute(e.target.value)}
+                          style={{
+                            flex: 1,
+                            appearance: 'none',
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            color: '#f4ecd8',
+                            padding: '9px 12px',
+                            borderRadius: 12,
+                            fontSize: 13,
+                            outline: 'none',
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            colorScheme: 'dark',
+                          }}
+                        >
+                          {Array.from({ length: 12 }, (_, i) => (
+                            <option key={i} value={String(i * 5).padStart(2, '0')}>{i * 5}분</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={submitTime}
+                          style={{
+                            width: 38,
+                            height: 38,
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #fcd34d, #f9c846)',
+                            border: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#0a1230',
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            boxShadow: '0 4px 16px rgba(252,211,77,0.4)',
+                            transition: 'transform 0.2s',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                        >
+                          <ArrowIcon />
+                        </button>
+                      </div>
+
+                      {/* 빠른 선택 */}
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {quickTimes.map(({ label, h, m: min }) => (
+                          <button
+                            key={label}
+                            onClick={() => { setDraftHour(h); setDraftMinute(min); }}
+                            style={{
+                              padding: '5px 12px',
+                              borderRadius: 999,
+                              background: draftHour === h && draftMinute === min
+                                ? 'rgba(139,92,246,0.25)'
+                                : 'rgba(255,255,255,0.05)',
+                              border: `1px solid ${draftHour === h && draftMinute === min ? 'rgba(139,92,246,0.6)' : 'rgba(255,255,255,0.12)'}`,
+                              color: draftHour === h && draftMinute === min
+                                ? '#c4b5fd'
+                                : 'rgba(255,255,255,0.55)',
+                              fontSize: 12,
+                              cursor: 'pointer',
+                              transition: 'all 0.15s',
+                            }}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 확인 버튼 */}
+                  {m.input === 'confirm' && (
+                    <div style={{ paddingTop: 14 }}>
+                      <button
+                        onClick={() => router.push('/select')}
+                        style={{
+                          width: '100%',
+                          padding: '12px 20px',
+                          borderRadius: 14,
+                          background: 'linear-gradient(135deg, #fcd34d, #f9c846)',
+                          border: 'none',
+                          color: '#0a1230',
+                          fontSize: 14,
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 24px rgba(252,211,77,0.45)',
+                          letterSpacing: '0.01em',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-1px)';
+                          e.currentTarget.style.boxShadow = '0 8px 32px rgba(252,211,77,0.55)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 4px 24px rgba(252,211,77,0.45)';
+                        }}
+                      >
+                        서비스 선택하러 가기 →
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+
+            {/* 타이핑 인디케이터 */}
+            {step === 0 && messages.length > 0 && messages[messages.length - 1].who === 'user' && (
+              <div style={{ alignSelf: 'flex-start' }}>
+                <div
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderLeft: '2px solid rgba(139,92,246,0.5)',
+                    borderRadius: '18px 18px 18px 18px',
+                    padding: '14px 18px',
+                    backdropFilter: 'blur(8px)',
+                  }}
+                >
+                  <div className="chat-typing-dots">
+                    <span />
+                    <span />
+                    <span />
                   </div>
                 </div>
-              )}
-
-              {m.input === 'confirm' && (
-                <div className="flex flex-wrap gap-2 mt-[14px]">
-                  <button
-                    onClick={goToSelect}
-                    className="bg-gradient-to-br from-[#fcd34d] to-[#f9d976] text-[#0a1230] font-medium text-[14px] py-3 px-6 rounded-full border-0 cursor-pointer hover:-translate-y-0.5 transition-transform shadow-[0_4px_30px_rgba(252,211,77,0.4)]"
-                  >
-                    서비스 고르러 가기 →
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
-
-          {step === 0 && messages.length > 0 && messages[messages.length - 1].who === 'user' && (
-            <div className="self-start max-w-[85%] px-5 py-[14px] rounded-[22px] bg-[rgba(244,236,216,0.08)] border border-[rgba(244,236,216,0.15)] backdrop-blur-md">
-              <div className="chat-typing-dots">
-                <span />
-                <span />
-                <span />
               </div>
-            </div>
-          )}
+            )}
         </div>
       </div>
     </div>

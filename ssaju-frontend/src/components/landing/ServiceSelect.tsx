@@ -22,20 +22,20 @@ const services = [
     icon: '⭐',
   },
   {
-    id: 'CONSULTATION',
-    number: '02',
-    title: 'AI 커리어 컨설팅',
-    description: '개인화된 커리어 조언',
-    duration: '15-20초',
-    icon: '💬',
-  },
-  {
     id: 'COMPATIBILITY',
-    number: '03',
+    number: '02',
     title: '기업 궁합 분석',
     description: '기업과의 궁합도 측정',
     duration: '5-8초',
     icon: '🏢',
+  },
+  {
+    id: 'CONSULTATION',
+    number: '03',
+    title: 'AI 커리어 컨설팅',
+    description: '개인화된 커리어 조언',
+    duration: '15-20초',
+    icon: '💬',
   },
 ];
 

@@ -19,10 +19,12 @@ export interface AuthStatusResponse {
  * 타임아웃: 5초
  */
 export async function fetchAuthStatus(): Promise<AuthStatusResponse> {
+  if (process.env.NODE_ENV === 'development') {
+    return { isLoggedIn: false, user: null };
+  }
   return apiFetch<AuthStatusResponse>('/api/auth/status', {
     method: 'GET',
     timeout: 5000,
-    // 인증 에러는 재시도하지 않음
     retry: { maxAttempts: 1 },
   });
 }

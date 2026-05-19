@@ -208,7 +208,6 @@ export function HistoryDetailPage({ record, onBack }: HistoryDetailPageProps) {
         {record.analysisType === 'CAREER_TIMING' && (
           <CareerTimingResult
             result={record.data as CareerTimingResultType}
-            isLoggedIn={true}
           />
         )}
 

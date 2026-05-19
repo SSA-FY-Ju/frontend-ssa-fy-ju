@@ -419,6 +419,44 @@ button {
   background: linear-gradient(to bottom, transparent, rgb(249 217 118));
 }
 
+/* Chat flow — scrollbar hidden, manual scroll locked */
+.chat-flow-no-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.chat-flow-no-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Chat bubble entrance animation */
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-bubble-in {
+  animation: bubble-in 1.4s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* Typing indicator dots */
+.chat-typing-dots {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+.chat-typing-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f9d976;
+  animation: chat-typing 1.2s infinite ease-in-out;
+}
+.chat-typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.chat-typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes chat-typing {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30%           { transform: translateY(-6px); opacity: 1; }
+}
+
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 8px;
@@ -435,4 +473,14 @@ button {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 215, 0, 0.5);
+}
+
+/* Consultation slide animation — .swiper-slide-active 내 .animate-item 요소에 적용 */
+@keyframes slide-up-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.swiper-slide-active .animate-item {
+  animation: slide-up-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }

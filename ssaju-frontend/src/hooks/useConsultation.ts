@@ -20,6 +20,7 @@
 import { useState, useRef } from 'react';
 import { fetchConsultation } from '@/lib/api/career';
 import { useConsultationStore } from '@/stores/consultationStore';
+import { useSessionStore } from '@/stores/sessionStore';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
 import type { ConsultationRequest } from '@/types/api';
 
@@ -52,6 +53,8 @@ export function useConsultation() {
 
       // Zustand 메모리에 전체 캐싱 (fullpage.js 즉시 렌더링)
       consultationStore.setConsultation(data, data.sajuResultId);
+      // sessionStore에 sajuResultId 저장 (페이지 이탈 경고 훅 연동)
+      useSessionStore.getState().setSajuResultId(data.sajuResultId);
       setPhase('result');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'AI 컨설팅 분석 중 오류가 발생했습니다.';
