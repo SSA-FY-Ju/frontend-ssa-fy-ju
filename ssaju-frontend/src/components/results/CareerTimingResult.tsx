@@ -247,10 +247,10 @@ export function CareerTimingResult({ result }: CareerTimingResultProps) {
                 animation: `careerFadeUp 0.5s cubic-bezier(0.22,1,0.36,1) ${0.8 + i * 0.15}s both`,
                 display: 'flex',
                 gap: 10,
-                alignItems: 'flex-start',
+                alignItems: 'center',
               }}
             >
-              <span style={{ flexShrink: 0, marginTop: 6, width: 4, height: 4, borderRadius: '50%', background: `${grade.color}88` }} />
+              <span style={{ flexShrink: 0, width: 4, height: 4, borderRadius: '50%', background: `${grade.color}88` }} />
               <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.65)', lineHeight: 1.75 }}>
                 {sentence}
               </p>
