@@ -14,11 +14,12 @@
 
 import { useRef, useEffect } from 'react';
 import { useCompanyAutocomplete } from '@/hooks/useCompanyAutocomplete';
+import type { DartCompany } from '@/hooks/useCompanyAutocomplete';
 
 interface CompanyAutocompleteProps {
   value: string;
   onChange: (value: string) => void;
-  onSelect: (value: string) => void;
+  onSelect: (company: DartCompany) => void;
   disabled?: boolean;
 }
 
@@ -54,8 +55,8 @@ export function CompanyAutocomplete({
   };
 
   /** 항목 선택 */
-  const handleSelect = (suggestion: string) => {
-    onSelect(suggestion);
+  const handleSelect = (company: DartCompany) => {
+    onSelect(company);
     close();
   };
 
@@ -131,15 +132,15 @@ export function CompanyAutocomplete({
             padding: '6px',
           }}
         >
-          {suggestions.map((suggestion, index) => (
+          {suggestions.map((company, index) => (
             <li
-              key={suggestion}
+              key={company.corpCode}
               id={`autocomplete-item-${index}`}
               role="option"
               aria-selected={index === highlightedIndex}
               onMouseDown={(e) => {
                 e.preventDefault();
-                handleSelect(suggestion);
+                handleSelect(company);
               }}
               style={{
                 padding: '10px 14px',
@@ -149,9 +150,13 @@ export function CompanyAutocomplete({
                 color: index === highlightedIndex ? '#c4b5fd' : 'rgba(255,255,255,0.75)',
                 background: index === highlightedIndex ? 'rgba(139,92,246,0.15)' : 'transparent',
                 transition: 'all 0.12s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 8,
               }}
             >
-              {suggestion}
+              <span>{company.corpName}</span>
             </li>
           ))}
         </ul>

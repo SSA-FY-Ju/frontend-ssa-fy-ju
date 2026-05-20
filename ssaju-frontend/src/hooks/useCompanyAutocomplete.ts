@@ -1,30 +1,54 @@
 'use client';
 
 /**
- * 기업명 자동완성 훅 (C2 아키텍처 수정)
+ * 기업명 자동완성 훅 — 클라이언트 사이드 필터링
  *
- * Component → Hook → API 계층 준수:
- * CompanyAutocomplete 컴포넌트가 API를 직접 호출하던 것을 이 훅으로 이전
- *
- * 기능:
- * - debounce 300ms로 백엔드 자동완성 API 호출
- * - 최대 10개 suggestions 반환
+ * - 페이지 진입 시 /dart-corps.json 1회 다운로드 후 메모리 캐시
+ * - 타이핑 시 API 호출 없이 즉시 필터링 (debounce 150ms)
  * - 키보드 네비게이션 상태 (highlightedIndex) 관리
  */
 
-import { useState, useRef } from 'react';
-import { fetchCompanyAutocomplete } from '@/lib/api/company';
+import { useState, useRef, useEffect } from 'react';
+import type { DartCompany } from '@/lib/api/company';
+
+export type { DartCompany };
+
+// 모듈 레벨 캐시 — 한 번 로드하면 앱 수명 내내 유지
+type RawCorp = { n: string; c: string; s: string };
+let corpListCache: DartCompany[] | null = null;
+let loadPromise: Promise<DartCompany[]> | null = null;
+
+async function loadCorpList(): Promise<DartCompany[]> {
+  if (corpListCache) return corpListCache;
+  if (loadPromise) return loadPromise;
+
+  loadPromise = fetch('/dart-corps.json')
+    .then((res) => res.json())
+    .then((raw: RawCorp[]) => {
+      corpListCache = raw.map((r) => ({ corpName: r.n, corpCode: r.c, stockCode: r.s }));
+      return corpListCache;
+    })
+    .catch(() => []);
+
+  return loadPromise;
+}
+
+/** 호환성 페이지 진입 시 미리 데이터 로드 (타이핑 전에 준비) */
+export function preloadCorpList() {
+  loadCorpList();
+}
 
 export function useCompanyAutocomplete() {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestions, setSuggestions] = useState<DartCompany[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  /**
-   * 검색어 변경 시 debounce 후 API 호출
-   * 빈 문자열 입력 시 드롭다운 닫기
-   */
+  // 컴포넌트 마운트 시 백그라운드 프리로드
+  useEffect(() => {
+    loadCorpList();
+  }, []);
+
   const search = (query: string) => {
     setHighlightedIndex(-1);
 
@@ -37,43 +61,30 @@ export function useCompanyAutocomplete() {
     }
 
     debounceRef.current = setTimeout(async () => {
-      try {
-        const result = await fetchCompanyAutocomplete({ query: query.trim() });
-        // 최대 10개만 표시
-        setSuggestions(result.suggestions.slice(0, 10));
-        setIsOpen(result.suggestions.length > 0);
-      } catch {
-        // 자동완성 실패 시 조용히 무시 (수동 입력 계속 허용)
-        setSuggestions([]);
-        setIsOpen(false);
-      }
-    }, 300);
+      const list = await loadCorpList();
+      const lower = query.trim().toLowerCase();
+
+      const startsWith = list.filter((c) => c.corpName.toLowerCase().startsWith(lower));
+      const contains = list.filter(
+        (c) =>
+          !c.corpName.toLowerCase().startsWith(lower) &&
+          c.corpName.toLowerCase().includes(lower),
+      );
+
+      const result = [...startsWith, ...contains].slice(0, 10);
+      setSuggestions(result);
+      setIsOpen(result.length > 0);
+    }, 150);
   };
 
-  /** 드롭다운 닫기 및 상태 초기화 */
   const close = () => {
     setSuggestions([]);
     setIsOpen(false);
     setHighlightedIndex(-1);
   };
 
-  /** 키보드 위 방향 네비게이션 */
-  const navigateUp = () => {
-    setHighlightedIndex((i) => Math.max(i - 1, 0));
-  };
+  const navigateUp = () => setHighlightedIndex((i) => Math.max(i - 1, 0));
+  const navigateDown = () => setHighlightedIndex((i) => Math.min(i + 1, suggestions.length - 1));
 
-  /** 키보드 아래 방향 네비게이션 */
-  const navigateDown = () => {
-    setHighlightedIndex((i) => Math.min(i + 1, suggestions.length - 1));
-  };
-
-  return {
-    suggestions,
-    isOpen,
-    highlightedIndex,
-    search,
-    close,
-    navigateUp,
-    navigateDown,
-  };
+  return { suggestions, isOpen, highlightedIndex, search, close, navigateUp, navigateDown };
 }

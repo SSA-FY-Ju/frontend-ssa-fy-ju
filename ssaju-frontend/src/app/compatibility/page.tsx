@@ -4,8 +4,10 @@ import { useState, useEffect, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCompatibility } from '@/hooks/useCompatibility';
-import { useCompanyInfo } from '@/hooks/useCompanyInfo';
 import { usePageExitGuard } from '@/hooks/usePageExitGuard';
+import { fetchDartCompanyDetail } from '@/lib/api/company';
+import type { DartCompany } from '@/hooks/useCompanyAutocomplete';
+import { preloadCorpList } from '@/hooks/useCompanyAutocomplete';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { CompanyAutocomplete } from '@/components/forms/CompanyAutocomplete';
@@ -46,8 +48,7 @@ export default function CompatibilityPage() {
 
   const { phase, result, error, disclaimerVisible, disclaimerFading, submitCompatibility, reset } =
     useCompatibility();
-  const { lookupCompany, suggestions, status: companyStatus, reset: resetCompanyInfo } =
-    useCompanyInfo();
+  const [companyLookupLoading, setCompanyLookupLoading] = useState(false);
 
   const sessionBirthDate = useSessionStore((s) => s.birthDate);
   const sessionBirthTime = useSessionStore((s) => s.birthTime);
@@ -70,6 +71,7 @@ export default function CompatibilityPage() {
   const [roleDetailName, setRoleDetailName] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingCompany, setPendingCompany] = useState('');
+  const [pendingCorpCode, setPendingCorpCode] = useState<string | null>(null);
 
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [feedbackIsExitMode, setFeedbackIsExitMode] = useState(false);
@@ -138,38 +140,69 @@ export default function CompatibilityPage() {
     }
   }, [exitRequestPending, hasFeedback, clearExitRequest, confirmExit]);
 
-  const handleCompanySelect = async (name: string) => {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    setPendingCompany(trimmed);
-    await lookupCompany(trimmed);
+  // DART 드롭다운에서 기업 선택 시 호출
+  const handleCompanySelect = (company: DartCompany) => {
+    setCompanyName(company.corpName);
+    setPendingCompany(company.corpName);
+    setPendingCorpCode(company.corpCode);
     setShowConfirmModal(true);
   };
 
-  const handleConfirm = (confirmedCompany: string) => {
-    setShowConfirmModal(false);
-    const defaultLabel = ROLE_CATEGORIES.find(r => r.value === roleCategory)?.label ?? '';
-    const targetRole: TargetRole = { category: roleCategory, detailName: roleDetailName || defaultLabel };
-    submitCompatibility(sessionBirthDate ?? '', sessionBirthTime ?? '12:00', targetRole, confirmedCompany);
+  // 직접 입력 submit 버튼 클릭 (드롭다운 미선택)
+  const handleManualSubmit = () => {
+    const trimmed = companyName.trim();
+    if (!trimmed) return;
+    setPendingCompany(trimmed);
+    setPendingCorpCode(null);
+    setShowConfirmModal(true);
   };
 
-  const handleManualInput = () => {
+  // 확인 모달에서 "이 기업으로 분석하기" 클릭
+  const handleConfirm = async (confirmedCompany: string) => {
     setShowConfirmModal(false);
+    setCompanyLookupLoading(true);
+
     const defaultLabel = ROLE_CATEGORIES.find(r => r.value === roleCategory)?.label ?? '';
     const targetRole: TargetRole = { category: roleCategory, detailName: roleDetailName || defaultLabel };
-    submitCompatibility(sessionBirthDate ?? '', sessionBirthTime ?? '12:00', targetRole, pendingCompany);
+
+    let foundingDate: string | undefined;
+    if (pendingCorpCode) {
+      try {
+        const detail = await fetchDartCompanyDetail(pendingCorpCode);
+        if (detail?.foundingDate) foundingDate = detail.foundingDate;
+      } catch {
+        // 설립일 조회 실패 시 없이 진행
+      }
+    }
+
+    setCompanyLookupLoading(false);
+    submitCompatibility(
+      sessionBirthDate ?? '',
+      sessionBirthTime ?? '12:00',
+      targetRole,
+      confirmedCompany,
+      foundingDate,
+    );
   };
 
   const handleReset = () => {
     reset();
-    resetCompanyInfo();
     setCompanyName('');
     setRoleDetailName('');
     setPendingCompany('');
+    setPendingCorpCode(null);
     setShowConfirmModal(false);
   };
 
-  if (!hasHydrated || !sessionBirthDate) return null;
+  // 기업 목록 백그라운드 프리로드 (타이핑 전에 준비)
+  useEffect(() => { preloadCorpList(); }, []);
+
+  // 하이드레이션 전: 빈 화면 대신 페이드인으로 부드럽게 처리
+  if (!hasHydrated || !sessionBirthDate) {
+    return (
+      <main className="relative z-10 text-white" style={{ height: '100vh', opacity: 0 }} />
+    );
+  }
 
   // 결과 단계에서는 FullPageCompatibility가 전체 화면을 제어
   if (phase === 'result' && result) {
@@ -248,15 +281,15 @@ export default function CompatibilityPage() {
   return (
     <main
       className="relative z-10 text-white"
-      style={{ height: '100vh', overflowY: 'auto', paddingTop: '4rem' }}
+      style={{ height: '100vh', overflowY: 'auto', paddingTop: '4rem', animation: 'fadeIn 0.3s ease' }}
     >
       <DisclaimerOverlay isVisible={disclaimerVisible} isFading={disclaimerFading} />
       {showConfirmModal && (
         <CompanyConfirmModal
-          suggestions={suggestions}
+          suggestions={[pendingCompany]}
           originalInput={pendingCompany}
           onConfirm={handleConfirm}
-          onManualInput={handleManualInput}
+          onManualInput={() => handleConfirm(pendingCompany)}
           onClose={() => setShowConfirmModal(false)}
         />
       )}
@@ -385,13 +418,13 @@ export default function CompatibilityPage() {
                     value={companyName}
                     onChange={setCompanyName}
                     onSelect={handleCompanySelect}
-                    disabled={companyStatus === 'loading'}
+                    disabled={companyLookupLoading}
                   />
                 </div>
 
                 <button
-                  onClick={() => handleCompanySelect(companyName)}
-                  disabled={!companyName.trim() || companyStatus === 'loading'}
+                  onClick={handleManualSubmit}
+                  disabled={!companyName.trim() || companyLookupLoading}
                   style={{
                     width: '100%',
                     padding: '13px',
@@ -403,13 +436,13 @@ export default function CompatibilityPage() {
                     color: companyName.trim() ? '#fff' : 'rgba(255,255,255,0.2)',
                     fontSize: 14,
                     fontWeight: 700,
-                    cursor: companyName.trim() && companyStatus !== 'loading' ? 'pointer' : 'not-allowed',
+                    cursor: companyName.trim() && !companyLookupLoading ? 'pointer' : 'not-allowed',
                     boxShadow: companyName.trim() ? '0 4px 20px rgba(109,40,217,0.4)' : 'none',
                     transition: 'all 0.2s',
                     letterSpacing: '0.02em',
                   }}
                 >
-                  {companyStatus === 'loading' ? '기업 정보 확인 중...' : '궁합 분석 시작하기 →'}
+                  {companyLookupLoading ? '설립일 조회 중...' : '궁합 분석 시작하기 →'}
                 </button>
 
                 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', textAlign: 'center', marginTop: 12 }}>

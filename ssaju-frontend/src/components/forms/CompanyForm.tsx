@@ -11,6 +11,7 @@
 
 import { useState } from 'react';
 import { CompanyAutocomplete } from './CompanyAutocomplete';
+import type { DartCompany } from '@/hooks/useCompanyAutocomplete';
 
 interface CompanyFormProps {
   /** 기업 선택 완료 콜백 */
@@ -30,10 +31,10 @@ export function CompanyForm({ onCompanySelect, isLoading = false }: CompanyFormP
   };
 
   /** 자동완성 항목 선택 핸들러 */
-  const handleAutocompleteSelect = (selected: string) => {
-    setCompanyName(selected);
+  const handleAutocompleteSelect = (company: DartCompany) => {
+    setCompanyName(company.corpName);
     setError(null);
-    onCompanySelect(selected);
+    onCompanySelect(company.corpName);
   };
 
   /** 폼 제출 핸들러 */
