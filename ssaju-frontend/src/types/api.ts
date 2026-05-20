@@ -108,50 +108,60 @@ export interface ConsultationData {
   monthlyForecasts: MonthlyForecast[];              // 탭8: 월별운세
 }
 
+/** 직무 카테고리 */
+export type RoleCategory =
+  | 'TECH_BACKEND'
+  | 'TECH_FRONTEND'
+  | 'TECH_FULLSTACK'
+  | 'TECH_DATA'
+  | 'TECH_DEVOPS'
+  | 'TECH_MOBILE'
+  | 'PLANNING'
+  | 'DESIGN'
+  | 'MARKETING'
+  | 'SALES'
+  | 'HR'
+  | 'FINANCE'
+  | 'MANAGEMENT'
+  | 'OTHER';
+
+/** 직무 정보 */
+export interface TargetRole {
+  category: RoleCategory;
+  detailName: string;
+}
+
 /**
  * 기업 호환성 요청
  */
 export interface CompatibilityRequest {
-  sajuResultId: string;
+  userBirthDate: string;       // YYYY-MM-DD
+  userBirthTime?: string;      // HH:mm
+  targetRole: TargetRole;
   companyName: string;
+  companyFoundingDate?: string; // YYYY-MM-DD (선택)
+  companyFoundingTime?: string; // HH:mm (선택)
 }
 
-/** 직무별 매칭 카드 */
-export interface JobMatchCard {
-  jobTitle: string;
-  score: number; // 0-100
-  reason: string;
-  recommendation: string; // '추천' | '주의' 등
-  isRecommended: boolean;
+/** 면접 최적 시기 */
+export interface BestTiming {
+  luckyDays: string[];
 }
 
-/** 경력 발전 마일스톤 */
-export interface CareerMilestone {
-  shortTerm: string; // 0-3개월
-  midTerm: string;   // 3-12개월
-  longTerm: string;  // 1-3년
+/** 실행 전략 */
+export interface ActionableStrategy {
+  interviewKeywords: string[];
+  weaknessDefense: string;
+  bestTiming: BestTiming;
 }
 
 /**
  * 기업 호환성 결과
  */
 export interface CompatibilityResult {
-  sajuResultId: string;
-  companyName: string;
-  compatibilityScore: number; // 0-100
-  confidenceLevel: 'LOW' | 'MEDIUM' | 'HIGH';
-  // 점수 분석 4개 항목
-  sipShinScore: number;   // 십신 궁합
-  oHangScore: number;     // 오행 궁합
-  jijangGanScore: number; // 지장간 궁합
-  leadershipScore: number; // 리더십 매칭
-  // 직무별 매칭
-  jobMatchCards: JobMatchCard[];
-  // 월별 운세 (MonthlyForecast 재사용)
-  monthlyForecasts: MonthlyForecast[];
-  // 경력 마일스톤
-  careerMilestone: CareerMilestone;
-  recommendation: string;
+  potentialSynergy: number;      // 시너지 점수 0-100
+  longTermStability: number;     // 장기 안정성 0-100
+  actionableStrategy: ActionableStrategy;
 }
 
 /**

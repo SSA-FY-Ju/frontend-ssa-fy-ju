@@ -48,7 +48,7 @@ describe('useCompatibility', () => {
     const { result } = renderHook(() => useCompatibility());
 
     await act(async () => {
-      result.current.submitCompatibility('1990-10-10', '14:30', '삼성전자');
+      result.current.submitCompatibility('1990-10-10', '14:30', { category: 'TECH_BACKEND', detailName: '백엔드 개발' }, '삼성전자');
     });
 
     await waitFor(() => expect(result.current.phase).toBe('result'));
@@ -61,11 +61,10 @@ describe('useCompatibility', () => {
     const { result } = renderHook(() => useCompatibility());
 
     await act(async () => {
-      result.current.submitCompatibility('1990-10-10', '14:30', '삼성전자');
+      result.current.submitCompatibility('1990-10-10', '14:30', { category: 'TECH_BACKEND', detailName: '백엔드 개발' }, '삼성전자');
     });
 
     await waitFor(() => expect(result.current.phase).toBe('result'));
-    expect(useSessionStore.getState().sajuResultId).toBe(mockCompatibilityResult.sajuResultId);
     expect(useSessionStore.getState().lastAnalysisType).toBe('COMPATIBILITY');
   });
 
@@ -76,7 +75,7 @@ describe('useCompatibility', () => {
     const { result } = renderHook(() => useCompatibility());
 
     await act(async () => {
-      result.current.submitCompatibility('1990-10-10', '14:30', '삼성전자');
+      result.current.submitCompatibility('1990-10-10', '14:30', { category: 'TECH_BACKEND', detailName: '백엔드 개발' }, '삼성전자');
     });
 
     await waitFor(() => expect(result.current.phase).toBe('result'));
@@ -93,7 +92,7 @@ describe('useCompatibility', () => {
     const { result } = renderHook(() => useCompatibility());
 
     await act(async () => {
-      result.current.submitCompatibility('1990-10-10', '14:30', '삼성전자');
+      result.current.submitCompatibility('1990-10-10', '14:30', { category: 'TECH_BACKEND', detailName: '백엔드 개발' }, '삼성전자');
     });
 
     await waitFor(() => expect(result.current.phase).toBe('result'));
@@ -105,7 +104,7 @@ describe('useCompatibility', () => {
     const { result } = renderHook(() => useCompatibility());
 
     await act(async () => {
-      result.current.submitCompatibility('1990-10-10', '14:30', '삼성전자');
+      result.current.submitCompatibility('1990-10-10', '14:30', { category: 'TECH_BACKEND', detailName: '백엔드 개발' }, '삼성전자');
     });
 
     await waitFor(() => expect(result.current.phase).toBe('error'));
@@ -118,7 +117,7 @@ describe('useCompatibility', () => {
     const { result } = renderHook(() => useCompatibility());
 
     await act(async () => {
-      result.current.submitCompatibility('1990-10-10', '14:30', '삼성전자');
+      result.current.submitCompatibility('1990-10-10', '14:30', { category: 'TECH_BACKEND', detailName: '백엔드 개발' }, '삼성전자');
     });
 
     await waitFor(() => expect(result.current.phase).toBe('error'));
@@ -129,8 +128,8 @@ describe('useCompatibility', () => {
     fetchCompatibility.mockReturnValue(new Promise(() => {}));
     const { result } = renderHook(() => useCompatibility());
 
-    act(() => { result.current.submitCompatibility('1990-10-10', '14:30', '삼성전자'); });
-    act(() => { result.current.submitCompatibility('1991-01-01', '09:00', 'LG전자'); });
+    act(() => { result.current.submitCompatibility('1990-10-10', '14:30', { category: 'TECH_BACKEND', detailName: '백엔드 개발' }, '삼성전자'); });
+    act(() => { result.current.submitCompatibility('1991-01-01', '09:00', { category: 'TECH_BACKEND', detailName: '백엔드 개발' }, 'LG전자'); });
 
     expect(fetchCompatibility).toHaveBeenCalledTimes(1);
   });
@@ -140,7 +139,7 @@ describe('useCompatibility', () => {
     const { result } = renderHook(() => useCompatibility());
 
     await act(async () => {
-      result.current.submitCompatibility('1990-10-10', '14:30', '삼성전자');
+      result.current.submitCompatibility('1990-10-10', '14:30', { category: 'TECH_BACKEND', detailName: '백엔드 개발' }, '삼성전자');
     });
     await waitFor(() => expect(result.current.phase).toBe('result'));
 

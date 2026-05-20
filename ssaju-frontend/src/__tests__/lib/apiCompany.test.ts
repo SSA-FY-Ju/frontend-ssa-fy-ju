@@ -11,32 +11,36 @@ jest.mock('@/lib/api/client', () => ({
 import { apiFetch } from '@/lib/api/client';
 const mockApiFetch = apiFetch as jest.MockedFunction<typeof apiFetch>;
 
+const mockReq = {
+  userBirthDate: '1990-10-10',
+  userBirthTime: '14:30',
+  targetRole: { category: 'TECH_BACKEND' as const, detailName: '백엔드 개발자' },
+  companyName: '삼성전자',
+};
+
 describe('fetchCompatibility', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('POST /api/company/compatibility 호출', async () => {
-    mockApiFetch.mockResolvedValueOnce({ compatibilityScore: 85 } as never);
-    const req = { sajuResultId: 'saju-001', companyName: '삼성전자' };
-    await fetchCompatibility(req);
+    mockApiFetch.mockResolvedValueOnce({ potentialSynergy: 85, longTermStability: 80, actionableStrategy: { interviewKeywords: [], weaknessDefense: '', bestTiming: { luckyDays: [] } } } as never);
+    await fetchCompatibility(mockReq);
     expect(mockApiFetch).toHaveBeenCalledWith('/api/company/compatibility', {
       method: 'POST',
-      body: req,
+      body: mockReq,
       timeout: 10000,
     });
   });
 
   it('apiFetch 결과를 그대로 반환함', async () => {
-    const mockResult = { compatibilityScore: 78, companyName: '카카오' };
+    const mockResult = { potentialSynergy: 78, longTermStability: 82, actionableStrategy: { interviewKeywords: ['협업'], weaknessDefense: '전략적으로 어필', bestTiming: { luckyDays: ['2월'] } } };
     mockApiFetch.mockResolvedValueOnce(mockResult as never);
-    const result = await fetchCompatibility({ sajuResultId: 'saju-001', companyName: '카카오' });
+    const result = await fetchCompatibility({ ...mockReq, companyName: '카카오' });
     expect(result).toEqual(mockResult);
   });
 
   it('apiFetch가 에러를 던지면 에러를 전파함', async () => {
     mockApiFetch.mockRejectedValueOnce(new Error('API 오류'));
-    await expect(
-      fetchCompatibility({ sajuResultId: 'saju-001', companyName: '네이버' }),
-    ).rejects.toThrow('API 오류');
+    await expect(fetchCompatibility({ ...mockReq, companyName: '네이버' })).rejects.toThrow('API 오류');
   });
 });
 

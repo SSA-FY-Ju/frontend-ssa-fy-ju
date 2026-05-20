@@ -21,14 +21,17 @@ import { useDisclaimerTimer } from './useDisclaimerTimer';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useAuthStore } from '@/stores/authStore';
-import type { CompatibilityResult, CompatibilityRequest } from '@/types/api';
+import type { CompatibilityResult, CompatibilityRequest, TargetRole } from '@/types/api';
 
 type Phase = 'idle' | 'disclaimer' | 'loading' | 'result' | 'error';
 
 interface CompatibilityArgs {
   birthDate: string;
   birthTime: string;
+  targetRole: TargetRole;
   companyName: string;
+  companyFoundingDate?: string;
+  companyFoundingTime?: string;
 }
 
 export function useCompatibility() {
@@ -49,20 +52,19 @@ export function useCompatibility() {
     setPhase('loading');
 
     try {
-      // sajuResultId는 sessionStore에서 가져옴 (선행 분석 결과)
-      const sajuResultId = useSessionStore.getState().sajuResultId ?? '';
-
       const request: CompatibilityRequest = {
-        sajuResultId,
+        userBirthDate: args.birthDate,
+        userBirthTime: args.birthTime,
+        targetRole: args.targetRole,
         companyName: args.companyName,
+        ...(args.companyFoundingDate ? { companyFoundingDate: args.companyFoundingDate } : {}),
+        ...(args.companyFoundingTime ? { companyFoundingTime: args.companyFoundingTime } : {}),
       };
 
       const data = await fetchCompatibility(request);
       setResult(data);
       setPhase('result');
 
-      // sessionStore에 sajuResultId 저장 (피드백 제출 시 사용)
-      useSessionStore.getState().setSajuResultId(data.sajuResultId);
       useSessionStore.getState().setLastAnalysisType('COMPATIBILITY');
 
       // 비로그인 시 analysisStore에 휘발성 저장
@@ -94,12 +96,18 @@ export function useCompatibility() {
   /**
    * 궁합 분석 시작 (고지 문구 → 로딩 → 결과)
    */
-  const submitCompatibility = (birthDate: string, birthTime: string = '12:00', companyName: string) => {
-    // 이미 진행 중이면 무시
+  const submitCompatibility = (
+    birthDate: string,
+    birthTime: string = '12:00',
+    targetRole: TargetRole,
+    companyName: string,
+    companyFoundingDate?: string,
+    companyFoundingTime?: string,
+  ) => {
     if (isRequestingRef.current) return;
     isRequestingRef.current = true;
 
-    pendingArgsRef.current = { birthDate, birthTime, companyName };
+    pendingArgsRef.current = { birthDate, birthTime, targetRole, companyName, companyFoundingDate, companyFoundingTime };
     setError(null);
     setPhase('disclaimer');
     startDisclaimer();

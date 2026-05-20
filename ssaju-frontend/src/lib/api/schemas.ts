@@ -94,33 +94,20 @@ export const ConsultationResponseSchema = ApiResponseSchema(ConsultationDataSche
 
 // ─── 기업 궁합 ────────────────────────────────────────────────────────────────
 
-export const JobMatchCardSchema = z.object({
-  jobTitle: z.string(),
-  score: z.number().min(0).max(100),
-  reason: z.string(),
-  recommendation: z.string(),
-  isRecommended: z.boolean(),
+const BestTimingSchema = z.object({
+  luckyDays: z.array(z.string()),
 });
 
-export const CareerMilestoneSchema = z.object({
-  shortTerm: z.string(),
-  midTerm: z.string(),
-  longTerm: z.string(),
+const ActionableStrategySchema = z.object({
+  interviewKeywords: z.array(z.string()),
+  weaknessDefense: z.string(),
+  bestTiming: BestTimingSchema,
 });
 
 export const CompatibilityResultSchema = z.object({
-  sajuResultId: z.string(),
-  companyName: z.string(),
-  compatibilityScore: z.number().min(0).max(100),
-  confidenceLevel: z.enum(['LOW', 'MEDIUM', 'HIGH']),
-  sipShinScore: z.number().min(0).max(100),
-  oHangScore: z.number().min(0).max(100),
-  jijangGanScore: z.number().min(0).max(100),
-  leadershipScore: z.number().min(0).max(100),
-  jobMatchCards: z.array(JobMatchCardSchema),
-  monthlyForecasts: z.array(MonthlyForecastSchema),
-  careerMilestone: CareerMilestoneSchema,
-  recommendation: z.string(),
+  potentialSynergy: z.number().min(0).max(100),
+  longTermStability: z.number().min(0).max(100),
+  actionableStrategy: ActionableStrategySchema,
 });
 
 export const CompatibilityResponseSchema = ApiResponseSchema(CompatibilityResultSchema);
