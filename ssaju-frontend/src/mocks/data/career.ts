@@ -5,10 +5,14 @@
 import type { CareerTimingResult, ConsultationData } from '@/types/api';
 
 export const mockCareerTimingResult: CareerTimingResult = {
-  favoredPeriod: '2025년 상반기',
-  confidenceScore: 82,
+  favoredPeriod: '2025년 하반기 (9월~11월)',
+  confidenceScore: 87,
   reasoning:
-    '귀하의 사주를 분석한 결과, 2025년 상반기가 취업 활동에 가장 유리한 시기입니다. 목(木) 기운이 강하게 작용하여 새로운 시작과 성장에 적합한 에너지가 집중됩니다.',
+    '일주(日柱) 경금(庚金)이 2025년 을사(乙巳)년 하반기 신금(辛金) 대운과 합을 이루며 관운(官運)이 크게 열립니다. ' +
+    '특히 9월부터 11월 사이 재성(財星)과 관성(官星)이 동시에 활성화되어 새로운 직책 획득에 유리한 에너지가 집중됩니다. ' +
+    '이 기간에는 적극적인 지원과 네트워킹이 실질적인 성과로 이어질 가능성이 높으며, ' +
+    '특히 목(木) 계열 산업(IT·교육·바이오)에서 기회가 두드러집니다. ' +
+    '반면 2026년 상반기는 공망(空亡) 영향으로 결실보다 준비에 집중하는 편이 유리합니다.',
 };
 
 export const mockConsultationData: ConsultationData = {

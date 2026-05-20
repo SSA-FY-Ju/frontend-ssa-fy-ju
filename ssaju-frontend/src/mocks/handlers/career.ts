@@ -1,8 +1,19 @@
 /**
  * MSW 커리어 API 핸들러
- *
- * /api/career/timing      — 실제 API 연결 (핸들러 제거)
- * /api/career/consultation — 실제 API 연결 (핸들러 제거)
  */
 
-export const careerHandlers: never[] = [];
+import { http, HttpResponse, delay } from 'msw';
+import { mockCareerTimingResult } from '../data/career';
+
+export const careerHandlers = [
+  // 관운 분석
+  http.post('/api/career/timing', async () => {
+    await delay(1800);
+    return HttpResponse.json({
+      success: true,
+      data: mockCareerTimingResult,
+      error: null,
+      timestamp: Date.now(),
+    });
+  }),
+];

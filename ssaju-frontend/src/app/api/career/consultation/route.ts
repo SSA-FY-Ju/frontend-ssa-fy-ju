@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = 'https://api.ssaju.net';
+const BACKEND_URL = process.env.BACKEND_URL!;
 
 /** AI 커리어 상담 — 실제 백엔드 프록시 */
 export async function POST(req: NextRequest) {
