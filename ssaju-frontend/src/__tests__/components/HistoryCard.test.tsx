@@ -28,27 +28,12 @@ const mockConsultationRecord: AnalysisRecord = {
   userId: 'user-001',
   analysisType: 'CONSULTATION',
   data: {
-    sajuResultId: 'saju-002',
-    recommendedIndustries: [
-      { industryName: 'IT/소프트웨어', reason: '적합합니다', recommendedRoles: ['개발자'] },
+    analysisSummary: '경금 일주의 분석력이 강점입니다.',
+    pivotPoints: [
+      { month: '2025년 9월', type: 'LUCKY', score: 91, description: '관성이 활성화됩니다.' },
     ],
-    interviewTips: [],
-    strengths: [],
-    sajuProfile: {
-      dayMaster: '丙',
-      personality: '밝은 성격',
-      oHangDistribution: {},
-      sipShinDistribution: {},
-    },
-    wealthStyle: {
-      incomeSource: '기술직',
-      financialAdvice: '저축',
-      investmentStyle: '안정형',
-      additionalIncome: '프리랜서',
-    },
-    careerRoadmap: { shortTerm: '기초', midTerm: '성장', longTerm: '목표' },
-    branding: { suitColor: '네이비', imageStyle: '클린', hairMakeup: '자연스럽게', powerKeywords: [] },
-    monthlyForecasts: [],
+    warningMonths: ['2025년 6월'],
+    warningDescription: '형충의 기운이 강합니다.',
   },
   createdAt: new Date('2025-02-10').getTime(),
 };
@@ -95,7 +80,7 @@ describe('HistoryCard', () => {
     expect(screen.getByText(/신뢰도 82%/)).toBeInTheDocument();
   });
 
-  it('CONSULTATION 카드: 첫 번째 추천 산업명 표시', () => {
+  it('CONSULTATION 카드: 전환점 정보 표시', () => {
     render(
       <HistoryCard
         record={mockConsultationRecord}
@@ -105,7 +90,7 @@ describe('HistoryCard', () => {
     );
 
     expect(screen.getByText('AI 컨설팅')).toBeInTheDocument();
-    expect(screen.getByText('IT/소프트웨어')).toBeInTheDocument();
+    expect(screen.getByText(/전환점/)).toBeInTheDocument();
   });
 
   it('COMPATIBILITY 카드: 기업명과 점수 표시', () => {

@@ -43,65 +43,22 @@ export interface ConsultationRequest {
   birthTime?: string;
 }
 
-/** 추천 산업 항목 */
-export interface IndustryRecommendation {
-  industryName: string;
-  reason: string;
-  recommendedRoles: string[];
-}
-
-/** 사주 프로필 */
-export interface SajuProfile {
-  dayMaster: string; // 일주 천간 (예: 丙)
-  personality: string;
-  oHangDistribution: Record<string, number>; // 木火土金水 개수
-  sipShinDistribution: Record<string, number>;
-}
-
-/** 부의운 */
-export interface WealthStyle {
-  incomeSource: string;
-  financialAdvice: string;
-  investmentStyle: string;
-  additionalIncome: string;
-}
-
-/** 경력 로드맵 */
-export interface CareerRoadmap {
-  shortTerm: string; // 0-2년
-  midTerm: string;   // 3-5년
-  longTerm: string;  // 최종 목표
-}
-
-/** 브랜딩 */
-export interface BrandingInfo {
-  suitColor: string;
-  imageStyle: string;
-  hairMakeup: string;
-  powerKeywords: string[];
-}
-
-/** 월별 운세 항목 */
-export interface MonthlyForecast {
-  month: number;        // 1-12
+/** 커리어 전환점 항목 */
+export interface PivotPoint {
+  month: string;        // 예: "2025년 9월"
+  type: string;         // 예: "LUCKY" | "CAUTION" | "NORMAL"
   score: number;        // 0-100
-  type: 'LUCKY' | 'CAUTION' | 'NORMAL';
-  advice: string;
+  description: string;
 }
 
 /**
- * AI 컨설팅 응답 (8개 탭 전체 데이터)
+ * AI 컨설팅 응답
  */
 export interface ConsultationData {
-  sajuResultId: string;
-  recommendedIndustries: IndustryRecommendation[]; // 탭1: 추천산업
-  interviewTips: string[];                          // 탭2: 면접팁
-  strengths: string[];                              // 탭3: 강점
-  sajuProfile: SajuProfile;                         // 탭4: 사주프로필
-  wealthStyle: WealthStyle;                         // 탭5: 부의운
-  careerRoadmap: CareerRoadmap;                     // 탭6: 경력로드맵
-  branding: BrandingInfo;                           // 탭7: 브랜딩
-  monthlyForecasts: MonthlyForecast[];              // 탭8: 월별운세
+  pivotPoints: PivotPoint[];
+  warningMonths: string[];
+  warningDescription: string;
+  analysisSummary: string;
 }
 
 /** 직무 카테고리 */

@@ -65,11 +65,11 @@ export default function ConsultationPage() {
     },
   });
 
-  // 피드백 넛지 — 마지막 섹션(인덱스 7) 도달 시 표시
+  // 피드백 넛지 — 마지막 섹션(인덱스 2) 도달 시 표시
   const [showFeedbackNudge, setShowFeedbackNudge] = useState(false);
   const [nudgeVisible, setNudgeVisible] = useState(false);
   const nudgeShownRef = useRef(false);
-  const LAST_SECTION = 7;
+  const LAST_SECTION = 2;
 
   useEffect(() => {
     if (phase !== 'result') {

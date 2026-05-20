@@ -33,24 +33,18 @@ describe('mockCareerTimingResult', () => {
 
 describe('mockConsultationData', () => {
   it('필수 필드 존재', () => {
-    expect(mockConsultationData.sajuResultId).toBeTruthy();
-    expect(mockConsultationData.recommendedIndustries).toBeTruthy();
-    expect(mockConsultationData.monthlyForecasts).toHaveLength(12);
+    expect(mockConsultationData.analysisSummary).toBeTruthy();
+    expect(Array.isArray(mockConsultationData.pivotPoints)).toBe(true);
+    expect(Array.isArray(mockConsultationData.warningMonths)).toBe(true);
+    expect(mockConsultationData.warningDescription).toBeTruthy();
   });
 
-  it('sajuResultId 존재', () => {
-    expect(mockConsultationData.sajuResultId).toBeTruthy();
-  });
-
-  it('8개 탭 데이터 모두 존재', () => {
-    expect(Array.isArray(mockConsultationData.recommendedIndustries)).toBe(true);
-    expect(Array.isArray(mockConsultationData.interviewTips)).toBe(true);
-    expect(Array.isArray(mockConsultationData.strengths)).toBe(true);
-    expect(mockConsultationData.sajuProfile).toBeDefined();
-    expect(mockConsultationData.wealthStyle).toBeDefined();
-    expect(mockConsultationData.careerRoadmap).toBeDefined();
-    expect(mockConsultationData.branding).toBeDefined();
-    expect(Array.isArray(mockConsultationData.monthlyForecasts)).toBe(true);
+  it('pivotPoints 각 항목에 필수 필드 존재', () => {
+    mockConsultationData.pivotPoints.forEach((pt) => {
+      expect(pt.month).toBeTruthy();
+      expect(typeof pt.score).toBe('number');
+      expect(pt.description).toBeTruthy();
+    });
   });
 });
 

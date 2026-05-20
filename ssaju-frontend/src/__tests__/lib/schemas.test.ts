@@ -8,154 +8,70 @@ import {
   ConsultationDataSchema,
   CompatibilityResultSchema,
   AnalysisRecordSchema,
-  MonthlyForecastSchema,
 } from '@/lib/api/schemas';
 
 // ─── 픽스처 ────────────────────────────────────────────────────────────────────
 
 const validCareerTimingResult = {
-  sajuResultId: 'result-001',
-  h1Period: '2025-03 ~ 2025-06',
-  h2Period: '2025-09 ~ 2025-12',
-  h1Confidence: 85,
-  h2Confidence: 72,
-  recommendation: '봄철에 이직 도전을 권장합니다.',
-};
-
-const validMonthlyForecast = {
-  month: 3,
-  score: 88,
-  type: 'LUCKY' as const,
-  advice: '새로운 기회를 적극적으로 잡으세요.',
+  favoredPeriod: '2025년 하반기',
+  confidenceScore: 85,
+  reasoning: '경금 일주가 을사년 하반기 운과 합을 이룹니다.',
 };
 
 const validConsultationData = {
-  sajuResultId: 'result-001',
-  recommendedIndustries: [
+  analysisSummary: '경금 일주의 분석력이 강점입니다.',
+  pivotPoints: [
     {
-      industryName: 'IT/소프트웨어',
-      reason: '분석력과 창의성이 높음',
-      recommendedRoles: ['백엔드 개발자', '데이터 엔지니어'],
+      month: '2025년 9월',
+      type: 'LUCKY',
+      score: 91,
+      description: '관성이 활성화되는 최고의 시기입니다.',
     },
   ],
-  interviewTips: ['자신감 있게 말하세요', '구체적인 사례를 들어 설명하세요'],
-  strengths: ['분석적 사고', '문제 해결 능력'],
-  sajuProfile: {
-    dayMaster: '丙',
-    personality: '열정적이고 카리스마 있음',
-    oHangDistribution: { 木: 2, 火: 3, 土: 1, 金: 1, 水: 1 },
-    sipShinDistribution: { 比肩: 1, 食神: 2, 正官: 1 },
-  },
-  wealthStyle: {
-    incomeSource: '급여 소득',
-    financialAdvice: '안정적 투자를 권장합니다.',
-    investmentStyle: '보수적',
-    additionalIncome: '부업 가능',
-  },
-  careerRoadmap: {
-    shortTerm: '현재 역량 강화',
-    midTerm: '시니어 포지션 도전',
-    longTerm: '리더십 역할 수행',
-  },
-  branding: {
-    suitColor: '네이비',
-    imageStyle: '전문적이고 신뢰감 있는',
-    hairMakeup: '단정하고 깔끔한',
-    powerKeywords: ['전문성', '신뢰', '혁신'],
-  },
-  monthlyForecasts: [validMonthlyForecast],
+  warningMonths: ['2025년 6월'],
+  warningDescription: '형충의 기운으로 대인 갈등이 생기기 쉽습니다.',
 };
 
 const validCompatibilityResult = {
-  sajuResultId: 'result-001',
-  companyName: '삼성전자',
-  compatibilityScore: 78,
-  confidenceLevel: 'HIGH' as const,
-  sipShinScore: 80,
-  oHangScore: 75,
-  jijangGanScore: 70,
-  leadershipScore: 85,
-  jobMatchCards: [
-    {
-      jobTitle: '소프트웨어 엔지니어',
-      score: 90,
-      reason: '기술적 역량과 부합',
-      recommendation: '추천',
-      isRecommended: true,
-    },
-  ],
-  monthlyForecasts: [validMonthlyForecast],
-  careerMilestone: {
-    shortTerm: '온보딩 완료',
-    midTerm: '프로젝트 리드',
-    longTerm: '팀장 승진',
+  potentialSynergy: 78,
+  longTermStability: 72,
+  actionableStrategy: {
+    interviewKeywords: ['혁신', '성과 중심'],
+    weaknessDefense: '단기 성과보다 장기적 비전을 강조하세요.',
+    bestTiming: { luckyDays: ['2025년 9월 15일'] },
   },
-  recommendation: '이 기업은 당신의 역량과 잘 맞습니다.',
 };
 
 // ─── 관운 분석 스키마 ──────────────────────────────────────────────────────────
 
 describe('CareerTimingResultSchema', () => {
   it('유효한 관운 분석 결과를 파싱한다', () => {
-    const result = CareerTimingResultSchema.safeParse(validCareerTimingResult);
-    expect(result.success).toBe(true);
+    expect(CareerTimingResultSchema.safeParse(validCareerTimingResult).success).toBe(true);
   });
 
   it('신뢰도 0-100 범위를 벗어나면 실패한다', () => {
-    const invalid = { ...validCareerTimingResult, h1Confidence: 150 };
-    const result = CareerTimingResultSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
+    expect(CareerTimingResultSchema.safeParse({ ...validCareerTimingResult, confidenceScore: 150 }).success).toBe(false);
   });
 
   it('필수 필드 누락 시 실패한다', () => {
-    const { sajuResultId: _, ...withoutId } = validCareerTimingResult;
-    const result = CareerTimingResultSchema.safeParse(withoutId);
-    expect(result.success).toBe(false);
+    const { favoredPeriod: _, ...without } = validCareerTimingResult;
+    expect(CareerTimingResultSchema.safeParse(without).success).toBe(false);
   });
 });
 
 describe('CareerTimingResponseSchema (ApiResponse 래퍼)', () => {
   it('success=true, data 있는 응답을 파싱한다', () => {
-    const response = {
-      success: true,
-      data: validCareerTimingResult,
-      error: null,
-      timestamp: Date.now(),
-    };
-    const result = CareerTimingResponseSchema.safeParse(response);
-    expect(result.success).toBe(true);
+    const response = { success: true, data: validCareerTimingResult, error: null, timestamp: Date.now() };
+    expect(CareerTimingResponseSchema.safeParse(response).success).toBe(true);
   });
 
   it('success=false, error 있는 응답을 파싱한다', () => {
     const response = {
-      success: false,
-      data: null,
-      error: { code: 'NOT_FOUND', message: '결과를 찾을 수 없습니다.', requestId: 'req-001' },
+      success: false, data: null,
+      error: { code: 'NOT_FOUND', message: '결과 없음', requestId: 'req-001' },
       timestamp: Date.now(),
     };
-    const result = CareerTimingResponseSchema.safeParse(response);
-    expect(result.success).toBe(true);
-  });
-});
-
-// ─── 월별 운세 스키마 ──────────────────────────────────────────────────────────
-
-describe('MonthlyForecastSchema', () => {
-  it('유효한 월별 운세를 파싱한다', () => {
-    const result = MonthlyForecastSchema.safeParse(validMonthlyForecast);
-    expect(result.success).toBe(true);
-  });
-
-  it('month 1-12 범위를 벗어나면 실패한다', () => {
-    const invalid = { ...validMonthlyForecast, month: 13 };
-    const result = MonthlyForecastSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
-  });
-
-  it('type이 허용된 enum 이외의 값이면 실패한다', () => {
-    const invalid = { ...validMonthlyForecast, type: 'UNKNOWN' };
-    const result = MonthlyForecastSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
+    expect(CareerTimingResponseSchema.safeParse(response).success).toBe(true);
   });
 });
 
@@ -163,78 +79,55 @@ describe('MonthlyForecastSchema', () => {
 
 describe('ConsultationDataSchema', () => {
   it('유효한 컨설팅 데이터를 파싱한다', () => {
-    const result = ConsultationDataSchema.safeParse(validConsultationData);
-    expect(result.success).toBe(true);
+    expect(ConsultationDataSchema.safeParse(validConsultationData).success).toBe(true);
   });
 
-  it('monthlyForecasts 중 잘못된 항목이 있으면 실패한다', () => {
+  it('pivotPoints score 범위를 벗어나면 실패한다', () => {
     const invalid = {
       ...validConsultationData,
-      monthlyForecasts: [{ ...validMonthlyForecast, score: -10 }],
+      pivotPoints: [{ ...validConsultationData.pivotPoints[0], score: 150 }],
     };
-    const result = ConsultationDataSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
+    expect(ConsultationDataSchema.safeParse(invalid).success).toBe(false);
+  });
+
+  it('필수 필드 누락 시 실패한다', () => {
+    const { analysisSummary: _, ...without } = validConsultationData;
+    expect(ConsultationDataSchema.safeParse(without).success).toBe(false);
   });
 });
 
 // ─── 기업 궁합 스키마 ──────────────────────────────────────────────────────────
 
 describe('CompatibilityResultSchema', () => {
-  it('유효한 기업 궁합 결과를 파싱한다', () => {
-    const result = CompatibilityResultSchema.safeParse(validCompatibilityResult);
-    expect(result.success).toBe(true);
+  it('유효한 궁합 결과를 파싱한다', () => {
+    expect(CompatibilityResultSchema.safeParse(validCompatibilityResult).success).toBe(true);
   });
 
-  it('confidenceLevel이 허용 값 이외이면 실패한다', () => {
-    const invalid = { ...validCompatibilityResult, confidenceLevel: 'VERY_HIGH' };
-    const result = CompatibilityResultSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
-  });
-
-  it('compatibilityScore가 0-100 범위를 벗어나면 실패한다', () => {
-    const invalid = { ...validCompatibilityResult, compatibilityScore: -5 };
-    const result = CompatibilityResultSchema.safeParse(invalid);
-    expect(result.success).toBe(false);
+  it('potentialSynergy 범위를 벗어나면 실패한다', () => {
+    expect(CompatibilityResultSchema.safeParse({ ...validCompatibilityResult, potentialSynergy: 110 }).success).toBe(false);
   });
 });
 
 // ─── 분석 기록 스키마 ──────────────────────────────────────────────────────────
 
 describe('AnalysisRecordSchema', () => {
-  it('CAREER_TIMING 타입 기록을 파싱한다', () => {
+  it('CAREER_TIMING 레코드를 파싱한다', () => {
     const record = {
-      recordId: 'rec-001',
-      userId: 'user-001',
+      recordId: 'rec-001', userId: 'u-001',
       analysisType: 'CAREER_TIMING',
       data: validCareerTimingResult,
       createdAt: Date.now(),
     };
-    const result = AnalysisRecordSchema.safeParse(record);
-    expect(result.success).toBe(true);
+    expect(AnalysisRecordSchema.safeParse(record).success).toBe(true);
   });
 
-  it('savedAt은 선택 필드다', () => {
+  it('CONSULTATION 레코드를 파싱한다', () => {
     const record = {
-      recordId: 'rec-002',
-      userId: 'user-001',
+      recordId: 'rec-002', userId: 'u-001',
       analysisType: 'CONSULTATION',
       data: validConsultationData,
       createdAt: Date.now(),
-      savedAt: Date.now(),
     };
-    const result = AnalysisRecordSchema.safeParse(record);
-    expect(result.success).toBe(true);
-  });
-
-  it('잘못된 analysisType이면 실패한다', () => {
-    const record = {
-      recordId: 'rec-003',
-      userId: 'user-001',
-      analysisType: 'UNKNOWN_TYPE',
-      data: validCareerTimingResult,
-      createdAt: Date.now(),
-    };
-    const result = AnalysisRecordSchema.safeParse(record);
-    expect(result.success).toBe(false);
+    expect(AnalysisRecordSchema.safeParse(record).success).toBe(true);
   });
 });

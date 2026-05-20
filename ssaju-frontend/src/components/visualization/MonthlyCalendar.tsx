@@ -10,7 +10,13 @@
  */
 
 import { useState } from 'react';
-import type { MonthlyForecast } from '@/types/api';
+
+interface MonthlyForecast {
+  month: number;
+  score: number;
+  type: 'LUCKY' | 'CAUTION' | 'NORMAL';
+  advice: string;
+}
 
 const TYPE_STYLES: Record<MonthlyForecast['type'], string> = {
   LUCKY: 'bg-star-500/20 border-star-500 text-star-300',

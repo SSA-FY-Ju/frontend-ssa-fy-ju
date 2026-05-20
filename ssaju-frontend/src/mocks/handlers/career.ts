@@ -3,7 +3,7 @@
  */
 
 import { http, HttpResponse, delay } from 'msw';
-import { mockCareerTimingResult } from '../data/career';
+import { mockCareerTimingResult, mockConsultationData } from '../data/career';
 
 export const careerHandlers = [
   // 관운 분석
@@ -12,6 +12,17 @@ export const careerHandlers = [
     return HttpResponse.json({
       success: true,
       data: mockCareerTimingResult,
+      error: null,
+      timestamp: Date.now(),
+    });
+  }),
+
+  // AI 커리어 컨설팅
+  http.post('/api/career/consultation', async () => {
+    await delay(2400);
+    return HttpResponse.json({
+      success: true,
+      data: mockConsultationData,
       error: null,
       timestamp: Date.now(),
     });

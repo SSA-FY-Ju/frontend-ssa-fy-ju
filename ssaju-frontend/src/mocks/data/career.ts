@@ -4,6 +4,7 @@
 
 import type { CareerTimingResult, ConsultationData } from '@/types/api';
 
+
 export const mockCareerTimingResult: CareerTimingResult = {
   favoredPeriod: '2025년 하반기 (9월~11월)',
   confidenceScore: 87,
@@ -16,83 +17,49 @@ export const mockCareerTimingResult: CareerTimingResult = {
 };
 
 export const mockConsultationData: ConsultationData = {
-  sajuResultId: 'mock-saju-result-001',
+  analysisSummary:
+    '일주(日柱) 경금(庚金)의 기운이 강하게 작용하는 당신은 분석력과 실행력을 겸비한 인재입니다. ' +
+    '2025년 을사년(乙巳年)은 금(金)과 목(木)의 충돌로 변화의 기운이 강해지며, ' +
+    '특히 하반기부터 관성(官星)이 활성화되어 커리어 전환의 적기가 열립니다. ' +
+    '준비된 자에게만 보이는 기회의 문이 9월 이후 열릴 것입니다.',
 
-  // 탭1: 추천산업
-  recommendedIndustries: [
+  pivotPoints: [
     {
-      industryName: 'IT/소프트웨어',
-      reason: '분석적 사고와 창의성을 결합한 업무 환경이 적합합니다.',
-      recommendedRoles: ['프로덕트 매니저', '데이터 사이언티스트', '백엔드 개발자'],
+      month: '2025년 3월',
+      type: 'NORMAL',
+      score: 58,
+      description: '식신(食神) 운이 활성화되며 자기 표현력이 높아집니다. 포트폴리오 정리와 이력서 보완에 집중하세요.',
     },
     {
-      industryName: '핀테크',
-      reason: '금융과 기술의 결합 분야에서 높은 성장 가능성이 있습니다.',
-      recommendedRoles: ['금융 데이터 분석가', '리스크 매니저'],
+      month: '2025년 6월',
+      type: 'CAUTION',
+      score: 32,
+      description: '형충(刑冲)의 기운으로 대인 갈등이 생기기 쉬운 시기입니다. 중요한 협상이나 계약은 7월 이후로 미루세요.',
+    },
+    {
+      month: '2025년 9월',
+      type: 'LUCKY',
+      score: 91,
+      description: '관성(官星)과 인성(印星)이 합을 이루는 최고의 시기입니다. 적극적인 지원 활동과 네트워킹으로 기회를 잡으세요.',
+    },
+    {
+      month: '2025년 10월',
+      type: 'LUCKY',
+      score: 87,
+      description: '금(金) 기운이 절정에 달하며 실질적인 결과물이 나오는 달입니다. 면접이나 협상에서 자신감 있는 태도가 성과로 이어집니다.',
+    },
+    {
+      month: '2026년 1월',
+      type: 'NORMAL',
+      score: 63,
+      description: '새로운 시작의 기운이 있으나 인내가 필요한 시기입니다. 장기적 관점에서 커리어 방향을 재점검할 좋은 시기입니다.',
     },
   ],
 
-  // 탭2: 면접팁
-  interviewTips: [
-    '구체적인 수치와 성과를 중심으로 경험을 설명하세요.',
-    '팀 협업 사례를 강조하면 좋은 인상을 줄 수 있습니다.',
-    '회사의 최근 이슈나 제품에 대한 사전 조사가 필수입니다.',
-    '논리적인 문제 해결 과정을 단계별로 설명하세요.',
-    '자신의 약점을 인정하되, 개선 노력을 함께 언급하세요.',
-  ],
+  warningMonths: ['2025년 5월', '2025년 6월', '2025년 8월'],
 
-  // 탭3: 강점
-  strengths: [
-    '분석적 사고력 — 복잡한 문제를 체계적으로 분해하는 능력',
-    '창의적 문제 해결 — 기존 방식에 얽매이지 않는 접근',
-    '리더십 잠재력 — 팀을 이끌고 방향을 제시하는 역량',
-    '빠른 학습 능력 — 새로운 기술과 환경에 빠르게 적응',
-  ],
-
-  // 탭4: 사주프로필
-  sajuProfile: {
-    dayMaster: '丙',
-    personality: '태양처럼 밝고 에너지가 넘치는 성격으로, 주변을 따뜻하게 하는 리더십이 있습니다.',
-    oHangDistribution: { 木: 2, 火: 3, 土: 1, 金: 2, 水: 1 },
-    sipShinDistribution: { 편관: 2, 정관: 1, 편재: 2, 정재: 1, 식신: 1 },
-  },
-
-  // 탭5: 부의운
-  wealthStyle: {
-    incomeSource: '기술 기반 직종 또는 컨설팅 업무에서 주요 수입 창출이 유리합니다.',
-    financialAdvice: '안정적 월급 외 부업을 통한 수입 다각화를 권장합니다.',
-    investmentStyle: '중장기 성장주 투자에 적합하며, 단기 투기는 피하세요.',
-    additionalIncome: '프리랜서 프로젝트나 온라인 강의를 통한 추가 수입이 가능합니다.',
-  },
-
-  // 탭6: 경력로드맵
-  careerRoadmap: {
-    shortTerm: '0-2년: 핵심 기술 스킬 심화 및 포트폴리오 구축. AWS/GCP 자격증 취득 권장.',
-    midTerm: '3-5년: 팀 리드 또는 시니어 포지션으로 성장. 도메인 전문성 확립.',
-    longTerm: '최종 목표: CTO 또는 기술 기반 창업. 자신만의 제품/서비스 개발.',
-  },
-
-  // 탭7: 브랜딩
-  branding: {
-    suitColor: '네이비 블루 또는 차콜 그레이 — 신뢰감과 전문성을 강조',
-    imageStyle: '클린하고 정돈된 이미지, 미니멀한 액세서리',
-    hairMakeup: '단정하고 자연스러운 스타일, 지나친 화장은 피할 것',
-    powerKeywords: ['전략적', '혁신적', '신뢰할 수 있는', '성과 중심', '협력적'],
-  },
-
-  // 탭8: 월별운세
-  monthlyForecasts: [
-    { month: 1, score: 72, type: 'NORMAL', advice: '새로운 시작에 집중하세요.' },
-    { month: 2, score: 85, type: 'LUCKY', advice: '대인관계가 풀리는 시기입니다.' },
-    { month: 3, score: 90, type: 'LUCKY', advice: '취업 활동에 최적의 시기입니다.' },
-    { month: 4, score: 65, type: 'NORMAL', advice: '꼼꼼한 준비가 필요합니다.' },
-    { month: 5, score: 45, type: 'CAUTION', advice: '중요한 결정은 미루세요.' },
-    { month: 6, score: 78, type: 'NORMAL', advice: '협업 프로젝트에 집중하세요.' },
-    { month: 7, score: 88, type: 'LUCKY', advice: '커리어 도약의 기회가 옵니다.' },
-    { month: 8, score: 55, type: 'CAUTION', advice: '건강 관리에 신경 쓰세요.' },
-    { month: 9, score: 82, type: 'LUCKY', advice: '네트워킹에 집중할 시기입니다.' },
-    { month: 10, score: 70, type: 'NORMAL', advice: '꾸준한 노력이 빛을 발합니다.' },
-    { month: 11, score: 75, type: 'NORMAL', advice: '연말 목표를 점검하세요.' },
-    { month: 12, score: 68, type: 'NORMAL', advice: '내년을 위한 준비를 시작하세요.' },
-  ],
+  warningDescription:
+    '5월~6월은 공망(空亡)과 형충(刑冲)이 겹치는 시기로, 충동적인 이직 결정은 후회로 이어질 수 있습니다. ' +
+    '8월은 금기(金氣)가 약해져 판단력이 흐려지기 쉬우니 중요한 계약서 서명이나 연봉 협상은 피하는 것이 좋습니다. ' +
+    '이 시기에는 준비와 학습에 집중하고, 기회는 9월 이후를 노리세요.',
 };

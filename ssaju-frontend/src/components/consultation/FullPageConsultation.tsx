@@ -1,90 +1,28 @@
 'use client';
 
 /**
- * AI 컨설팅 풀페이지 뷰 (T065)
+ * AI 커리어 컨설팅 풀페이지 뷰
  *
- * Swiper.js v12으로 fullpage.js 동일 UX 구현
- * - 각 섹션 = 100vh 독립 전체 화면 (direction: "vertical")
- * - Mousewheel 모듈: 트랙패드/마우스 휠 자동 정규화, 한 번에 한 섹션씩 이동
- * - Keyboard 모듈: 위/아래 화살표 키 지원
- * - navigator 클릭: swiperRef.current?.slideTo(index)
- * - 마지막 섹션 최초 도달 시 비로그인 사용자에게 회원가입 모달 표시
+ * 섹션 구성:
+ *   1. 종합 분석 요약  (analysisSummary)
+ *   2. 운명의 전환점   (pivotPoints — 타임라인)
+ *   3. 주의 시기       (warningMonths + warningDescription)
  */
 
 import { useRef } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel, Keyboard, A11y } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
-import type { ConsultationData } from '@/types/api';
+import type { ConsultationData, PivotPoint } from '@/types/api';
 import { SectionNavigator } from './SectionNavigator';
-import { IndustriesTab } from './IndustriesTab';
-import { InterviewTipsTab } from './InterviewTipsTab';
-import { StrengthsTab } from './StrengthsTab';
-import { SajuProfileTab } from './SajuProfileTab';
-import { WealthStyleTab } from './WealthStyleTab';
-import { CareerRoadmapTab } from './CareerRoadmapTab';
-import { BrandingTab } from './BrandingTab';
-import { MonthlyForecastTab } from './MonthlyForecastTab';
+
+import 'swiper/css';
 
 const SECTIONS = [
-  {
-    label: '추천산업',
-    icon: '🏢',
-    accentColor: '#10b981',
-    accentBg: 'rgba(16,185,129,0.06)',
-    subtitle: '당신의 사주가 빛나는 무대',
-  },
-  {
-    label: '면접팁',
-    icon: '💬',
-    accentColor: '#3b82f6',
-    accentBg: 'rgba(59,130,246,0.06)',
-    subtitle: '천기가 내린 면접의 비결',
-  },
-  {
-    label: '강점',
-    icon: '⚡',
-    accentColor: '#f59e0b',
-    accentBg: 'rgba(245,158,11,0.06)',
-    subtitle: '하늘이 새긴 타고난 재능',
-  },
-  {
-    label: '사주프로필',
-    icon: '✦',
-    accentColor: '#8b5cf6',
-    accentBg: 'rgba(139,92,246,0.06)',
-    subtitle: '운명의 근원, 당신의 일주',
-  },
-  {
-    label: '부의운',
-    icon: '💰',
-    accentColor: '#eab308',
-    accentBg: 'rgba(234,179,8,0.06)',
-    subtitle: '재성이 흐르는 방향',
-  },
-  {
-    label: '경력로드맵',
-    icon: '🗺️',
-    accentColor: '#06b6d4',
-    accentBg: 'rgba(6,182,212,0.06)',
-    subtitle: '별이 인도하는 성장의 길',
-  },
-  {
-    label: '브랜딩',
-    icon: '✨',
-    accentColor: '#f43f5e',
-    accentBg: 'rgba(244,63,94,0.06)',
-    subtitle: '세상에 보여줄 나만의 인상',
-  },
-  {
-    label: '월별운세',
-    icon: '🌙',
-    accentColor: '#a855f7',
-    accentBg: 'rgba(168,85,247,0.06)',
-    subtitle: '달이 전하는 한 해의 흐름',
-  },
+  { key: 'summary',  label: '종합 분석', subtitle: '사주가 그리는 당신의 커리어',   color: '#8b5cf6' },
+  { key: 'pivots',   label: '전환점',    subtitle: '별이 정한 운명의 분기점들',      color: '#f59e0b' },
+  { key: 'warning',  label: '주의 시기', subtitle: '지혜로운 자는 피할 줄 안다',    color: '#f87171' },
 ] as const;
-
 
 interface FullPageConsultationProps {
   data: ConsultationData;
@@ -92,39 +30,17 @@ interface FullPageConsultationProps {
   onSectionChange: (index: number) => void;
 }
 
-export function FullPageConsultation({
-  data,
-  currentSectionIndex,
-  onSectionChange,
-}: FullPageConsultationProps) {
+export function FullPageConsultation({ data, currentSectionIndex, onSectionChange }: FullPageConsultationProps) {
   const swiperRef = useRef<SwiperType | null>(null);
-
-  /** 네비게이터 클릭 → Swiper 슬라이드 이동 */
-  const handleNavigate = (index: number) => {
-    swiperRef.current?.slideTo(index);
-  };
-
-  const slides = [
-    <IndustriesTab key="industries" industries={data.recommendedIndustries} />,
-    <InterviewTipsTab key="interview" tips={data.interviewTips} />,
-    <StrengthsTab key="strengths" strengths={data.strengths} />,
-    <SajuProfileTab key="saju" profile={data.sajuProfile} />,
-    <WealthStyleTab key="wealth" wealthStyle={data.wealthStyle} />,
-    <CareerRoadmapTab key="roadmap" roadmap={data.careerRoadmap} />,
-    <BrandingTab key="branding" branding={data.branding} />,
-    <MonthlyForecastTab key="monthly" forecasts={data.monthlyForecasts} />,
-  ];
 
   return (
     <div className="relative">
-      {/* 섹션 네비게이터 (데스크톱: 우측 플로팅, 모바일: 상단 고정) */}
       <SectionNavigator
         sections={SECTIONS.map((s) => s.label)}
         currentIndex={currentSectionIndex}
-        onNavigate={handleNavigate}
+        onNavigate={(i) => swiperRef.current?.slideTo(i)}
       />
 
-      {/* Swiper 풀페이지 수직 슬라이더 */}
       <Swiper
         direction="vertical"
         slidesPerView={1}
@@ -133,121 +49,230 @@ export function FullPageConsultation({
         mousewheel={{ thresholdDelta: 50, forceToAxis: true, releaseOnEdges: false }}
         keyboard={{ enabled: true }}
         a11y={{ enabled: true }}
-        onSwiper={(swiper) => {
-          swiperRef.current = swiper;
-        }}
+        onSwiper={(swiper) => { swiperRef.current = swiper; }}
         onSlideChange={(swiper) => onSectionChange(swiper.activeIndex)}
         style={{ height: '100vh', willChange: 'transform' }}
         data-testid="fullpage-container"
       >
         {SECTIONS.map((section, index) => (
-          <SwiperSlide
-            key={section.label}
-            style={{ height: '100vh', overflow: 'hidden' }}
-            data-testid={`fullpage-section-${index}`}
-          >
-            <div
-              className="min-h-full flex flex-col justify-center"
-              style={{
-                height: '100vh',
-                overflowY: 'auto',
-                background: `radial-gradient(ellipse at 60% 30%, ${section.accentBg} 0%, transparent 65%)`,
-              }}
-            >
-              <div className="max-w-3xl mx-auto px-4 py-8 w-full">
-                <SectionTitle
-                  label={section.label}
-                  icon={section.icon}
-                  accentColor={section.accentColor}
-                  subtitle={section.subtitle}
-                  index={index}
-                />
-                {slides[index]}
-              </div>
-            </div>
+          <SwiperSlide key={section.key} style={{ height: '100vh', overflow: 'hidden' }} data-testid={`fullpage-section-${index}`}>
+            <SlideShell section={section} index={index}>
+              {index === 0 && <SummarySection text={data.analysisSummary} color={section.color} />}
+              {index === 1 && <PivotsSection pivots={data.pivotPoints} color={section.color} />}
+              {index === 2 && <WarningSection months={data.warningMonths} description={data.warningDescription} color={section.color} />}
+            </SlideShell>
           </SwiperSlide>
         ))}
       </Swiper>
-
-
     </div>
   );
 }
 
-function SectionTitle({
-  label,
-  icon,
-  accentColor,
-  subtitle,
-  index,
+/* ── 공통 슬라이드 쉘 ─────────────────────────────── */
+
+function SlideShell({
+  section, index, children,
 }: {
-  label: string;
-  icon: string;
-  accentColor: string;
-  subtitle: string;
+  section: (typeof SECTIONS)[number];
   index: number;
+  children: React.ReactNode;
 }) {
-  const num = String(index + 1).padStart(2, '0');
+  return (
+    <div style={{
+      height: '100vh', overflowY: 'auto',
+      background: `radial-gradient(ellipse at 75% 20%, ${section.color}0d 0%, transparent 60%)`,
+      display: 'flex', flexDirection: 'column', justifyContent: 'center',
+      paddingTop: '4rem', paddingBottom: '2rem', boxSizing: 'border-box',
+    }}>
+      <div className="max-w-3xl mx-auto px-4 py-8 w-full">
+        {/* 섹션 헤더 */}
+        <div style={{ marginBottom: 32 }}>
+          <p style={{
+            color: section.color, opacity: 0.6, fontSize: 11, fontWeight: 800,
+            letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 14,
+            display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <span style={{ opacity: 0.8 }}>✦</span>
+            <span>&mdash;&nbsp;{String(index + 1).padStart(2, '0')}&nbsp;&mdash;</span>
+            <span style={{ opacity: 0.8 }}>✦</span>
+          </p>
+          <h2 className="font-black text-white tracking-tight" style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', lineHeight: 1.1, marginBottom: 10 }}>
+            {section.label}
+          </h2>
+          <p style={{ fontSize: '0.82rem', color: section.color, opacity: 0.7, fontStyle: 'italic', letterSpacing: '0.04em', marginBottom: 16 }}>
+            {section.subtitle}
+          </p>
+          <div style={{ height: 1, background: `linear-gradient(90deg, ${section.color}99, ${section.color}22, transparent)` }} />
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* ── 1. 종합 분석 요약 ───────────────────────────── */
+
+function SummarySection({ text, color }: { text: string; color: string }) {
+  // 문장 분리
+  const sentences = text.split(/(?<=[.。])\s+/).map(s => s.trim()).filter(Boolean);
 
   return (
-    <div className="mb-8">
-      {/* Ornamental section counter: ✦ — 01 — ✦ */}
-      <p
-        style={{
-          color: accentColor,
-          opacity: 0.6,
-          fontSize: 11,
-          fontWeight: 800,
-          letterSpacing: '0.22em',
-          textTransform: 'uppercase',
-          marginBottom: 14,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-        }}
-      >
-        <span style={{ opacity: 0.8 }}>✦</span>
-        <span style={{ letterSpacing: '0.18em' }}>
-          &mdash;&nbsp;{num}&nbsp;&mdash;
-        </span>
-        <span style={{ opacity: 0.8 }}>✦</span>
-      </p>
+    <div style={{ position: 'relative' }}>
+      {/* 인용 부호 장식 */}
+      <span aria-hidden="true" style={{
+        position: 'absolute', top: -24, left: -4,
+        fontSize: 96, lineHeight: 1, color, opacity: 0.07,
+        fontFamily: 'serif', fontWeight: 900, userSelect: 'none', pointerEvents: 'none',
+      }}>"</span>
 
-      {/* Main title row */}
-      <div className="flex items-center gap-4 mb-3">
-        <span aria-hidden="true" style={{ fontSize: 36, lineHeight: 1, flexShrink: 0 }}>
-          {icon}
-        </span>
-        <h2
-          className="font-black text-white tracking-tight"
-          style={{ fontSize: 'clamp(1.75rem, 4vw, 2.5rem)', lineHeight: 1.1 }}
-        >
-          {label}
-        </h2>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16, paddingTop: 8 }}>
+        {sentences.map((sentence, i) => (
+          <p
+            key={i}
+            className="animate-item"
+            style={{
+              fontSize: i === 0 ? 'clamp(1rem, 2.4vw, 1.15rem)' : '0.925rem',
+              color: i === 0 ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.62)',
+              lineHeight: 1.85,
+              fontStyle: i === 0 ? 'normal' : 'italic',
+              paddingLeft: 4,
+              animationDelay: `${i * 0.12}s`,
+            }}
+          >
+            {sentence}
+          </p>
+        ))}
       </div>
 
-      {/* Subtitle / tagline */}
-      <p
-        style={{
-          fontSize: '0.82rem',
-          color: accentColor,
-          opacity: 0.7,
-          fontStyle: 'italic',
-          letterSpacing: '0.04em',
-          paddingLeft: 52, /* align with title text */
-          marginBottom: 16,
-        }}
-      >
-        {subtitle}
-      </p>
+      {/* 하단 서명 */}
+      <div style={{ marginTop: 28, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ height: 1, width: 32, background: `${color}66` }} />
+        <span style={{ fontSize: 11, color: `${color}88`, letterSpacing: '0.18em' }}>AI 커리어 컨설팅</span>
+      </div>
+    </div>
+  );
+}
 
-      {/* Accent divider */}
-      <div
-        style={{
-          height: 1,
-          background: `linear-gradient(90deg, ${accentColor}99 0%, ${accentColor}22 50%, transparent 100%)`,
-        }}
-      />
+/* ── 2. 전환점 타임라인 ──────────────────────────── */
+
+function getPivotStyle(type: string) {
+  switch (type.toUpperCase()) {
+    case 'LUCKY':   return { color: '#34d399', label: '길(吉)', dot: '#34d399' };
+    case 'CAUTION': return { color: '#f87171', label: '흉(凶)', dot: '#f87171' };
+    default:        return { color: '#94a3b8', label: '보통',   dot: '#94a3b8' };
+  }
+}
+
+function PivotsSection({ pivots, color }: { pivots: PivotPoint[]; color: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
+      {pivots.map((pt, i) => {
+        const style = getPivotStyle(pt.type);
+        const circumference = 2 * Math.PI * 14;
+        const offset = circumference * (1 - pt.score / 100);
+
+        return (
+          <div key={i} className="animate-item" style={{ display: 'flex', gap: 16, animationDelay: `${i * 0.1}s` }}>
+            {/* 타임라인 라인 + 도트 */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0, width: 28 }}>
+              <div style={{
+                width: 12, height: 12, borderRadius: '50%', flexShrink: 0,
+                background: style.dot,
+                boxShadow: `0 0 8px ${style.dot}88`,
+                marginTop: 4,
+              }} />
+              {i < pivots.length - 1 && (
+                <div style={{ width: 1, flex: 1, minHeight: 20, background: `${color}22`, margin: '4px 0' }} />
+              )}
+            </div>
+
+            {/* 내용 */}
+            <div style={{ paddingBottom: i < pivots.length - 1 ? 20 : 0, flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{pt.month}</span>
+                <span style={{
+                  fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 999,
+                  background: `${style.color}18`, border: `1px solid ${style.color}44`, color: style.color,
+                }}>
+                  {style.label}
+                </span>
+              </div>
+
+              {/* 점수 미니 게이지 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <svg width="36" height="36" style={{ flexShrink: 0, transform: 'rotate(-90deg)' }}>
+                  <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="3" />
+                  <circle
+                    cx="18" cy="18" r="14" fill="none"
+                    stroke={style.color} strokeWidth="3" strokeLinecap="round"
+                    strokeDasharray={circumference} strokeDashoffset={offset}
+                    style={{ transition: 'stroke-dashoffset 0.8s ease' }}
+                  />
+                </svg>
+                <span style={{ fontSize: 22, fontWeight: 900, color: style.color, lineHeight: 1 }}>{pt.score}</span>
+                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', alignSelf: 'flex-end', marginBottom: 2 }}>/ 100</span>
+              </div>
+
+              <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', lineHeight: 1.7 }}>
+                {pt.description}
+              </p>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── 3. 주의 시기 ────────────────────────────────── */
+
+function WarningSection({ months, description, color }: { months: string[]; description: string; color: string }) {
+  const sentences = description.split(/(?<=[.。])\s+/).map(s => s.trim()).filter(Boolean);
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* 주의 달 태그 */}
+      <div className="animate-item" style={{ animationDelay: '0s' }}>
+        <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 12 }}>
+          피해야 할 시기
+        </p>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+          {months.map((m, i) => (
+            <span
+              key={i}
+              style={{
+                fontSize: 12, fontWeight: 700,
+                padding: '6px 14px', borderRadius: 999,
+                background: `${color}14`, border: `1px solid ${color}44`,
+                color,
+              }}
+            >
+              ⚠ {m}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* 구분선 */}
+      <div style={{ height: 1, background: `linear-gradient(90deg, ${color}33, transparent)` }} />
+
+      {/* 경고 설명 */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {sentences.map((sentence, i) => (
+          <p
+            key={i}
+            className="animate-item"
+            style={{
+              fontSize: '0.9rem',
+              color: i === 0 ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.55)',
+              lineHeight: 1.8,
+              animationDelay: `${0.1 + i * 0.12}s`,
+            }}
+          >
+            {sentence}
+          </p>
+        ))}
+      </div>
     </div>
   );
 }

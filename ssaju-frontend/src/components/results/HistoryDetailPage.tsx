@@ -35,108 +35,41 @@ function formatDate(timestamp: number): string {
   });
 }
 
-/** CONSULTATION 결과 요약 (8섹션 전체) */
+/** CONSULTATION 결과 요약 */
 function ConsultationSummary({ data }: { data: ConsultationData }) {
   return (
     <div className="flex flex-col gap-6">
-      {/* 섹션1: 추천 산업 */}
+      {/* 종합 요약 */}
       <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">추천 산업</h3>
-        <ul className="flex flex-col gap-2">
-          {data.recommendedIndustries.map((industry) => (
-            <li key={industry.industryName} className="flex items-start gap-2">
-              <span className="text-star-500 mt-0.5">✦</span>
-              <div>
-                <p className="text-white text-sm font-medium">{industry.industryName}</p>
-                <p className="text-night-600 text-xs mt-0.5">{industry.reason}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <h3 className="text-star-400 text-sm font-medium mb-3">종합 분석</h3>
+        <p className="text-white text-sm leading-relaxed">{data.analysisSummary}</p>
       </div>
 
-      {/* 섹션2: 면접 팁 */}
+      {/* 전환점 */}
       <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">면접 팁</h3>
-        <ul className="flex flex-col gap-1.5">
-          {data.interviewTips.map((tip, i) => (
-            <li key={i} className="text-white text-sm leading-relaxed">• {tip}</li>
-          ))}
-        </ul>
-      </div>
-
-      {/* 섹션3: 강점 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">나의 강점</h3>
-        <ul className="flex flex-col gap-1.5">
-          {data.strengths.map((strength) => (
-            <li key={strength} className="text-white text-sm leading-relaxed">• {strength}</li>
-          ))}
-        </ul>
-      </div>
-
-      {/* 섹션4: 사주 프로필 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">사주 프로필</h3>
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div><span className="text-night-600">일간</span><p className="text-white mt-0.5">{data.sajuProfile.dayMaster}</p></div>
-          <div><span className="text-night-600">성격</span><p className="text-white mt-0.5">{data.sajuProfile.personality}</p></div>
-        </div>
-      </div>
-
-      {/* 섹션5: 부의 운 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">부의 운</h3>
-        <div className="flex flex-col gap-2 text-sm">
-          <p className="text-night-600 text-xs">수입원</p>
-          <p className="text-white leading-relaxed">{data.wealthStyle.incomeSource}</p>
-          <p className="text-night-600 text-xs mt-1">재테크 스타일</p>
-          <p className="text-white leading-relaxed">{data.wealthStyle.investmentStyle}</p>
-          <p className="text-night-600 text-xs mt-1">재무 조언</p>
-          <p className="text-white leading-relaxed">{data.wealthStyle.financialAdvice}</p>
-        </div>
-      </div>
-
-      {/* 섹션6: 경력 로드맵 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">경력 로드맵</h3>
-        <div className="flex flex-col gap-2 text-sm">
-          <p className="text-night-600 text-xs">단기 (0–3개월)</p>
-          <p className="text-white leading-relaxed">{data.careerRoadmap.shortTerm}</p>
-          <p className="text-night-600 text-xs mt-1">중기 (3–12개월)</p>
-          <p className="text-white leading-relaxed">{data.careerRoadmap.midTerm}</p>
-          <p className="text-night-600 text-xs mt-1">장기 (1–3년)</p>
-          <p className="text-white leading-relaxed">{data.careerRoadmap.longTerm}</p>
-        </div>
-      </div>
-
-      {/* 섹션7: 브랜딩 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">퍼스널 브랜딩</h3>
-        <div className="flex flex-col gap-2 text-sm">
-          <p className="text-night-600 text-xs">정장 색상</p>
-          <p className="text-white">{data.branding.suitColor}</p>
-          <p className="text-night-600 text-xs mt-1">이미지 스타일</p>
-          <p className="text-white">{data.branding.imageStyle}</p>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {data.branding.powerKeywords.map((kw) => (
-              <span key={kw} className="bg-night-700 text-star-300 text-xs px-2 py-1 rounded-full">{kw}</span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 섹션8: 월별 운세 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">월별 운세</h3>
+        <h3 className="text-star-400 text-sm font-medium mb-3">운명의 전환점</h3>
         <div className="flex flex-col gap-3">
-          {data.monthlyForecasts.map((forecast) => (
-            <div key={forecast.month} className="flex gap-3 text-sm">
-              <span className="text-star-400 font-medium w-8 shrink-0">{forecast.month}월</span>
-              <p className="text-white leading-relaxed">{forecast.advice}</p>
+          {data.pivotPoints.map((pt, i) => (
+            <div key={i} className="flex gap-3 text-sm">
+              <span className="text-star-400 font-medium shrink-0 w-28">{pt.month}</span>
+              <div>
+                <p className="text-white leading-relaxed">{pt.description}</p>
+                <p className="text-night-600 text-xs mt-0.5">점수 {pt.score}</p>
+              </div>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* 주의 시기 */}
+      <div className="bg-night-800 rounded-xl p-5">
+        <h3 className="text-star-400 text-sm font-medium mb-3">주의 시기</h3>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {data.warningMonths.map((m) => (
+            <span key={m} className="bg-night-700 text-rose-400 text-xs px-2 py-1 rounded-full border border-rose-500/20">{m}</span>
+          ))}
+        </div>
+        <p className="text-white text-sm leading-relaxed">{data.warningDescription}</p>
       </div>
     </div>
   );

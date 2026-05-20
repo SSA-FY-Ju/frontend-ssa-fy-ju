@@ -20,7 +20,6 @@
 import { useState, useRef } from 'react';
 import { fetchConsultation } from '@/lib/api/career';
 import { useConsultationStore } from '@/stores/consultationStore';
-import { useSessionStore } from '@/stores/sessionStore';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
 import type { ConsultationRequest } from '@/types/api';
 
@@ -50,10 +49,8 @@ export function useConsultation() {
 
       const data = await fetchConsultation(request);
 
-      // Zustand 메모리에 전체 캐싱 (fullpage.js 즉시 렌더링)
-      consultationStore.setConsultation(data, data.sajuResultId);
-      // sessionStore에 sajuResultId 저장 (페이지 이탈 경고 훅 연동)
-      useSessionStore.getState().setSajuResultId(data.sajuResultId);
+      // Zustand 메모리에 전체 캐싱
+      consultationStore.setConsultation(data);
       setPhase('result');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'AI 컨설팅 분석 중 오류가 발생했습니다.';
@@ -77,9 +74,9 @@ export function useConsultation() {
    * 컨설팅 분석 시작
    * 캐시 유효 시 API 재호출 없이 즉시 result 상태로 전환
    */
-  const submitConsultation = (birthDate: string, birthTime: string = '12:00', sajuResultId?: string) => {
+  const submitConsultation = (birthDate: string, birthTime: string = '12:00') => {
     // 캐시 히트: 즉시 결과 표시
-    if (sajuResultId && consultationStore.isValid(sajuResultId)) {
+    if (consultationStore.hasFetched && consultationStore.consultation !== null) {
       setPhase('result');
       return;
     }

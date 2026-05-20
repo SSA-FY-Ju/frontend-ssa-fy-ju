@@ -47,8 +47,8 @@ function getPreviewText(record: AnalysisRecord): string {
     }
     case 'CONSULTATION': {
       const data = record.data as ConsultationData;
-      const first = data.recommendedIndustries[0];
-      return first ? first.industryName : '추천 산업 없음';
+      const first = data.pivotPoints[0];
+      return first ? `전환점 ${data.pivotPoints.length}개 · ${first.month}` : '커리어 분석';
     }
     case 'COMPATIBILITY': {
       const data = record.data as CompatibilityResult;

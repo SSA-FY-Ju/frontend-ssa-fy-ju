@@ -52,7 +52,7 @@ describe('useConsultation', () => {
     expect(result.current.consultation).toEqual(mockConsultationData);
   });
 
-  it('API 성공 시 consultationStore에 전체 데이터 캐싱 (스크롤 뷰 즉시 렌더링 가능)', async () => {
+  it('API 성공 시 consultationStore에 전체 데이터 캐싱', async () => {
     fetchConsultation.mockResolvedValueOnce(mockConsultationData);
     const { result } = renderHook(() => useConsultation());
 
@@ -62,14 +62,14 @@ describe('useConsultation', () => {
 
     await waitFor(() => expect(result.current.phase).toBe('result'));
     expect(useConsultationStore.getState().consultation).toEqual(mockConsultationData);
-    expect(useConsultationStore.getState().lastFetchedId).toBe(mockConsultationData.sajuResultId);
+    expect(useConsultationStore.getState().hasFetched).toBe(true);
   });
 
-  it('캐시 유효 시 API 재호출 없이 즉시 result (스크롤 뷰 복원)', () => {
-    useConsultationStore.getState().setConsultation(mockConsultationData, 'saju-001');
+  it('캐시 유효 시 API 재호출 없이 즉시 result', () => {
+    useConsultationStore.getState().setConsultation(mockConsultationData);
     const { result } = renderHook(() => useConsultation());
 
-    act(() => { result.current.submitConsultation('1990-10-10', '14:30', 'saju-001'); });
+    act(() => { result.current.submitConsultation('1990-10-10', '14:30'); });
 
     expect(result.current.phase).toBe('result');
     expect(fetchConsultation).not.toHaveBeenCalled();
@@ -97,7 +97,7 @@ describe('useConsultation', () => {
 
     expect(result.current.phase).toBe('idle');
     expect(result.current.consultation).toBeNull();
-    expect(useConsultationStore.getState().lastFetchedId).toBeNull();
+    expect(useConsultationStore.getState().hasFetched).toBe(false);
   });
 
   // ─── fullpage.js 연동 테스트 (T080 - 2026-05-13 추가) ───────────────────
