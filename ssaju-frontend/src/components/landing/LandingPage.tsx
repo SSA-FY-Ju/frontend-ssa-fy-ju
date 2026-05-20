@@ -133,7 +133,7 @@ export default function LandingPage() {
             onClick={() => setPageIndex(i)}
             aria-label={`페이지 ${i + 1}`}
           >
-            {pageIndex === i ? '🌕' : '🌙'}
+            🌕
           </button>
         ))}
       </div>
