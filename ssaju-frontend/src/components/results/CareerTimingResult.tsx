@@ -66,14 +66,14 @@ function CircularGauge({ score, grade }: { score: number; grade: ReturnType<type
           border: `1px dashed ${grade.color}33`,
         }}
       />
-      {/* 외곽 글로우 링 */}
+      {/* 외곽 글로우 링 — 원형 box-shadow 펄스 */}
       <div
-        className="absolute"
+        className="absolute career-gauge-glow-ring"
         style={{
           inset: 8,
           borderRadius: '50%',
           border: `1px solid ${grade.color}22`,
-          boxShadow: `0 0 30px ${grade.color}18`,
+          ['--gauge-color-pulse' as string]: `${grade.color}66`,
         }}
       />
 

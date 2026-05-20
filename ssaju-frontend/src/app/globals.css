@@ -560,8 +560,8 @@ button {
   to   { stroke-dashoffset: var(--gauge-target); }
 }
 @keyframes careerGlowPulse {
-  0%, 100% { filter: drop-shadow(0 0 6px var(--gauge-color)); }
-  50%       { filter: drop-shadow(0 0 18px var(--gauge-color)) drop-shadow(0 0 32px var(--gauge-color)); }
+  0%, 100% { box-shadow: 0 0 12px 2px var(--gauge-color-pulse, rgba(251,191,36,0.2)), 0 0 28px 6px var(--gauge-color-pulse, rgba(251,191,36,0.1)); }
+  50%       { box-shadow: 0 0 24px 6px var(--gauge-color-pulse, rgba(251,191,36,0.45)), 0 0 56px 16px var(--gauge-color-pulse, rgba(251,191,36,0.2)); }
 }
 @keyframes careerPeriodReveal {
   from { opacity: 0; transform: translateY(20px) scale(0.97); letter-spacing: 0.12em; }
@@ -586,8 +586,11 @@ button {
 }
 
 .career-gauge-arc {
-  animation: careerGaugeFill 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards,
-             careerGlowPulse 2.8s ease-in-out 1.4s infinite;
+  animation: careerGaugeFill 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.career-gauge-glow-ring {
+  border-radius: 50%;
+  animation: careerGlowPulse 2.8s ease-in-out 1.4s infinite;
 }
 .career-period-reveal {
   animation: careerPeriodReveal 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
