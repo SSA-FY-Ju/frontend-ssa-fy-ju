@@ -24,9 +24,6 @@ export interface ApiResponse<T> {
 export interface CareerTimingRequest {
   birthDate: string; // YYYY-MM-DD
   birthTime?: string; // HH:mm (기본값: 12:00)
-  solarType: 'SOLAR' | 'LUNAR';
-  birthCity?: string;
-  gender?: 'M' | 'F' | 'UNKNOWN';
 }
 
 /**
@@ -39,12 +36,11 @@ export interface CareerTimingResult {
 }
 
 /**
- * AI 컨설팅 요청 (한 번 호출로 19개 필드 전체 수신)
+ * AI 컨설팅 요청
  */
 export interface ConsultationRequest {
   birthDate: string;
   birthTime?: string;
-  solarType: 'SOLAR' | 'LUNAR';
 }
 
 /** 추천 산업 항목 */
@@ -172,7 +168,7 @@ export interface CompatibilityResult {
  * feedbackContent: 선택 입력, 최대 500자
  */
 export interface FeedbackRequest {
-  sajuResultId: string;
+  sajuResultId: number;
   feedbackType: 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
   satisfactionStatus: 'SATISFIED' | 'UNSATISFIED';
   feedbackContent?: string;

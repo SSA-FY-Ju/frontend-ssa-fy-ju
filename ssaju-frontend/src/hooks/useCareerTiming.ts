@@ -47,7 +47,6 @@ export function useCareerTiming() {
       const request: CareerTimingRequest = {
         birthDate: args.birthDate,
         birthTime: args.birthTime,
-        solarType: 'SOLAR',
       };
 
       const data = await fetchCareerTiming(request);

@@ -32,9 +32,10 @@ export function useFeedback(feedbackType: FeedbackType, onSuccess?: () => void) 
     satisfactionStatus: 'SATISFIED' | 'UNSATISFIED',
     feedbackContent?: string,
   ) => {
-    const sajuResultId = useSessionStore.getState().sajuResultId;
+    const sajuResultIdRaw = useSessionStore.getState().sajuResultId;
+    const sajuResultId = sajuResultIdRaw ? Number(sajuResultIdRaw) : null;
 
-    if (!sajuResultId) {
+    if (!sajuResultId || isNaN(sajuResultId)) {
       setError('분석 결과가 없습니다. 먼저 분석을 진행해주세요.');
       return;
     }

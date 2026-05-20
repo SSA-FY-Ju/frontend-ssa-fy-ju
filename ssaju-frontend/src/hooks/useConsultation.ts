@@ -46,7 +46,6 @@ export function useConsultation() {
       const request: ConsultationRequest = {
         birthDate: args.birthDate,
         birthTime: args.birthTime,
-        solarType: 'SOLAR',
       };
 
       const data = await fetchConsultation(request);

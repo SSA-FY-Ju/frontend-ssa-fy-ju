@@ -28,10 +28,6 @@ export interface SignupRequest {
   privacyAgreed: boolean;
 }
 
-export interface CheckEmailResult {
-  available: boolean;
-}
-
 /**
  * 이메일/패스워드 로그인
  * 성공 시 accessToken 반환
@@ -59,9 +55,10 @@ export async function signup(req: SignupRequest): Promise<void> {
 
 /**
  * 이메일 중복 확인
+ * 서버 응답 data: "AVAILABLE" → 사용 가능, 그 외 문자열 → 이미 사용 중
  */
-export async function checkEmail(email: string): Promise<CheckEmailResult> {
-  return apiFetch<CheckEmailResult>('/api/auth/check-email', {
+export async function checkEmail(email: string): Promise<string> {
+  return apiFetch<string>('/api/auth/check-email', {
     method: 'POST',
     body: { email },
     timeout: 5000,

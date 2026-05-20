@@ -80,7 +80,7 @@ export const authHandlers = [
 
     return HttpResponse.json({
       success: true,
-      data: { available: !taken },
+      data: taken ? 'DUPLICATE' : 'AVAILABLE',
       error: null,
       timestamp: Date.now(),
     });

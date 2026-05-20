@@ -120,9 +120,9 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
       router.push('/chat');
     } catch (err) {
       try {
-        const { available } = await checkEmail(loginEmail);
+        const status = await checkEmail(loginEmail);
         setLocalError(
-          available
+          status === 'AVAILABLE'
             ? '등록되지 않은 이메일입니다. 회원가입을 먼저 해주세요.'
             : '비밀번호가 올바르지 않습니다.',
         );
