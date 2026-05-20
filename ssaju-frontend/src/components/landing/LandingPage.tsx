@@ -15,6 +15,8 @@ import { useAuthStore } from '@/stores/authStore';
 
 type PageState = 'landing' | 'chat';
 
+
+
 const PAGES = [
   {
     kicker: 'SSAju · 별이 빛나는 밤, 당신의 길을 묻다',
