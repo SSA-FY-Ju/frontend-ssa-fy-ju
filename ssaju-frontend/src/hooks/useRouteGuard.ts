@@ -18,13 +18,14 @@ import { useAuthStore } from '@/stores/authStore';
 export function useRouteGuard(required: boolean = true) {
   const { birthDate, _hasHydrated } = useSessionStore();
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const authHydrated = useAuthStore((s) => s._hasHydrated);
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     if (!required) return;
-    if (!_hasHydrated) return;
+    if (!_hasHydrated || !authHydrated) return; // 두 store 모두 복원 완료 후 판단
     if (pathname?.startsWith('/survey')) return;
 
     if (!isLoggedIn) {
@@ -37,5 +38,5 @@ export function useRouteGuard(required: boolean = true) {
       router.push('/chat');
       toast.info('생년월일을 먼저 입력해주세요');
     }
-  }, [required, _hasHydrated, isLoggedIn, birthDate, pathname, router]);
+  }, [required, _hasHydrated, authHydrated, isLoggedIn, birthDate, pathname, router]);
 }

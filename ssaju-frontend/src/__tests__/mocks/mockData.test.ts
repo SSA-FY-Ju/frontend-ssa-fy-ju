@@ -10,7 +10,7 @@
  */
 
 import { mockCareerTimingResult, mockConsultationData } from '@/mocks/data/career';
-import { mockUser, mockAuthStatus } from '@/mocks/data/auth';
+import { mockUser } from '@/mocks/data/auth';
 import { mockCompatibilityResult, mockCompanyAutocomplete } from '@/mocks/data/company';
 
 describe('mockCareerTimingResult', () => {
@@ -66,31 +66,19 @@ describe('mockUser', () => {
   });
 });
 
-describe('mockAuthStatus', () => {
-  it('로그인 상태 true', () => {
-    expect(mockAuthStatus.isLoggedIn).toBe(true);
-  });
-
-  it('user 객체 포함', () => {
-    expect(mockAuthStatus.user).toBeDefined();
-    expect(mockAuthStatus.user.userId).toBe(mockUser.userId);
-  });
-});
 
 describe('mockCompatibilityResult', () => {
-  it('필수 필드 존재', () => {
-    expect(mockCompatibilityResult.sajuResultId).toBeTruthy();
-    expect(mockCompatibilityResult.companyName).toBeTruthy();
+  it('시너지/안정성 점수 0-100 범위', () => {
+    expect(mockCompatibilityResult.potentialSynergy).toBeGreaterThanOrEqual(0);
+    expect(mockCompatibilityResult.potentialSynergy).toBeLessThanOrEqual(100);
+    expect(mockCompatibilityResult.longTermStability).toBeGreaterThanOrEqual(0);
+    expect(mockCompatibilityResult.longTermStability).toBeLessThanOrEqual(100);
   });
 
-  it('궁합 점수는 0-100 범위', () => {
-    expect(mockCompatibilityResult.compatibilityScore).toBeGreaterThanOrEqual(0);
-    expect(mockCompatibilityResult.compatibilityScore).toBeLessThanOrEqual(100);
-  });
-
-  it('직무 매칭 카드 배열 존재', () => {
-    expect(Array.isArray(mockCompatibilityResult.jobMatchCards)).toBe(true);
-    expect(mockCompatibilityResult.jobMatchCards.length).toBeGreaterThan(0);
+  it('actionableStrategy 필드 존재', () => {
+    expect(Array.isArray(mockCompatibilityResult.actionableStrategy.interviewKeywords)).toBe(true);
+    expect(mockCompatibilityResult.actionableStrategy.weaknessDefense).toBeTruthy();
+    expect(Array.isArray(mockCompatibilityResult.actionableStrategy.bestTiming.luckyDays)).toBe(true);
   });
 });
 

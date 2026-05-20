@@ -144,44 +144,48 @@ function ConsultationSummary({ data }: { data: ConsultationData }) {
 
 /** COMPATIBILITY 결과 요약 */
 function CompatibilitySummary({ data }: { data: CompatibilityResult }) {
-  const scoreColor =
-    data.compatibilityScore >= 80
-      ? 'text-green-400'
-      : data.compatibilityScore >= 60
-        ? 'text-star-400'
-        : 'text-red-400';
-
   return (
     <div className="flex flex-col gap-6">
-      {/* 점수 헤더 */}
-      <div className="bg-night-800 rounded-xl p-6 text-center">
-        <p className="text-night-600 text-sm mb-2">{data.companyName} 궁합 점수</p>
-        <p className={`text-5xl font-bold ${scoreColor}`}>{data.compatibilityScore}</p>
-        <p className="text-night-600 text-xs mt-1">/ 100</p>
+      {/* 점수 카드 */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-night-800 rounded-xl p-5 text-center">
+          <p className="text-night-600 text-xs mb-2">시너지 점수</p>
+          <p className="text-4xl font-bold text-star-400">{data.potentialSynergy}</p>
+          <p className="text-night-600 text-xs mt-1">/ 100</p>
+        </div>
+        <div className="bg-night-800 rounded-xl p-5 text-center">
+          <p className="text-night-600 text-xs mb-2">장기 안정성</p>
+          <p className="text-4xl font-bold text-green-400">{data.longTermStability}</p>
+          <p className="text-night-600 text-xs mt-1">/ 100</p>
+        </div>
       </div>
 
-      {/* 세부 점수 */}
+      {/* 면접 키워드 */}
       <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-4">세부 점수</h3>
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { label: '십신 궁합', score: data.sipShinScore },
-            { label: '오행 궁합', score: data.oHangScore },
-            { label: '지장간 궁합', score: data.jijangGanScore },
-            { label: '리더십 매칭', score: data.leadershipScore },
-          ].map((item) => (
-            <div key={item.label} className="bg-night-700 rounded-lg p-3 text-center">
-              <p className="text-night-600 text-xs mb-1">{item.label}</p>
-              <p className="text-star-400 font-bold">{item.score}</p>
-            </div>
+        <h3 className="text-star-400 text-sm font-medium mb-3">면접 키워드</h3>
+        <div className="flex flex-wrap gap-2">
+          {data.actionableStrategy.interviewKeywords.map((kw, i) => (
+            <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">{kw}</span>
           ))}
         </div>
       </div>
 
-      {/* 추천 메시지 */}
+      {/* 약점 방어 */}
       <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-2">종합 의견</h3>
-        <p className="text-white text-sm leading-relaxed">{data.recommendation}</p>
+        <h3 className="text-star-400 text-sm font-medium mb-2">약점 방어 전략</h3>
+        <p className="text-white text-sm leading-relaxed italic">{data.actionableStrategy.weaknessDefense}</p>
+      </div>
+
+      {/* 면접 최적 시기 */}
+      <div className="bg-night-800 rounded-xl p-5">
+        <h3 className="text-star-400 text-sm font-medium mb-3">면접 최적 시기</h3>
+        <div className="flex flex-col gap-2">
+          {data.actionableStrategy.bestTiming.luckyDays.map((day, i) => (
+            <div key={i} className="flex items-center gap-2 text-sm text-white/80">
+              <span>🌙</span><span>{day}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

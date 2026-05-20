@@ -52,7 +52,7 @@ function getPreviewText(record: AnalysisRecord): string {
     }
     case 'COMPATIBILITY': {
       const data = record.data as CompatibilityResult;
-      return `${data.companyName} · ${data.compatibilityScore}점`;
+      return `시너지 ${data.potentialSynergy}점 · 안정성 ${data.longTermStability}점`;
     }
     default:
       return '';

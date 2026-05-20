@@ -10,6 +10,7 @@ import { useSessionStore } from '@/stores/sessionStore';
 import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { CompanyAutocomplete } from '@/components/forms/CompanyAutocomplete';
 import { CompanyConfirmModal } from '@/components/modals/CompanyConfirmModal';
+import type { RoleCategory, TargetRole } from '@/types/api';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { LoadingProgress } from '@/components/results/LoadingProgress';
 import { ErrorMessage } from '@/components/errors/ErrorMessage';
@@ -21,6 +22,23 @@ const FullPageCompatibility = dynamic(
   () => import('@/components/compatibility/FullPageCompatibility').then((m) => ({ default: m.FullPageCompatibility })),
   { ssr: false }
 );
+
+const ROLE_CATEGORIES: { value: RoleCategory; label: string }[] = [
+  { value: 'TECH_BACKEND',   label: '백엔드 개발' },
+  { value: 'TECH_FRONTEND',  label: '프론트엔드 개발' },
+  { value: 'TECH_FULLSTACK', label: '풀스택 개발' },
+  { value: 'TECH_DATA',      label: '데이터/AI' },
+  { value: 'TECH_DEVOPS',    label: 'DevOps/인프라' },
+  { value: 'TECH_MOBILE',    label: '모바일 개발' },
+  { value: 'PLANNING',       label: '기획' },
+  { value: 'DESIGN',         label: '디자인' },
+  { value: 'MARKETING',      label: '마케팅' },
+  { value: 'SALES',          label: '영업' },
+  { value: 'HR',             label: '인사/HR' },
+  { value: 'FINANCE',        label: '재무/회계' },
+  { value: 'MANAGEMENT',     label: '경영/전략' },
+  { value: 'OTHER',          label: '기타' },
+];
 
 export default function CompatibilityPage() {
   useRouteGuard(true);
@@ -48,6 +66,8 @@ export default function CompatibilityPage() {
   }, [hasHydrated, sessionBirthDate, router]);
 
   const [companyName, setCompanyName] = useState('');
+  const [roleCategory, setRoleCategory] = useState<RoleCategory>('TECH_BACKEND');
+  const [roleDetailName, setRoleDetailName] = useState('');
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [pendingCompany, setPendingCompany] = useState('');
 
@@ -128,18 +148,23 @@ export default function CompatibilityPage() {
 
   const handleConfirm = (confirmedCompany: string) => {
     setShowConfirmModal(false);
-    submitCompatibility(sessionBirthDate ?? '', sessionBirthTime ?? '12:00', confirmedCompany);
+    const defaultLabel = ROLE_CATEGORIES.find(r => r.value === roleCategory)?.label ?? '';
+    const targetRole: TargetRole = { category: roleCategory, detailName: roleDetailName || defaultLabel };
+    submitCompatibility(sessionBirthDate ?? '', sessionBirthTime ?? '12:00', targetRole, confirmedCompany);
   };
 
   const handleManualInput = () => {
     setShowConfirmModal(false);
-    submitCompatibility(sessionBirthDate ?? '', sessionBirthTime ?? '12:00', pendingCompany);
+    const defaultLabel = ROLE_CATEGORIES.find(r => r.value === roleCategory)?.label ?? '';
+    const targetRole: TargetRole = { category: roleCategory, detailName: roleDetailName || defaultLabel };
+    submitCompatibility(sessionBirthDate ?? '', sessionBirthTime ?? '12:00', targetRole, pendingCompany);
   };
 
   const handleReset = () => {
     reset();
     resetCompanyInfo();
     setCompanyName('');
+    setRoleDetailName('');
     setPendingCompany('');
     setShowConfirmModal(false);
   };
@@ -152,6 +177,7 @@ export default function CompatibilityPage() {
       <main className="relative z-10 text-white" style={{ height: '100vh', overflow: 'hidden' }}>
         <FullPageCompatibility
           result={result}
+          companyName={pendingCompany || companyName}
           onReset={handleReset}
           onSectionChange={setActiveSectionIndex}
         />
@@ -291,7 +317,7 @@ export default function CompatibilityPage() {
                   boxShadow: '0 8px 40px rgba(0,0,0,0.3)',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
                   <div style={{
                     width: 32, height: 32, borderRadius: '50%',
                     background: 'rgba(139,92,246,0.15)',
@@ -302,11 +328,59 @@ export default function CompatibilityPage() {
                     <span style={{ fontSize: 14, color: '#a78bfa' }}>✦</span>
                   </div>
                   <p style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.8)' }}>
-                    분석할 기업명을 입력해주세요
+                    지원 직무와 기업을 입력해주세요
                   </p>
                 </div>
 
+                {/* 직무 카테고리 선택 */}
+                <div style={{ marginBottom: 12 }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(196,181,253,0.6)', marginBottom: 6, letterSpacing: '0.06em' }}>
+                    직군 선택
+                  </label>
+                  <select
+                    value={roleCategory}
+                    onChange={(e) => setRoleCategory(e.target.value as RoleCategory)}
+                    style={{
+                      width: '100%', padding: '10px 12px', borderRadius: 10,
+                      background: 'rgba(139,92,246,0.08)',
+                      border: '1px solid rgba(139,92,246,0.25)',
+                      color: '#fff', fontSize: 13, outline: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {ROLE_CATEGORIES.map((r) => (
+                      <option key={r.value} value={r.value} style={{ background: '#1e1b4b' }}>
+                        {r.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* 세부 직무명 (선택) */}
+                <div style={{ marginBottom: 16 }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(196,181,253,0.6)', marginBottom: 6, letterSpacing: '0.06em' }}>
+                    세부 직무명 <span style={{ opacity: 0.5 }}>(선택)</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={roleDetailName}
+                    onChange={(e) => setRoleDetailName(e.target.value)}
+                    placeholder="예: Spring Boot 백엔드 개발자"
+                    style={{
+                      width: '100%', padding: '10px 12px', borderRadius: 10,
+                      background: 'rgba(255,255,255,0.04)',
+                      border: '1px solid rgba(139,92,246,0.2)',
+                      color: '#fff', fontSize: 13, outline: 'none',
+                      boxSizing: 'border-box',
+                    }}
+                  />
+                </div>
+
+                {/* 기업명 입력 */}
                 <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(196,181,253,0.6)', marginBottom: 6, letterSpacing: '0.06em' }}>
+                    기업명
+                  </label>
                   <CompanyAutocomplete
                     value={companyName}
                     onChange={setCompanyName}

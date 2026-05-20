@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { mockAuthStatus } from '@/mocks/data/auth';
 
-/** 인증 상태 확인 목업 (백엔드 없이 로컬 개발용) */
+/** 인증 상태 확인 — 더 이상 사용하지 않음 (JWT 방식으로 전환) */
 export async function GET() {
   return NextResponse.json({
     success: true,
-    data: mockAuthStatus,
+    data: { isLoggedIn: false, user: null },
     error: null,
     timestamp: Date.now(),
   });

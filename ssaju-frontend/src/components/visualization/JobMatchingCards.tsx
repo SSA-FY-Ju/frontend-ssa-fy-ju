@@ -4,7 +4,13 @@
  * 직무별 매칭도 — 번호 리스트 에디토리얼 스타일
  */
 
-import type { JobMatchCard } from '@/types/api';
+interface JobMatchCard {
+  jobTitle: string;
+  score: number;
+  reason: string;
+  recommendation: string;
+  isRecommended: boolean;
+}
 
 interface JobMatchingCardsProps {
   cards: JobMatchCard[];

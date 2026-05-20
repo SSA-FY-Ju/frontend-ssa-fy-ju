@@ -8,7 +8,9 @@ import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { CompatibilityScore } from '@/components/visualization/CompatibilityScore';
 import { JobMatchingCards } from '@/components/visualization/JobMatchingCards';
-import type { JobMatchCard } from '@/types/api';
+interface JobMatchCard {
+  jobTitle: string; score: number; reason: string; recommendation: string; isRecommended: boolean;
+}
 
 // Recharts 모킹 (jsdom 환경)
 jest.mock('recharts', () => ({
