@@ -20,6 +20,7 @@
 import { useState, useRef } from 'react';
 import { fetchConsultation } from '@/lib/api/career';
 import { useConsultationStore } from '@/stores/consultationStore';
+import { useSessionStore } from '@/stores/sessionStore';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
 import type { ConsultationRequest } from '@/types/api';
 
@@ -52,6 +53,11 @@ export function useConsultation() {
       // Zustand 메모리에 전체 캐싱
       consultationStore.setConsultation(data);
       setPhase('result');
+
+      // exit guard & 피드백 연동용 로컬 결과 ID 생성 (career-timing과 동일 패턴)
+      const localResultId = `CONSULTATION_${args.birthDate}_${args.birthTime}`;
+      useSessionStore.getState().setSajuResultId(localResultId);
+      useSessionStore.getState().setLastAnalysisType('CONSULTATION');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'AI 컨설팅 분석 중 오류가 발생했습니다.';
       setError(message);
@@ -75,8 +81,13 @@ export function useConsultation() {
    * 캐시 유효 시 API 재호출 없이 즉시 result 상태로 전환
    */
   const submitConsultation = (birthDate: string, birthTime: string = '12:00') => {
-    // 캐시 히트: 즉시 결과 표시
+    // 캐시 히트: 즉시 결과 표시 (exit guard용 ID도 보장)
     if (consultationStore.hasFetched && consultationStore.consultation !== null) {
+      const localResultId = `CONSULTATION_${birthDate}_${birthTime}`;
+      if (!useSessionStore.getState().sajuResultId) {
+        useSessionStore.getState().setSajuResultId(localResultId);
+        useSessionStore.getState().setLastAnalysisType('CONSULTATION');
+      }
       setPhase('result');
       return;
     }

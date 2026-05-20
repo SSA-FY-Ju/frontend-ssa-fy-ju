@@ -49,9 +49,14 @@ export function FullPageConsultation({ data, currentSectionIndex, onSectionChang
         mousewheel={{ thresholdDelta: 50, forceToAxis: true, releaseOnEdges: false }}
         keyboard={{ enabled: true }}
         a11y={{ enabled: true }}
-        onSwiper={(swiper) => { swiperRef.current = swiper; }}
+        onSwiper={(swiper) => {
+          swiperRef.current = swiper;
+          // 마운트 즉시 포커스 → mousewheel 이벤트 바로 수신
+          (swiper.el as HTMLElement).focus({ preventScroll: true });
+        }}
         onSlideChange={(swiper) => onSectionChange(swiper.activeIndex)}
         style={{ height: '100vh', willChange: 'transform' }}
+        tabIndex={0}
         data-testid="fullpage-container"
       >
         {SECTIONS.map((section, index) => (
