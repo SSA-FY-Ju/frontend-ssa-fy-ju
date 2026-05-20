@@ -365,6 +365,19 @@ export default function CompatibilityPage() {
                   </p>
                 </div>
 
+                {/* 기업명 입력 */}
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(196,181,253,0.6)', marginBottom: 6, letterSpacing: '0.06em' }}>
+                    기업명
+                  </label>
+                  <CompanyAutocomplete
+                    value={companyName}
+                    onChange={setCompanyName}
+                    onSelect={handleCompanySelect}
+                    disabled={companyLookupLoading}
+                  />
+                </div>
+
                 {/* 직무 카테고리 선택 */}
                 <div style={{ marginBottom: 12 }}>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(196,181,253,0.6)', marginBottom: 6, letterSpacing: '0.06em' }}>
@@ -406,19 +419,6 @@ export default function CompatibilityPage() {
                       color: '#fff', fontSize: 13, outline: 'none',
                       boxSizing: 'border-box',
                     }}
-                  />
-                </div>
-
-                {/* 기업명 입력 */}
-                <div style={{ marginBottom: 14 }}>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'rgba(196,181,253,0.6)', marginBottom: 6, letterSpacing: '0.06em' }}>
-                    기업명
-                  </label>
-                  <CompanyAutocomplete
-                    value={companyName}
-                    onChange={setCompanyName}
-                    onSelect={handleCompanySelect}
-                    disabled={companyLookupLoading}
                   />
                 </div>
 
