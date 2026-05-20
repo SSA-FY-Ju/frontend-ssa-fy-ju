@@ -25,17 +25,13 @@ interface FetchOptions {
   headers?: Record<string, string>;
 }
 
-interface ApiErrorResponse {
-  code: string;
-  message: string;
-  requestId: string;
-}
-
 interface ApiResponse<T> {
   success: boolean;
   data: T | null;
-  error: ApiErrorResponse | null;
-  timestamp: number;
+  message: string;
+  errorCode?: string;
+  timestamp: string;
+  path?: string;
 }
 
 class ApiError extends Error {
@@ -172,9 +168,9 @@ export async function apiFetch<T>(
           // API 비즈니스 에러
           throw new ApiError(
             response.status,
-            json.error?.code || 'UNKNOWN_ERROR',
-            json.error?.message || 'Unknown error',
-            json.error?.requestId || 'unknown',
+            json.errorCode || 'UNKNOWN_ERROR',
+            json.message || 'Unknown error',
+            'unknown',
           );
         }
 
@@ -199,9 +195,9 @@ export async function apiFetch<T>(
           }
           throw new ApiError(
             response.status,
-            json.error?.code || 'CLIENT_ERROR',
-            json.error?.message || response.statusText,
-            json.error?.requestId || 'unknown',
+            json.errorCode || 'CLIENT_ERROR',
+            json.message || response.statusText,
+            'unknown',
           );
         }
 

@@ -14,6 +14,13 @@ function getGrade(score: number) {
   return                  { label: '낮음',     color: '#f87171', hex: '#f87171' };
 }
 
+/** H1/H2 → 상반기/하반기 변환 */
+function formatFavoredPeriod(period: string): string {
+  if (period === 'H1') return '상반기';
+  if (period === 'H2') return '하반기';
+  return period;
+}
+
 /** reasoning 문자열을 문장 단위로 분리 */
 function splitSentences(text: string): string[] {
   return text
@@ -210,7 +217,7 @@ export function CareerTimingResult({ result }: CareerTimingResultProps) {
             textShadow: `0 0 40px ${grade.color}44, 0 2px 20px rgba(0,0,0,0.5)`,
           }}
         >
-          {result.favoredPeriod}
+          {formatFavoredPeriod(result.favoredPeriod)}
         </p>
 
         {/* 하이라이트 바 */}
