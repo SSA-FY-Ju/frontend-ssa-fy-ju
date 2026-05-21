@@ -83,6 +83,8 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
   const [signupPasswordConfirm, setSignupPasswordConfirm] = useState('');
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [privacyAgreed, setPrivacyAgreed] = useState(false);
+  const [emailChecked, setEmailChecked] = useState(false);
+  const [emailChecking, setEmailChecking] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -91,6 +93,8 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
       setLoginError(null);
       setLocalError(null);
       setSubmitting(false);
+      setEmailChecked(false);
+      setEmailChecking(false);
       requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
     } else {
       setVisible(false);
@@ -102,7 +106,36 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
   const goTo = (v: View) => {
     setLocalError(null);
     setLoginError(null);
+    setEmailChecked(false);
+    setEmailChecking(false);
     setView(v);
+  };
+
+  const handleCheckEmail = async () => {
+    if (!signupEmail) {
+      setLocalError('이메일을 입력해주세요.');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(signupEmail)) {
+      setLocalError('올바른 이메일 형식이 아닙니다.');
+      return;
+    }
+    setLocalError(null);
+    setEmailChecking(true);
+    try {
+      // 성공(200) = 사용 가능, 중복이면 409 → ApiError 로 throw
+      await checkEmail(signupEmail);
+      setEmailChecked(true);
+    } catch (err) {
+      if (err instanceof ApiError && err.statusCode === 409) {
+        setLocalError('이미 사용 중인 이메일입니다.');
+      } else {
+        setLocalError(toUserMessage(err));
+      }
+    } finally {
+      setEmailChecking(false);
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -117,7 +150,7 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
       await login({ email: loginEmail, password: loginPassword });
       onClose();
       toastUtils.success('로그인이 완료되었습니다.', { duration: 2000 });
-      router.push('/chat');
+      router.push('/select');
     } catch (err) {
       try {
         const status = await checkEmail(loginEmail);
@@ -141,6 +174,10 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
       setLocalError('모든 필드를 입력해주세요.');
       return;
     }
+    if (!emailChecked) {
+      setLocalError('이메일 중복 확인을 해주세요.');
+      return;
+    }
     if (signupPassword !== signupPasswordConfirm) {
       setLocalError('비밀번호가 일치하지 않습니다.');
       return;
@@ -158,7 +195,7 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
       await signup({ email: signupEmail, password: signupPassword, name: signupName, termsAgreed, privacyAgreed });
       onClose();
       toastUtils.success('회원가입이 완료되었습니다.', { duration: 2000 });
-      router.push('/chat');
+      router.push('/select');
     } catch (err) {
       setLocalError(toUserMessage(err));
     } finally {
@@ -435,10 +472,22 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
 
           {/* ══════════ SIGNUP ══════════ */}
           {view === 'signup' && (
-            <>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+              {/* 성공/에러 배너 */}
+              {emailChecked && (
+                <div style={{
+                  padding: '11px 15px', borderRadius: 12,
+                  background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.28)',
+                  fontSize: 13, color: '#86efac', display: 'flex', alignItems: 'center', gap: 8,
+                }}>
+                  <span style={{ fontSize: 14, flexShrink: 0 }}>✓</span>
+                  사용 가능한 이메일입니다.
+                </div>
+              )}
               {localError && (
                 <div style={{
-                  marginBottom: 16, padding: '11px 15px', borderRadius: 12,
+                  padding: '11px 15px', borderRadius: 12,
                   background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
                   fontSize: 13, color: '#fca5a5', display: 'flex', alignItems: 'center', gap: 8,
                 }}>
@@ -446,23 +495,81 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
                   {localError}
                 </div>
               )}
+
+              {/* ── 이름 (폼 외부 — Enter 키 폼 제출 방지) ── */}
+              <div>
+                <label style={labelStyle}>이름</label>
+                <input
+                  type="text"
+                  value={signupName}
+                  onChange={(e) => setSignupName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}
+                  placeholder="홍길동"
+                  autoComplete="name"
+                  style={inputStyle}
+                  onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.55)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                  onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }}
+                />
+              </div>
+
+              {/* ── 이메일 + 중복 확인 (폼 외부 — 버튼·Enter 폼 제출 완전 차단) ── */}
+              <div>
+                <label style={labelStyle}>이메일</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input
+                    type="text"
+                    value={signupEmail}
+                    onChange={(e) => { setSignupEmail(e.target.value); setEmailChecked(false); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCheckEmail(); } }}
+                    placeholder="example@email.com"
+                    autoComplete="email"
+                    readOnly={emailChecked}
+                    style={{
+                      ...inputStyle,
+                      flex: 1,
+                      ...(emailChecked ? {
+                        borderColor: 'rgba(34,197,94,0.35)',
+                        background: 'rgba(34,197,94,0.04)',
+                        color: 'rgba(255,255,255,0.55)',
+                        cursor: 'default',
+                      } : {}),
+                    }}
+                    onFocus={(e) => { if (!emailChecked) { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.55)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; } }}
+                    onBlur={(e) => { if (!emailChecked) { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; } }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleCheckEmail}
+                    disabled={emailChecking || emailChecked || !signupEmail}
+                    style={{
+                      padding: '0 14px',
+                      borderRadius: 12,
+                      border: emailChecked
+                        ? '1px solid rgba(34,197,94,0.4)'
+                        : '1px solid rgba(139,92,246,0.4)',
+                      background: emailChecked
+                        ? 'rgba(34,197,94,0.12)'
+                        : 'rgba(109,40,217,0.22)',
+                      color: emailChecked
+                        ? 'rgba(134,239,172,0.9)'
+                        : 'rgba(196,181,253,0.85)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                      cursor: (emailChecking || emailChecked || !signupEmail) ? 'not-allowed' : 'pointer',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      transition: 'all 0.2s',
+                      opacity: (!emailChecked && (emailChecking || !signupEmail)) ? 0.5 : 1,
+                      letterSpacing: '0.01em',
+                    }}
+                  >
+                    {emailChecking ? '확인 중...' : emailChecked ? '✓ 확인됨' : '중복 확인'}
+                  </button>
+                </div>
+              </div>
+
+              {/* ── 비밀번호 / 약관 / 제출 (폼 내부) ── */}
               <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <div style={{ display: 'flex', gap: 12 }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={labelStyle}>이름</label>
-                    <input type="text" value={signupName} onChange={(e) => setSignupName(e.target.value)}
-                      placeholder="홍길동" autoComplete="name" style={inputStyle}
-                      onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.55)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-                      onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }} />
-                  </div>
-                </div>
-                <div>
-                  <label style={labelStyle}>이메일</label>
-                  <input type="email" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)}
-                    placeholder="example@email.com" autoComplete="email" style={inputStyle}
-                    onFocus={(e) => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.55)'; e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
-                    onBlur={(e) => { e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)'; e.currentTarget.style.background = 'rgba(255,255,255,0.03)'; }} />
-                </div>
                 <div style={{ display: 'flex', gap: 12 }}>
                   <div style={{ flex: 1 }}>
                     <label style={labelStyle}>비밀번호 (8자 이상)</label>
@@ -525,16 +632,16 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
                   onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = submitting ? 'none' : '0 4px 20px rgba(109,40,217,0.4)'; }}>
                   {submitting ? '처리 중...' : '회원가입'}
                 </button>
-
-                <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.22)', margin: 0 }}>
-                  이미 계정이 있으신가요?{' '}
-                  <button type="button" onClick={() => goTo('login')}
-                    style={{ background: 'none', border: 'none', color: 'rgba(167,139,250,0.65)', cursor: 'pointer', fontSize: 12, padding: 0, fontWeight: 600 }}>
-                    로그인하기
-                  </button>
-                </p>
               </form>
-            </>
+
+              <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.22)', margin: 0 }}>
+                이미 계정이 있으신가요?{' '}
+                <button type="button" onClick={() => goTo('login')}
+                  style={{ background: 'none', border: 'none', color: 'rgba(167,139,250,0.65)', cursor: 'pointer', fontSize: 12, padding: 0, fontWeight: 600 }}>
+                  로그인하기
+                </button>
+              </p>
+            </div>
           )}
         </div>
       </div>
