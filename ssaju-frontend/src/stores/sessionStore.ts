@@ -39,6 +39,7 @@ interface SessionActions {
   initSession: (data: { birthDate: string; birthTime: string }) => void;
   setBirthDate: (birthDate: string | null) => void;
   setBirthTime: (birthTime: string | null) => void;
+  setSelectedService: (serviceId: string) => void;
   setSajuData: (data: { birthDate: string; birthTime: string; selectedService: string }) => void;
   // Analysis Tracking
   setSajuResultId: (id: string | null) => void;
@@ -92,6 +93,10 @@ export const useSessionStore = create<SessionStore>()(
 
       setBirthTime: (birthTime: string | null) => {
         set({ birthTime });
+      },
+
+      setSelectedService: (serviceId: string) => {
+        set({ selectedService: serviceId });
       },
 
       setSajuData: (data: { birthDate: string; birthTime: string; selectedService: string }) => {

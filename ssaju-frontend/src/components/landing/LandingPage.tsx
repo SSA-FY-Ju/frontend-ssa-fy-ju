@@ -56,7 +56,7 @@ export default function LandingPage() {
 
   const handleStart = () => {
     if (isLoggedIn) {
-      router.push('/chat');
+      router.push('/select');
     } else {
       openLoginModal();
     }
