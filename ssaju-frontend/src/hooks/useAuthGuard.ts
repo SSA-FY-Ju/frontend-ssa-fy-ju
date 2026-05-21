@@ -26,7 +26,7 @@ import { useAuthStore } from '@/stores/authStore';
  * @param required - 가드 활성화 여부 (기본값: true)
  */
 export function useAuthGuard(required: boolean = true) {
-  const { isLoggedIn, _hasHydrated, openLoginModal } = useAuthStore();
+  const { isLoggedIn, _hasHydrated } = useAuthStore();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -36,8 +36,7 @@ export function useAuthGuard(required: boolean = true) {
     if (pathname === '/') return;
 
     if (!isLoggedIn) {
-      openLoginModal();
       router.push('/select');
     }
-  }, [required, _hasHydrated, isLoggedIn, pathname, router, openLoginModal]);
+  }, [required, _hasHydrated, isLoggedIn, pathname, router]);
 }
