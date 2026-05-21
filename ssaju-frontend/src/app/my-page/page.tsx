@@ -67,7 +67,7 @@ export default function MyPage() {
   const initial = user?.name?.charAt(0)?.toUpperCase() ?? '?';
 
   return (
-    <div className="min-h-screen text-white pt-16">
+    <div className="h-screen overflow-y-auto text-white pt-16">
       <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col gap-6">
 
         {/* 뒤로가기 */}
@@ -116,6 +116,29 @@ export default function MyPage() {
                 <p className="text-xs truncate mt-0.5" style={{ color: 'rgba(196,181,253,0.45)' }}>{user.email}</p>
               )}
             </div>
+
+            <button
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-200"
+              style={{
+                border: '1px solid rgba(239,68,68,0.25)',
+                background: 'rgba(239,68,68,0.07)',
+                color: 'rgba(248,113,113,0.7)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(239,68,68,0.15)';
+                e.currentTarget.style.color = '#f87171';
+                e.currentTarget.style.borderColor = 'rgba(239,68,68,0.45)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(239,68,68,0.07)';
+                e.currentTarget.style.color = 'rgba(248,113,113,0.7)';
+                e.currentTarget.style.borderColor = 'rgba(239,68,68,0.25)';
+              }}
+            >
+              {isLoggingOut ? '처리 중...' : '로그아웃'}
+            </button>
           </div>
         </div>
 
@@ -224,29 +247,6 @@ export default function MyPage() {
           </div>
         </div>
 
-        {/* 로그아웃 */}
-        <button
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="w-full py-3 rounded-xl text-sm font-semibold transition-all duration-200"
-          style={{
-            border: '1px solid rgba(239,68,68,0.2)',
-            background: 'rgba(239,68,68,0.06)',
-            color: 'rgba(248,113,113,0.7)',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(239,68,68,0.12)';
-            e.currentTarget.style.color = '#f87171';
-            e.currentTarget.style.borderColor = 'rgba(239,68,68,0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'rgba(239,68,68,0.06)';
-            e.currentTarget.style.color = 'rgba(248,113,113,0.7)';
-            e.currentTarget.style.borderColor = 'rgba(239,68,68,0.2)';
-          }}
-        >
-          {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
-        </button>
 
       </div>
 

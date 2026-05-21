@@ -6,7 +6,9 @@
  * - 사용자 정보 (userId, name, email)
  * - JWT accessToken
  *
- * 영속화: accessToken + isLoggedIn + user → localStorage (새로고침 후에도 로그인 유지)
+ * 영속화: isLoggedIn + user → localStorage (새로고침 후에도 UI 상태 유지)
+ * 비영속(메모리): accessToken → XSS 방어를 위해 localStorage 저장 안 함
+ *   → 새로고침 시 accessToken=null, 첫 API 호출에서 401 → tryRefreshToken() 자동 재발급
  * 비영속: loginError, isLoading, isLoginModalOpen, _hasHydrated → 세션 메모리만
  */
 
@@ -38,6 +40,7 @@ interface AuthStore {
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   setLoginError: (error: string | null) => void;
   setIsLoading: (isLoading: boolean) => void;
+  setHasHydrated: (hasHydrated: boolean) => void;
   logout: () => void;
   reset: () => void;
   openLoginModal: () => void;
@@ -76,6 +79,10 @@ export const useAuthStore = create<AuthStore>()(
         set({ isLoading });
       },
 
+      setHasHydrated: (hasHydrated: boolean) => {
+        set({ _hasHydrated: hasHydrated });
+      },
+
       logout: () => {
         set({ isLoggedIn: false, user: null, accessToken: null, loginError: null });
       },
@@ -96,14 +103,13 @@ export const useAuthStore = create<AuthStore>()(
     {
       name: 'ssaju-auth',
       storage: createJSONStorage(() => localStorage),
-      // localStorage에 저장할 필드만 선택 — 에러/로딩/모달/_hasHydrated 상태는 제외
+      // localStorage에 저장할 필드만 선택 — accessToken은 XSS 방어를 위해 메모리에만 유지
       partialize: (state) => ({
         isLoggedIn: state.isLoggedIn,
         user: state.user,
-        accessToken: state.accessToken,
       }),
       onRehydrateStorage: () => (state) => {
-        if (state) state._hasHydrated = true;
+        state?.setHasHydrated(true);
       },
     },
   ),

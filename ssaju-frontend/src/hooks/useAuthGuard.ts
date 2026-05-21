@@ -37,7 +37,7 @@ export function useAuthGuard(required: boolean = true) {
 
     if (!isLoggedIn) {
       openLoginModal();
-      router.push('/');
+      router.push('/select');
     }
   }, [required, _hasHydrated, isLoggedIn, pathname, router, openLoginModal]);
 }
