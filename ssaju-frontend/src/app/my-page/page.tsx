@@ -13,6 +13,7 @@ import { EmptyState } from '@/components/history/EmptyState';
 import { InfiniteScroll } from '@/components/history/InfiniteScroll';
 import { DeleteConfirmModal } from '@/components/history/DeleteConfirmModal';
 import { HistoryDetailPage } from '@/components/results/HistoryDetailPage';
+import { useAuthStore } from '@/stores/authStore';
 import type { AnalysisRecord } from '@/types/api';
 
 const STAT_TYPES = [
@@ -22,9 +23,10 @@ const STAT_TYPES = [
 ] as const;
 
 export default function MyPage() {
-  useAuthGuard(true);
+  const { isAllowed } = useAuthGuard(true);
   const router = useRouter();
 
+  const isAuthReady = useAuthStore((s) => s.isAuthReady);
   const { user, logout } = useAuth();
   const {
     analyses, totalCount, isLoading, isLoadingMore, hasMore,
@@ -43,9 +45,9 @@ export default function MyPage() {
   });
 
   useEffect(() => {
-    if (user) loadInitial('ALL');
+    if (isAuthReady && user) loadInitial('ALL');
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [isAuthReady, user]);
 
   useEffect(() => {
     if (detailRecord) setViewingRecord(detailRecord);
@@ -57,6 +59,8 @@ export default function MyPage() {
     CONSULTATION:  analyses.filter((a) => a.type === 'CONSULTATION').length,
     COMPATIBILITY: analyses.filter((a) => a.type === 'COMPATIBILITY').length,
   }), [analyses]);
+
+  if (!isAllowed) return null;
 
   if (viewingRecord) {
     return (

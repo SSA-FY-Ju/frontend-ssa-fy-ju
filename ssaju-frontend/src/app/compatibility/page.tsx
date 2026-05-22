@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
 import { useCompatibility } from '@/hooks/useCompatibility';
 import { usePageExitGuard } from '@/hooks/usePageExitGuard';
 import { fetchDartCompanyDetail } from '@/lib/api/company';
@@ -42,28 +41,19 @@ const ROLE_CATEGORIES: { value: RoleCategory; label: string }[] = [
 ];
 
 export default function CompatibilityPage() {
-  useRouteGuard(true);
-  const router = useRouter();
-
+  const { isAllowed } = useRouteGuard(true);
   const { phase, result, error, disclaimerVisible, disclaimerFading, submitCompatibility, reset } =
     useCompatibility();
   const [companyLookupLoading, setCompanyLookupLoading] = useState(false);
 
   const sessionBirthDate = useSessionStore((s) => s.birthDate);
   const sessionBirthTime = useSessionStore((s) => s.birthTime);
-  const hasHydrated = useSessionStore((s) => s._hasHydrated);
   const sajuResultId = useSessionStore((s) => s.sajuResultId);
   const feedbackGivenIds = useSessionStore((s) => s.feedbackGivenIds);
   const setFeedbackGiven = useSessionStore((s) => s.setFeedbackGiven);
   const exitRequestPending = useSessionStore((s) => s.exitRequestPending);
   const clearExitRequest = useSessionStore((s) => s.clearExitRequest);
   const hasFeedback = !!sajuResultId && feedbackGivenIds.includes(`${sajuResultId}_COMPATIBILITY`);
-
-  useEffect(() => {
-    if (hasHydrated && !sessionBirthDate) {
-      router.push('/chat');
-    }
-  }, [hasHydrated, sessionBirthDate, router]);
 
   const [companyName, setCompanyName] = useState('');
   const [roleCategory, setRoleCategory] = useState<RoleCategory>('TECH_BACKEND');
@@ -171,12 +161,7 @@ export default function CompatibilityPage() {
   // 기업 목록 백그라운드 프리로드 (타이핑 전에 준비)
   useEffect(() => { preloadCorpList(); }, []);
 
-  // 하이드레이션 전: 빈 화면 대신 페이드인으로 부드럽게 처리
-  if (!hasHydrated || !sessionBirthDate) {
-    return (
-      <main className="relative z-10 text-white" style={{ height: '100vh', opacity: 0 }} />
-    );
-  }
+  if (!isAllowed) return null;
 
   // 결과 단계에서는 FullPageCompatibility가 전체 화면을 제어
   if (phase === 'result' && result) {

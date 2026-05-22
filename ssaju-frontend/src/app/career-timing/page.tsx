@@ -13,7 +13,7 @@ import { useErrorHandler } from '@/hooks/useErrorHandler';
 import { FeedbackModal } from '@/components/modals/FeedbackModal';
 
 export default function CareerTimingPage() {
-  useRouteGuard(true);
+  const { isAllowed } = useRouteGuard(true);
 
   const { phase, result, error, disclaimerVisible, disclaimerFading, submitAnalysis, reset } =
     useCareerTiming();
@@ -91,6 +91,8 @@ export default function CareerTimingPage() {
       confirmExit();
     }
   }, [exitRequestPending, hasFeedback, clearExitRequest, confirmExit]);
+
+  if (!isAllowed) return null;
 
   return (
     <main className="relative z-10 min-h-screen text-white pt-16">

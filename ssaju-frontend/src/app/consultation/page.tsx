@@ -21,7 +21,7 @@ const FullPageConsultation = dynamic(
 );
 
 export default function ConsultationPage() {
-  useRouteGuard(true);
+  const { isAllowed } = useRouteGuard(true);
 
   const {
     phase,
@@ -69,7 +69,7 @@ export default function ConsultationPage() {
   const [showFeedbackNudge, setShowFeedbackNudge] = useState(false);
   const [nudgeVisible, setNudgeVisible] = useState(false);
   const nudgeShownRef = useRef(false);
-  const LAST_SECTION = 2;
+  const LAST_SECTION = 10;
 
   useEffect(() => {
     if (phase !== 'result') {
@@ -115,6 +115,8 @@ export default function ConsultationPage() {
       confirmExit();
     }
   }, [exitRequestPending, hasFeedback, clearExitRequest, confirmExit]);
+
+  if (!isAllowed) return null;
 
   return (
     <main className="relative z-10 min-h-screen text-white">
