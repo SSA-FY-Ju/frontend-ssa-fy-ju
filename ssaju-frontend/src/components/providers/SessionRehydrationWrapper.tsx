@@ -30,7 +30,29 @@ export function SessionRehydrationWrapper({
   const setIsAuthReady = useAuthStore((s) => s.setIsAuthReady);
   const logout = useAuthStore((s) => s.logout);
 
+  const isAuthReady = useAuthStore((s) => s.isAuthReady);
+  const openLoginModal = useAuthStore((s) => s.openLoginModal);
+
   const triedRef = useRef(false);
+  const modalTriedRef = useRef(false);
+
+  // 미들웨어가 ?openModal=true로 리다이렉트한 경우 로그인 모달 자동 오픈
+  useEffect(() => {
+    if (!isAuthReady || modalTriedRef.current) return;
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('openModal') !== 'true') return;
+    modalTriedRef.current = true;
+    if (!isLoggedIn) {
+      openLoginModal();
+    }
+    // URL에서 파라미터 제거
+    params.delete('openModal');
+    const newUrl = params.toString()
+      ? `${window.location.pathname}?${params.toString()}`
+      : window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+  }, [isAuthReady, isLoggedIn, openLoginModal]);
 
   useEffect(() => {
     if (!_hasHydrated || triedRef.current) return;
