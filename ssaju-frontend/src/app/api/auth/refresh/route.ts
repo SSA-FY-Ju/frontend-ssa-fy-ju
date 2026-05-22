@@ -46,17 +46,5 @@ export async function POST(req: NextRequest) {
     nextResponse.headers.append('set-cookie', cookie);
   });
 
-  // refresh 성공 시 sessionValid 갱신
-  if (res.ok) {
-    nextResponse.cookies.set('sessionValid', '1', {
-      httpOnly: true,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30,
-    });
-  } else {
-    nextResponse.cookies.delete('sessionValid');
-  }
-
   return nextResponse;
 }
