@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 
 /**
@@ -12,7 +12,7 @@ import { useAuthStore } from '@/stores/authStore';
  *
  * 동작:
  * 1. required=true면 isLoggedIn 확인
- * 2. 로그인 안 되어 있으면 /로 리다이렉트
+ * 2. 로그인 안 되어 있으면 로그인 모달 표시
  * 3. 루트('/') 페이지는 무한 루프 방지 (로그인 유도 페이지)
  *
  * 사용 예:
@@ -26,17 +26,19 @@ import { useAuthStore } from '@/stores/authStore';
  * @param required - 가드 활성화 여부 (기본값: true)
  */
 export function useAuthGuard(required: boolean = true) {
-  const { isLoggedIn, _hasHydrated } = useAuthStore();
-  const router = useRouter();
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
+  const _hasHydrated = useAuthStore((s) => s._hasHydrated);
+  const isAuthReady = useAuthStore((s) => s.isAuthReady);
+  const openLoginModal = useAuthStore((s) => s.openLoginModal);
   const pathname = usePathname();
 
   useEffect(() => {
     if (!required) return;
-    if (!_hasHydrated) return; // localStorage 복원 전에는 판단하지 않음
+    if (!_hasHydrated || !isAuthReady) return; // 복원 + refresh 완료 전에는 판단하지 않음
     if (pathname === '/') return;
 
     if (!isLoggedIn) {
-      router.push('/select');
+      openLoginModal();
     }
-  }, [required, _hasHydrated, isLoggedIn, pathname, router]);
+  }, [required, _hasHydrated, isAuthReady, isLoggedIn, pathname, openLoginModal]);
 }
