@@ -9,7 +9,6 @@
  */
 
 import { apiFetch, ApiError } from './client';
-import { config } from '../config/env';
 
 export interface LoginRequest {
   email: string;
@@ -33,7 +32,9 @@ export interface SignupRequest {
  * 백엔드가 accessToken을 응답 헤더(Authorization: Bearer ...)로 내려줌
  */
 export async function login(req: LoginRequest): Promise<LoginResult> {
-  const res = await fetch(`${config.apiBaseUrl}/api/auth/login`, {
+  // Next.js 프록시(/api/auth/login)를 통해 호출해야 refreshToken 쿠키가
+  // 프론트 오리진(localhost:3000)에 세팅되어 Middleware가 쿠키를 읽을 수 있음
+  const res = await fetch('/api/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -92,9 +93,9 @@ export async function checkEmail(email: string): Promise<string> {
  * 로그아웃
  */
 export async function logout(): Promise<void> {
-  await apiFetch<void>('/api/auth/logout', {
+  // 프록시를 통해 refreshToken 쿠키 삭제가 프론트 오리진 기준으로 처리됨
+  await fetch('/api/auth/logout', {
     method: 'POST',
-    timeout: 5000,
-    retry: { maxAttempts: 1 },
+    credentials: 'include',
   });
 }
