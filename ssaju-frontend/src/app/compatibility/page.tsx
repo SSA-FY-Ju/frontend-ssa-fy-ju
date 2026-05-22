@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useCompatibility } from '@/hooks/useCompatibility';
@@ -86,36 +86,6 @@ export default function CompatibilityPage() {
   });
 
   const { getDisplayMessage } = useErrorHandler();
-
-  // 피드백 넛지 — 마지막 섹션 도달 시 표시
-  const [showFeedbackNudge, setShowFeedbackNudge] = useState(false);
-  const [nudgeVisible, setNudgeVisible] = useState(false);
-  const [activeSectionIndex, setActiveSectionIndex] = useState(0);
-  const nudgeShownRef = useRef(false);
-  const LAST_SECTION = 4; // SECTIONS 인덱스 0~4 (총 5개)
-
-  useEffect(() => {
-    if (phase !== 'result') {
-      setShowFeedbackNudge(false);
-      setNudgeVisible(false);
-      return;
-    }
-  }, [phase]);
-
-  useEffect(() => {
-    if (activeSectionIndex !== LAST_SECTION) return;
-    if (nudgeShownRef.current) return;
-    nudgeShownRef.current = true;
-    const t = setTimeout(() => {
-      setShowFeedbackNudge(true);
-      requestAnimationFrame(() => requestAnimationFrame(() => {
-        setNudgeVisible(true);
-        setTimeout(() => setNudgeVisible(false), 5000);
-        setTimeout(() => setShowFeedbackNudge(false), 5500);
-      }));
-    }, 800);
-    return () => clearTimeout(t);
-  }, [activeSectionIndex, nudgeShownRef]);
 
   const handleFeedbackSubmitted = () => {
     if (sajuResultId) setFeedbackGiven(sajuResultId, 'COMPATIBILITY');
@@ -215,60 +185,9 @@ export default function CompatibilityPage() {
         <FullPageCompatibility
           result={result}
           companyName={companyName}
-          onReset={handleReset}
-          onSectionChange={setActiveSectionIndex}
+          hasFeedback={hasFeedback}
+          onFeedbackOpen={() => { setFeedbackIsExitMode(false); setFeedbackModalOpen(true); }}
         />
-
-        {/* 피드백 넛지 — 피드백 완료 전에만 표시 */}
-        {showFeedbackNudge && !hasFeedback && (
-          <div
-            role="complementary"
-            aria-label="피드백 요청"
-            style={{
-              position: 'fixed', bottom: 24, right: 24, zIndex: 200,
-              transition: 'opacity 500ms ease, transform 500ms cubic-bezier(0.22,1,0.36,1)',
-              opacity: nudgeVisible ? 1 : 0,
-              transform: nudgeVisible ? 'translateY(0)' : 'translateY(20px)',
-            }}
-          >
-            <div
-              style={{
-                width: 220,
-                display: 'flex', flexDirection: 'column', gap: 10,
-                borderRadius: 16, padding: 14,
-                backdropFilter: 'blur(12px)',
-                background: 'rgba(10,12,28,0.9)',
-                border: '1px solid rgba(139,92,246,0.3)',
-                boxShadow: '0 16px 40px rgba(0,0,0,0.4)',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 16, color: '#a78bfa' }}>✦</span>
-                <button
-                  onClick={() => setShowFeedbackNudge(false)}
-                  style={{ color: 'rgba(148,163,184,0.45)', fontSize: 16, lineHeight: 1, background: 'none', border: 'none', cursor: 'pointer' }}
-                  onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(148,163,184,0.45)')}
-                >×</button>
-              </div>
-              <div>
-                <p style={{ fontSize: 12, fontWeight: 700, color: '#fff', lineHeight: 1.4 }}>이 결과에 대해 의견을 알려주세요</p>
-                <p style={{ fontSize: 11, color: 'rgba(196,181,253,0.55)', marginTop: 3 }}>피드백이 서비스 개선에 도움이 됩니다</p>
-              </div>
-              <button
-                onClick={() => { setFeedbackIsExitMode(false); setFeedbackModalOpen(true); }}
-                style={{
-                  width: '100%', padding: '7px', borderRadius: 10, border: 'none',
-                  background: 'linear-gradient(90deg, #6d28d9, #4f46e5)',
-                  color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer',
-                  boxShadow: '0 0 10px rgba(109,40,217,0.4)',
-                }}
-              >
-                의견 남기기
-              </button>
-            </div>
-          </div>
-        )}
 
         {feedbackModalOpen && (
           <FeedbackModal

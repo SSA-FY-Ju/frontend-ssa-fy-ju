@@ -4,14 +4,15 @@
  * 기업 궁합 분석 풀페이지 뷰
  *
  * 섹션 구성:
- *   1. 시너지 점수 (potentialSynergy)
- *   2. 장기 안정성 (longTermStability)
- *   3. 면접 키워드 (actionableStrategy.interviewKeywords)
- *   4. 약점 방어 전략 (actionableStrategy.weaknessDefense)
- *   5. 면접 최적 시기 (actionableStrategy.bestTiming.luckyDays)
+ *   1. 종합 점수   — compatibilityScore + analysisBreakdown 4개 바
+ *   2. 직군 분석   — targetRoleAnalysis (matchScore, synergy, warning)
+ *   3. 오행 분석   — fiveElementsAnalysis (user/company 오행 비교)
+ *   4. 면접 준비   — expectedInterviewQuestions + roleCompatibilities
+ *   5. 월별 운세   — monthlyForecasts
+ *   6. 주의사항    — cautions
  */
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel, Keyboard, A11y } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
@@ -20,93 +21,178 @@ import type { CompatibilityResult } from '@/types/api';
 import 'swiper/css';
 
 const SECTIONS = [
-  { key: 'synergy',   label: '시너지',    subtitle: '함께할 때 빛나는 가능성',      color: '#f59e0b' },
-  { key: 'stability', label: '안정성',    subtitle: '긴 시간이 증명하는 인연',      color: '#8b5cf6' },
-  { key: 'keywords',  label: '면접 키워드', subtitle: '별이 속삭이는 당신의 언어',  color: '#06b6d4' },
-  { key: 'defense',   label: '약점 전략', subtitle: '약점을 강점으로 바꾸는 법',    color: '#34d399' },
-  { key: 'timing',    label: '최적 시기', subtitle: '운이 열리는 날들',             color: '#f87171' },
+  { key: 'score',     label: '종합 점수',  subtitle: '사주가 말하는 당신과 이 기업의 에너지 궁합', color: '#f59e0b' },
+  { key: 'role',      label: '직군 분석',  subtitle: '당신의 별자리가 이 직군과 만나는 방식',      color: '#06b6d4' },
+  { key: 'ohang',     label: '오행 분석',  subtitle: '우주의 다섯 기운이 빚어낸 조화',             color: '#10b981' },
+  { key: 'interview', label: '면접 준비',  subtitle: '별이 예고하는 면접의 흐름',                  color: '#8b5cf6' },
+  { key: 'monthly',   label: '월별 운세',  subtitle: '시간이 열어주는 기회의 문',                  color: '#3b82f6' },
+  { key: 'caution',   label: '주의사항',   subtitle: '별이 당부하는 말들',                         color: '#f87171' },
 ] as const;
 
 interface FullPageCompatibilityProps {
   result: CompatibilityResult;
   companyName: string;
-  onReset: () => void;
-  onSectionChange?: (index: number) => void;
+  hasFeedback: boolean;
+  onFeedbackOpen: () => void;
 }
 
-export function FullPageCompatibility({ result, companyName, onReset, onSectionChange }: FullPageCompatibilityProps) {
+export function FullPageCompatibility({ result, companyName, hasFeedback, onFeedbackOpen }: FullPageCompatibilityProps) {
   const swiperRef = useRef<SwiperType | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [mounted, setMounted] = useState(false);
+  const [feedbackCardVisible, setFeedbackCardVisible] = useState(false);
+  const [feedbackCardDismissed, setFeedbackCardDismissed] = useState(false);
+  const feedbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  useEffect(() => {
+    if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    if (activeIndex === SECTIONS.length - 1) {
+      // 슬라이드 전환(800ms) + 여유(200ms) 후 카드 등장
+      feedbackTimerRef.current = setTimeout(() => setFeedbackCardVisible(true), 1000);
+    } else {
+      setFeedbackCardVisible(false);
+    }
+    return () => {
+      if (feedbackTimerRef.current) clearTimeout(feedbackTimerRef.current);
+    };
+  }, [activeIndex]);
 
   const handleSlideChange = (swiper: SwiperType) => {
     setActiveIndex(swiper.activeIndex);
-    onSectionChange?.(swiper.activeIndex);
   };
 
   const navigateTo = (index: number) => swiperRef.current?.slideTo(index);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100vh', overflow: 'hidden' }}>
+    <div
+      style={{
+        position: 'relative', width: '100%', height: '100vh', overflow: 'hidden',
+        opacity: mounted ? 1 : 0,
+        transform: mounted ? 'translateY(0)' : 'translateY(14px)',
+        transition: 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.22,1,0.36,1)',
+      }}
+    >
       <RightNavigator sections={SECTIONS} activeIndex={activeIndex} onNavigate={navigateTo} />
 
       <Swiper
         direction="vertical"
         slidesPerView={1}
-        speed={750}
+        speed={800}
         modules={[Mousewheel, Keyboard, A11y]}
         mousewheel={{ thresholdDelta: 50, forceToAxis: true, releaseOnEdges: false }}
         keyboard={{ enabled: true }}
         a11y={{ enabled: true }}
-        onSwiper={(swiper) => { swiperRef.current = swiper; }}
+        onSwiper={(swiper) => {
+          swiperRef.current = swiper;
+          (swiper.el as HTMLElement).focus({ preventScroll: true });
+        }}
         onSlideChange={handleSlideChange}
         style={{ height: '100vh', willChange: 'transform' }}
       >
-        {/* 1. 시너지 */}
+        {/* 1. 종합 점수 */}
         <SwiperSlide style={{ height: '100vh' }}>
           <SlideShell section={SECTIONS[0]}>
             <ScoreSection
-              score={result.potentialSynergy}
+              score={result.compatibilityScore}
               companyName={companyName}
-              description="사주가 말하는 당신과 이 기업의 에너지 궁합"
+              breakdown={result.analysisBreakdown}
               color={SECTIONS[0].color}
-              onReset={onReset}
             />
           </SlideShell>
         </SwiperSlide>
 
-        {/* 2. 안정성 */}
+        {/* 2. 직군 분석 */}
         <SwiperSlide style={{ height: '100vh' }}>
           <SlideShell section={SECTIONS[1]}>
-            <ScoreSection
-              score={result.longTermStability}
-              companyName={companyName}
-              description="오랜 시간 함께했을 때의 운명적 안정도"
-              color={SECTIONS[1].color}
+            <RoleSection analysis={result.targetRoleAnalysis} color={SECTIONS[1].color} />
+          </SlideShell>
+        </SwiperSlide>
+
+        {/* 3. 오행 분석 */}
+        <SwiperSlide style={{ height: '100vh' }}>
+          <SlideShell section={SECTIONS[2]}>
+            <OhangSection data={result.fiveElementsAnalysis} color={SECTIONS[2].color} />
+          </SlideShell>
+        </SwiperSlide>
+
+        {/* 4. 면접 준비 */}
+        <SwiperSlide style={{ height: '100vh' }}>
+          <SlideShell section={SECTIONS[3]} scrollable>
+            <InterviewSection
+              questions={result.expectedInterviewQuestions}
+              roles={result.roleCompatibilities}
+              color={SECTIONS[3].color}
             />
           </SlideShell>
         </SwiperSlide>
 
-        {/* 3. 면접 키워드 */}
+        {/* 5. 월별 운세 */}
         <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[2]}>
-            <KeywordsSection keywords={result.actionableStrategy.interviewKeywords} color={SECTIONS[2].color} />
+          <SlideShell section={SECTIONS[4]} scrollable>
+            <MonthlySection forecasts={result.monthlyForecasts} color={SECTIONS[4].color} />
           </SlideShell>
         </SwiperSlide>
 
-        {/* 4. 약점 방어 */}
+        {/* 6. 주의사항 */}
         <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[3]}>
-            <DefenseSection text={result.actionableStrategy.weaknessDefense} color={SECTIONS[3].color} />
-          </SlideShell>
-        </SwiperSlide>
-
-        {/* 5. 최적 시기 */}
-        <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[4]}>
-            <TimingSection luckyDays={result.actionableStrategy.bestTiming.luckyDays} color={SECTIONS[4].color} />
+          <SlideShell section={SECTIONS[5]}>
+            <CautionSection cautions={result.cautions} color={SECTIONS[5].color} />
           </SlideShell>
         </SwiperSlide>
       </Swiper>
+
+      {/* 피드백 floating 카드 — 마지막 섹션 도달 시 우측 하단에 표시 */}
+      {!hasFeedback && !feedbackCardDismissed && (
+        <div
+          role="complementary"
+          aria-label="피드백 요청"
+          className="fixed bottom-6 right-6 z-50"
+          style={{
+            transition: 'opacity 500ms ease, transform 500ms cubic-bezier(0.22,1,0.36,1)',
+            opacity: feedbackCardVisible ? 1 : 0,
+            transform: feedbackCardVisible ? 'translateY(0)' : 'translateY(20px)',
+            pointerEvents: feedbackCardVisible ? 'auto' : 'none',
+          }}
+        >
+          <div
+            className="flex flex-col gap-3 rounded-2xl shadow-2xl p-4"
+            style={{
+              width: 240,
+              backdropFilter: 'blur(12px)',
+              background: 'rgba(10,12,28,0.9)',
+              border: '1px solid rgba(139,92,246,0.3)',
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <span style={{ fontSize: 18, color: '#a78bfa', filter: 'drop-shadow(0 0 6px rgba(167,139,250,0.5))' }}>✦</span>
+              <button
+                onClick={() => setFeedbackCardDismissed(true)}
+                aria-label="닫기"
+                className="text-base leading-none transition-colors"
+                style={{ color: 'rgba(148,163,184,0.45)' }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(148,163,184,0.45)')}
+              >×</button>
+            </div>
+            <div>
+              <p className="text-white text-xs font-semibold leading-snug">이 결과에 대해 의견을 알려주세요</p>
+              <p className="text-xs mt-1" style={{ color: 'rgba(196,181,253,0.55)' }}>피드백이 서비스 개선에 도움이 됩니다</p>
+            </div>
+            <button
+              onClick={onFeedbackOpen}
+              className="w-full text-xs font-bold py-2 rounded-lg transition-all duration-200 hover:scale-105"
+              style={{ background: 'linear-gradient(90deg, #6d28d9, #4f46e5)', color: '#fff', boxShadow: '0 0 10px rgba(109,40,217,0.4)' }}
+            >
+              의견 남기기
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -123,17 +209,19 @@ function SlideShell({
   scrollable?: boolean;
 }) {
   const idx = SECTIONS.findIndex((s) => s.key === section.key);
-  void scrollable; // scrollable prop reserved for future use
 
   return (
     <div style={{
       height: '100vh',
-      overflowY: 'auto',
+      overflowY: scrollable ? 'auto' : 'hidden',
       background: `radial-gradient(ellipse at 80% 20%, ${section.color}10 0%, transparent 60%)`,
       display: 'flex', flexDirection: 'column', justifyContent: 'center',
       paddingTop: '4rem', paddingBottom: '2rem', boxSizing: 'border-box',
     }}>
-      <div className="max-w-3xl mx-auto px-4 py-8 w-full">
+      <div
+        className="animate-item max-w-3xl mx-auto px-4 py-8 w-full"
+        style={idx === 0 ? { animationDelay: '0.3s' } : undefined}
+      >
         <div style={{ marginBottom: 32 }}>
           <p style={{
             color: section.color, opacity: 0.6, fontSize: 11, fontWeight: 800,
@@ -158,144 +246,260 @@ function SlideShell({
   );
 }
 
-/* ── 점수 섹션 ─────────────────────────────────── */
+/* ── 1. 종합 점수 섹션 ─────────────────────────── */
 
 function ScoreSection({
-  score, companyName, description, color, onReset,
+  score, companyName, breakdown, color,
 }: {
   score: number; companyName: string;
-  description: string; color: string; onReset?: () => void;
+  breakdown: CompatibilityResult['analysisBreakdown'];
+  color: string;
 }) {
-  const grade = score >= 80 ? '최상' : score >= 60 ? '양호' : score >= 40 ? '보통' : '주의';
   const gradeColor = score >= 80 ? '#f59e0b' : score >= 60 ? '#22c55e' : score >= 40 ? '#06b6d4' : '#ef4444';
+  const grade = score >= 80 ? '최상' : score >= 60 ? '양호' : score >= 40 ? '보통' : '주의';
   const circumference = 2 * Math.PI * 54;
   const offset = circumference * (1 - score / 100);
 
+  const bars = [
+    { label: '십신 궁합',  value: breakdown.tenGodCompatibility },
+    { label: '오행 궁합',  value: breakdown.fiveElementsMatch },
+    { label: '지장간 궁합', value: breakdown.hiddenStemAlignment },
+    { label: '리더십 매칭', value: breakdown.leadershipFit },
+  ];
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 28 }}>
-      {/* 기업명 */}
-      <p style={{ fontSize: 'clamp(1.4rem, 4vw, 2rem)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', textShadow: `0 0 40px ${color}44` }}>
-        {companyName}
-      </p>
-
-      {/* 원형 점수 게이지 */}
-      <div style={{ position: 'relative', width: 140, height: 140 }}>
-        <svg width="140" height="140" style={{ transform: 'rotate(-90deg)' }}>
-          <circle cx="70" cy="70" r="54" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
-          <circle
-            cx="70" cy="70" r="54" fill="none"
-            stroke={gradeColor} strokeWidth="10"
-            strokeDasharray={circumference}
-            strokeDashoffset={offset}
-            strokeLinecap="round"
-            style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.22,1,0.36,1)', filter: `drop-shadow(0 0 8px ${gradeColor}88)` }}
-          />
-        </svg>
-        <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <span style={{ fontSize: 32, fontWeight: 900, color: gradeColor, lineHeight: 1 }}>{score}</span>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>/ 100</span>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+      {/* 기업명 + 원형 게이지 */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
+        <p style={{ fontSize: 'clamp(1.2rem, 3vw, 1.6rem)', fontWeight: 900, color: '#fff', letterSpacing: '-0.02em', textShadow: `0 0 40px ${color}44` }}>
+          {companyName}
+        </p>
+        <div style={{ position: 'relative', width: 140, height: 140 }}>
+          <svg width="140" height="140" style={{ transform: 'rotate(-90deg)' }}>
+            <circle cx="70" cy="70" r="54" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+            <circle
+              cx="70" cy="70" r="54" fill="none"
+              stroke={gradeColor} strokeWidth="10"
+              strokeDasharray={circumference}
+              strokeDashoffset={offset}
+              strokeLinecap="round"
+              style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.22,1,0.36,1)', filter: `drop-shadow(0 0 8px ${gradeColor}88)` }}
+            />
+          </svg>
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ fontSize: 32, fontWeight: 900, color: gradeColor, lineHeight: 1 }}>{score}</span>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>/ 100</span>
+          </div>
         </div>
-      </div>
-
-      {/* 등급 + 설명 */}
-      <div style={{ textAlign: 'center' }}>
         <span style={{
           display: 'inline-block', padding: '4px 16px', borderRadius: 999,
           background: `${gradeColor}22`, border: `1px solid ${gradeColor}55`,
-          color: gradeColor, fontSize: 13, fontWeight: 800, marginBottom: 12,
+          color: gradeColor, fontSize: 13, fontWeight: 800,
         }}>{grade}</span>
-        <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6 }}>{description}</p>
       </div>
 
-      {/* 다시 분석 버튼 (첫 섹션에만) */}
-      {onReset && (
-        <button
-          onClick={onReset}
-          style={{
-            padding: '8px 20px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.12)',
-            background: 'transparent', color: 'rgba(255,255,255,0.35)', fontSize: 12, cursor: 'pointer',
-          }}
-        >
-          다시 분석하기
-        </button>
-      )}
+      {/* 세부 점수 바 */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        {bars.map(({ label, value }) => {
+          const barColor = value >= 80 ? '#22c55e' : value >= 60 ? '#f59e0b' : '#ef4444';
+          return (
+            <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
+                <span style={{ color: 'rgba(255,255,255,0.6)' }}>{label}</span>
+                <span style={{ color: barColor, fontWeight: 700 }}>{value}점</span>
+              </div>
+              <div style={{ height: 3, background: 'rgba(255,255,255,0.06)', borderRadius: 999, overflow: 'hidden' }}>
+                <div style={{ width: `${value}%`, height: '100%', background: barColor, borderRadius: 999, boxShadow: `0 0 6px ${barColor}66`, transition: 'width 0.7s ease' }} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
-      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.1em' }}>
+      <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.1em', textAlign: 'center' }}>
         스크롤로 자세한 분석 보기 ↓
       </p>
     </div>
   );
 }
 
-/* ── 면접 키워드 섹션 ──────────────────────────── */
+/* ── 2. 직군 분석 섹션 ─────────────────────────── */
 
-function KeywordsSection({ keywords, color }: { keywords: string[]; color: string }) {
+function RoleSection({ analysis, color }: { analysis: CompatibilityResult['targetRoleAnalysis']; color: string }) {
+  const matchGrade = analysis.matchScore >= 80 ? '최상' : analysis.matchScore >= 60 ? '양호' : '보통';
+  const gradeColor = analysis.matchScore >= 80 ? '#22c55e' : analysis.matchScore >= 60 ? '#f59e0b' : '#ef4444';
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 8 }}>
-        면접에서 이 키워드를 활용하면 별의 기운이 더해집니다
-      </p>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
-        {keywords.map((kw, i) => (
-          <span
-            key={i}
-            style={{
-              padding: '8px 16px', borderRadius: 999,
-              background: `${color}18`, border: `1px solid ${color}44`,
-              color, fontSize: 14, fontWeight: 700,
-              boxShadow: `0 0 12px ${color}22`,
-            }}
-          >
-            {kw}
-          </span>
-        ))}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* 직군 매칭 점수 */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '18px 20px', borderRadius: 14, background: `${color}10`, border: `1px solid ${color}22` }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontSize: 40, fontWeight: 900, color: gradeColor, lineHeight: 1 }}>{analysis.matchScore}</p>
+          <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>직군 매칭</p>
+        </div>
+        <div style={{ flex: 1, height: 1, background: `rgba(255,255,255,0.08)` }} />
+        <span style={{ fontSize: 13, fontWeight: 800, color: gradeColor, padding: '4px 14px', borderRadius: 999, background: `${gradeColor}20`, border: `1px solid ${gradeColor}44` }}>
+          {matchGrade}
+        </span>
+      </div>
+
+      {/* 시너지 */}
+      <div>
+        <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color, opacity: 0.5, textTransform: 'uppercase', marginBottom: 10 }}>시너지</p>
+        <p style={{ fontSize: '0.95rem', color: 'rgba(255,255,255,0.85)', lineHeight: 1.75 }}>{analysis.synergy}</p>
+      </div>
+
+      {/* 주의 */}
+      <div style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.2)' }}>
+        <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color: '#f87171', opacity: 0.6, textTransform: 'uppercase', marginBottom: 8 }}>주의</p>
+        <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.65 }}>{analysis.warning}</p>
       </div>
     </div>
   );
 }
 
-/* ── 약점 방어 전략 섹션 ───────────────────────── */
+/* ── 3. 오행 분석 섹션 ─────────────────────────── */
 
-function DefenseSection({ text, color }: { text: string; color: string }) {
+const ELEMENT_COLORS: Record<string, string> = {
+  '木': '#22c55e',
+  '火': '#ef4444',
+  '土': '#f59e0b',
+  '金': '#e2e8f0',
+  '水': '#3b82f6',
+};
+
+function OhangSection({ data, color }: { data: CompatibilityResult['fiveElementsAnalysis']; color: string }) {
+  const elements = ['木', '火', '土', '金', '水'];
+
   return (
-    <div style={{ position: 'relative' }}>
-      <span aria-hidden="true" style={{
-        position: 'absolute', top: -20, left: -8, fontSize: 80, lineHeight: 1,
-        color, opacity: 0.08, fontFamily: 'serif', fontWeight: 900, userSelect: 'none',
-      }}>"</span>
-      <p style={{
-        fontSize: 'clamp(1rem, 2.5vw, 1.15rem)', color: 'rgba(255,255,255,0.88)',
-        lineHeight: 2, fontStyle: 'italic', paddingLeft: 4, paddingTop: 16,
-      }}>
-        {text}
-      </p>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+      {/* 오행 비교 바 */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        {elements.map((el) => {
+          const userVal = data.userElements[el] ?? 0;
+          const companyVal = data.companyElements[el] ?? 0;
+          const elColor = ELEMENT_COLORS[el] ?? color;
+          const maxVal = Math.max(...elements.map((e) => Math.max(data.userElements[e] ?? 0, data.companyElements[e] ?? 0, 1)));
+
+          return (
+            <div key={el} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: 16, width: 24, textAlign: 'center', color: elColor }}>{el}</span>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                {/* 사용자 */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', width: 28 }}>나</span>
+                  <div style={{ flex: 1, height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 999, overflow: 'hidden' }}>
+                    <div style={{ width: `${(userVal / maxVal) * 100}%`, height: '100%', background: elColor, borderRadius: 999, opacity: 0.9 }} />
+                  </div>
+                  <span style={{ fontSize: 10, color: elColor, fontWeight: 700, width: 12 }}>{userVal}</span>
+                </div>
+                {/* 기업 */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', width: 28 }}>기업</span>
+                  <div style={{ flex: 1, height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 999, overflow: 'hidden' }}>
+                    <div style={{ width: `${(companyVal / maxVal) * 100}%`, height: '100%', background: elColor, borderRadius: 999, opacity: 0.5 }} />
+                  </div>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 700, width: 12 }}>{companyVal}</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 종합 분석 */}
+      <div style={{ padding: '16px', borderRadius: 12, background: `${color}0a`, border: `1px solid ${color}22` }}>
+        <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color, opacity: 0.55, textTransform: 'uppercase', marginBottom: 10 }}>종합 분석</p>
+        <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.75 }}>{data.analysis}</p>
+      </div>
     </div>
   );
 }
 
-/* ── 최적 시기 섹션 ────────────────────────────── */
+/* ── 4. 면접 준비 섹션 ─────────────────────────── */
 
-function TimingSection({ luckyDays, color }: { luckyDays: string[]; color: string }) {
+function InterviewSection({
+  questions, roles, color,
+}: { questions: string[]; roles: CompatibilityResult['roleCompatibilities']; color: string }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 8 }}>
-        별자리가 가장 밝게 빛나는 날, 면접을 잡으세요
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+      {/* 예상 면접 질문 */}
+      <div>
+        <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color, opacity: 0.55, textTransform: 'uppercase', marginBottom: 12 }}>예상 면접 질문</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {questions.map((q, i) => (
+            <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 10, background: `${color}0a`, border: `1px solid ${color}1a` }}>
+              <span style={{ fontSize: 10, fontWeight: 800, color, opacity: 0.5, flexShrink: 0, paddingTop: 2 }}>Q{i + 1}</span>
+              <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.65 }}>{q}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 직군별 궁합 */}
+      <div>
+        <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color, opacity: 0.55, textTransform: 'uppercase', marginBottom: 12 }}>직군별 궁합</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {roles.map((role, i) => {
+            const roleColor = role.score >= 80 ? '#22c55e' : role.score >= 60 ? '#f59e0b' : '#f87171';
+            return (
+              <div key={i} style={{ display: 'flex', gap: 14, padding: '12px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div style={{ textAlign: 'center', minWidth: 36 }}>
+                  <p style={{ fontSize: 18, fontWeight: 900, color: roleColor, lineHeight: 1 }}>{role.score}</p>
+                  <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 1 }}>점</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{role.roleName}</p>
+                  <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.55 }}>{role.reason}</p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── 5. 월별 운세 섹션 ─────────────────────────── */
+
+function MonthlySection({ forecasts, color }: { forecasts: CompatibilityResult['monthlyForecasts']; color: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 4 }}>
+        별자리가 가장 밝게 빛나는 날, 도전하세요
       </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-        {luckyDays.map((day, i) => (
-          <div
-            key={i}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 14,
-              padding: '14px 18px', borderRadius: 12,
-              background: `${color}0e`, border: `1px solid ${color}2a`,
-            }}
-          >
-            <span style={{ fontSize: 18, flexShrink: 0 }}>🌙</span>
-            <span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>{day}</span>
+      {forecasts.map((f, i) => {
+        const barColor = f.favorabilityScore >= 8 ? '#22c55e' : f.favorabilityScore >= 6 ? '#f59e0b' : f.favorabilityScore >= 4 ? '#06b6d4' : '#f87171';
+        return (
+          <div key={i} style={{ display: 'flex', gap: 14, padding: '14px 16px', borderRadius: 12, background: `${color}08`, border: `1px solid ${color}18` }}>
+            <div style={{ minWidth: 56 }}>
+              <p style={{ fontSize: 11, fontWeight: 800, color, opacity: 0.7 }}>{f.month}</p>
+              <div style={{ display: 'flex', gap: 2, marginTop: 6 }}>
+                {Array.from({ length: 10 }).map((_, j) => (
+                  <div key={j} style={{ width: 4, height: 4, borderRadius: 999, background: j < f.favorabilityScore ? barColor : 'rgba(255,255,255,0.08)' }} />
+                ))}
+              </div>
+            </div>
+            <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.6, flex: 1 }}>{f.advice}</p>
           </div>
-        ))}
-      </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ── 6. 주의사항 섹션 ─────────────────────────── */
+
+function CautionSection({ cautions, color }: { cautions: string[]; color: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      {cautions.map((c, i) => (
+        <div key={i} style={{ display: 'flex', gap: 12, padding: '14px 16px', borderRadius: 12, background: `${color}08`, border: `1px solid ${color}20` }}>
+          <span style={{ fontSize: 16, flexShrink: 0, opacity: 0.7 }}>⚠</span>
+          <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.7 }}>{c}</p>
+        </div>
+      ))}
     </div>
   );
 }
