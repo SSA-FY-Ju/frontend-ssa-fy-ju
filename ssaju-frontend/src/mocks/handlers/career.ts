@@ -3,10 +3,19 @@
  */
 
 import { http, HttpResponse, delay } from 'msw';
-import { mockConsultationData } from '../data/career';
+import { mockCareerTimingResult, mockConsultationData } from '../data/career';
 
 export const careerHandlers = [
-  // 관운 분석 — 실제 API 사용 (MSW 핸들러 제거)
+  // 관운 분석
+  http.post('/api/career/timing', async () => {
+    await delay(1200);
+    return HttpResponse.json({
+      success: true,
+      data: mockCareerTimingResult,
+      error: null,
+      timestamp: Date.now(),
+    });
+  }),
 
   // AI 커리어 컨설팅
   http.post('/api/career/consultation', async () => {

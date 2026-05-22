@@ -1,10 +1,8 @@
 'use client';
 
 /**
- * 분석 기록 상세 조회 훅 (T100)
- *
- * - recordId로 단일 분석 기록 fetch
- * - 상태: record, isLoading, error
+ * 분석 기록 상세 조회 훅
+ * API 명세(GET /api/mypage/analyses/{id})에 맞춰 업데이트
  */
 
 import { useState, useCallback } from 'react';
@@ -15,7 +13,7 @@ interface UseHistoryDetailReturn {
   record: AnalysisRecord | null;
   isLoading: boolean;
   error: string | null;
-  fetchDetail: (recordId: string) => Promise<void>;
+  fetchDetail: (recordId: string, type: string) => Promise<void>;
   reset: () => void;
 }
 
@@ -25,12 +23,12 @@ export function useHistoryDetail(): UseHistoryDetailReturn {
   const [error, setError] = useState<string | null>(null);
 
   /** 분석 기록 상세 조회 */
-  const fetchDetail = useCallback(async (recordId: string) => {
+  const fetchDetail = useCallback(async (recordId: string, type: string) => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const data = await fetchAnalysisRecord(recordId);
+      const data = await fetchAnalysisRecord(recordId, type);
       setRecord(data);
     } catch (err) {
       const message = err instanceof Error ? err.message : '기록 상세를 불러오는 데 실패했습니다.';

@@ -66,9 +66,11 @@ export function useCompatibility() {
       setPhase('result');
 
       useSessionStore.getState().setLastAnalysisType('COMPATIBILITY');
-      // exit guard 활성화 + 피드백 추적용 ID 설정
-      const localResultId = `COMPATIBILITY_${args.birthDate}_${args.birthTime}_${args.companyName}`;
-      useSessionStore.getState().setSajuResultId(localResultId);
+      // 백엔드가 sajuResultId를 주면 사용, 없으면 로컬 fallback (백엔드 추가 전 임시)
+      const resultId = data.sajuResultId != null
+        ? String(data.sajuResultId)
+        : `COMPATIBILITY_${args.birthDate}_${args.birthTime}_${args.companyName}`;
+      useSessionStore.getState().setSajuResultId(resultId);
 
       // 비로그인 시 analysisStore에 휘발성 저장
       const { isLoggedIn } = useAuthStore.getState();

@@ -17,7 +17,20 @@ import { useSessionStore } from '@/stores/sessionStore';
 import { toastUtils } from '@/lib/toast';
 import type { FeedbackRequest } from '@/types/api';
 
+// UI에서 사용하는 내부 타입 (페이지 컴포넌트에서 전달)
 type FeedbackType = 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
+
+// UI 내부 값 → API enum 매핑
+const FEEDBACK_TYPE_MAP: Record<FeedbackType, FeedbackRequest['feedbackType']> = {
+  CAREER_TIMING:  'CAREER_TIMING',
+  CONSULTATION:   'CAREER_CONSULTATION',
+  COMPATIBILITY:  'COMPANY_COMPATIBILITY',
+};
+
+const SATISFACTION_MAP: Record<'SATISFIED' | 'DISSATISFIED', FeedbackRequest['satisfactionStatus']> = {
+  SATISFIED:    'SATISFIED',
+  DISSATISFIED: 'DISSATISFIED',
+};
 
 export function useFeedback(feedbackType: FeedbackType, onSuccess?: () => void) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,11 +38,11 @@ export function useFeedback(feedbackType: FeedbackType, onSuccess?: () => void) 
 
   /**
    * 피드백 제출
-   * @param satisfactionStatus - 만족/불만족
+   * @param satisfactionStatus - 만족(SATISFIED) / 불만족(DISSATISFIED)
    * @param feedbackContent - 상세 의견 (선택, 최대 500자)
    */
   const submit = async (
-    satisfactionStatus: 'SATISFIED' | 'UNSATISFIED',
+    satisfactionStatus: 'SATISFIED' | 'DISSATISFIED',
     feedbackContent?: string,
   ) => {
     const sajuResultIdRaw = useSessionStore.getState().sajuResultId;
@@ -45,8 +58,8 @@ export function useFeedback(feedbackType: FeedbackType, onSuccess?: () => void) 
 
     const request: FeedbackRequest = {
       sajuResultId,
-      feedbackType,
-      satisfactionStatus,
+      feedbackType: FEEDBACK_TYPE_MAP[feedbackType],
+      satisfactionStatus: SATISFACTION_MAP[satisfactionStatus],
       feedbackContent: feedbackContent?.trim() || undefined,
     };
 

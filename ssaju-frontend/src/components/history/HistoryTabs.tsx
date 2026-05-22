@@ -1,15 +1,11 @@
 'use client';
 
 /**
- * 분석 기록 탭 컴포넌트 (T104)
- *
- * 탭 목록:
- * - 관운 분석 (CAREER_TIMING)
- * - AI 컨설팅 (CONSULTATION)
- * - 기업 궁합 (COMPATIBILITY)
+ * 분석 기록 탭 컴포넌트
+ * API 명세(TIMING, CONSULTATION, COMPATIBILITY)에 맞춰 업데이트
  */
 
-type AnalysisTab = 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
+type AnalysisTab = 'ALL' | 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY';
 
 interface HistoryTabsProps {
   activeTab: AnalysisTab;
@@ -17,7 +13,8 @@ interface HistoryTabsProps {
 }
 
 const TABS: { id: AnalysisTab; label: string }[] = [
-  { id: 'CAREER_TIMING', label: '관운 분석' },
+  { id: 'ALL', label: '전체' },
+  { id: 'TIMING', label: '관운 분석' },
   { id: 'CONSULTATION', label: 'AI 컨설팅' },
   { id: 'COMPATIBILITY', label: '기업 궁합' },
 ];

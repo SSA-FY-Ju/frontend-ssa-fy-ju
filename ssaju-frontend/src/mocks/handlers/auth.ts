@@ -78,9 +78,22 @@ export const authHandlers = [
     const body = (await request.json()) as { email: string };
     const taken = body.email === 'taken@example.com' || body.email === mockUser.email;
 
+    if (taken) {
+      return HttpResponse.json(
+        {
+          success: false,
+          data: null,
+          error: { code: 'EMAIL_ALREADY_EXISTS', message: '이미 사용 중인 이메일입니다.', requestId: 'mock-req-003' },
+          timestamp: Date.now(),
+        },
+        { status: 409 },
+      );
+    }
+
     return HttpResponse.json({
       success: true,
-      data: taken ? 'DUPLICATE' : 'AVAILABLE',
+      data: null,
+      message: '사용 가능한 이메일입니다',
       error: null,
       timestamp: Date.now(),
     });

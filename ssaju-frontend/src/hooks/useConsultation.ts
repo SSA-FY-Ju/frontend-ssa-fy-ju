@@ -5,16 +5,10 @@
  *
  * 흐름:
  * 1. submitConsultation() → disclaimer 1.5초 → API 호출(20초)
- * 2. 19개 필드 전체 수신 → consultationStore에 메모리 캐싱
- * 3. FullPageConsultation에서 Swiper.js 수직 슬라이드로 탐색 (재요청 없음)
+ * 2. 19개 필드 전체 수신 → consultationStore에 저장
+ * 3. FullPageConsultation에서 Swiper.js 수직 슬라이드로 탐색
  *
- * 변경사항 (2026-05-13):
- * - Swiper.js onSlideChange 콜백에서 handleSectionChange 호출
- * - consultationStore.currentSectionIndex 읽기/쓰기
- * - handleSectionChange(index) → consultationStore.setCurrentSectionIndex(index)
- *
- * 타임아웃 정책 (FR-027):
- * - 20초 타임아웃, 최대 2회 재시도 (각 5초 간격)
+ * 캐싱 없음: 같은 사용자도 날짜를 달리해 여러 번 분석 가능하므로 매번 새로 요청
  */
 
 import { useState, useRef } from 'react';
@@ -54,9 +48,11 @@ export function useConsultation() {
       consultationStore.setConsultation(data);
       setPhase('result');
 
-      // exit guard & 피드백 연동용 로컬 결과 ID 생성 (career-timing과 동일 패턴)
-      const localResultId = `CONSULTATION_${args.birthDate}_${args.birthTime}`;
-      useSessionStore.getState().setSajuResultId(localResultId);
+      // API 응답의 sajuResultId 사용, 없으면 로컬 fallback
+      const resultId = data.sajuResultId
+        ? String(data.sajuResultId)
+        : `CONSULTATION_${args.birthDate}_${args.birthTime}`;
+      useSessionStore.getState().setSajuResultId(resultId);
       useSessionStore.getState().setLastAnalysisType('CONSULTATION');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'AI 컨설팅 분석 중 오류가 발생했습니다.';
@@ -77,21 +73,9 @@ export function useConsultation() {
   } = useDisclaimerTimer({ onComplete: runApiCall });
 
   /**
-   * 컨설팅 분석 시작
-   * 캐시 유효 시 API 재호출 없이 즉시 result 상태로 전환
+   * 컨설팅 분석 시작 — 매번 새로 API 호출 (캐싱 없음)
    */
   const submitConsultation = (birthDate: string, birthTime: string = '12:00') => {
-    // 캐시 히트: 즉시 결과 표시 (exit guard용 ID도 보장)
-    if (consultationStore.hasFetched && consultationStore.consultation !== null) {
-      const localResultId = `CONSULTATION_${birthDate}_${birthTime}`;
-      if (!useSessionStore.getState().sajuResultId) {
-        useSessionStore.getState().setSajuResultId(localResultId);
-        useSessionStore.getState().setLastAnalysisType('CONSULTATION');
-      }
-      setPhase('result');
-      return;
-    }
-
     if (isRequestingRef.current) return;
     isRequestingRef.current = true;
 

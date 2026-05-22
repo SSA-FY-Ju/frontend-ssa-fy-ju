@@ -30,6 +30,8 @@ interface AuthStore {
 
   // 비영속 상태
   _hasHydrated: boolean;
+  /** refresh 완료(성공/실패) 후 true → 이 플래그가 true일 때만 API 호출 허용 */
+  isAuthReady: boolean;
   loginError: string | null;
   isLoading: boolean;
   isLoginModalOpen: boolean;
@@ -41,6 +43,7 @@ interface AuthStore {
   setLoginError: (error: string | null) => void;
   setIsLoading: (isLoading: boolean) => void;
   setHasHydrated: (hasHydrated: boolean) => void;
+  setIsAuthReady: (ready: boolean) => void;
   logout: () => void;
   reset: () => void;
   openLoginModal: () => void;
@@ -55,6 +58,7 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       accessToken: null,
       _hasHydrated: false,
+      isAuthReady: false,
       loginError: null,
       isLoading: false,
       isLoginModalOpen: false,
@@ -81,6 +85,10 @@ export const useAuthStore = create<AuthStore>()(
 
       setHasHydrated: (hasHydrated: boolean) => {
         set({ _hasHydrated: hasHydrated });
+      },
+
+      setIsAuthReady: (ready: boolean) => {
+        set({ isAuthReady: ready });
       },
 
       logout: () => {

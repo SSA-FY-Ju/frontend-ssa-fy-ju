@@ -40,17 +40,21 @@ export async function login(req: LoginRequest): Promise<LoginResult> {
     body: JSON.stringify(req),
   });
 
+  const json = await res.json().catch(() => ({}));
+
   if (!res.ok) {
-    const json = await res.json().catch(() => ({}));
     const msg = json?.error?.message ?? json?.message ?? '로그인에 실패했습니다.';
     throw new ApiError(res.status, json?.error?.code ?? 'LOGIN_FAILED', msg, 'unknown');
   }
 
-  // accessToken은 응답 헤더에서 읽음
-  const authHeader = res.headers.get('authorization') ?? res.headers.get('Authorization') ?? '';
-  const accessToken = authHeader.startsWith('Bearer ')
-    ? authHeader.slice(7)
-    : authHeader;
+  // 1순위: 응답 헤더 Authorization (백엔드가 헤더로 내려주는 경우)
+  const authHeader = res.headers.get('authorization') ?? '';
+  let accessToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+
+  // 2순위: 응답 body의 data.accessToken (명세 기준)
+  if (!accessToken) {
+    accessToken = json?.data?.accessToken ?? '';
+  }
 
   if (!accessToken) {
     throw new ApiError(500, 'NO_TOKEN', '서버에서 인증 토큰을 받지 못했습니다.', 'unknown');

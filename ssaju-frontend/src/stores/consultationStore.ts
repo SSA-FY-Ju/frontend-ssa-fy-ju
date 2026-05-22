@@ -1,13 +1,13 @@
 /**
- * AI 컨설팅 데이터 캐시 스토어 (Zustand)
+ * AI 컨설팅 데이터 스토어 (Zustand)
  *
  * 관리하는 정보:
- * - consultation: 전체 데이터 메모리 저장 (persist 없음)
- * - hasFetched: 캐시 유효성 검증
+ * - consultation: 현재 세션의 컨설팅 데이터 (캐싱 없음)
+ * - isLoading / error: 요청 상태
+ * - currentSectionIndex: Swiper 현재 섹션
  *
  * 특징:
- * - 단일 API 호출로 전체 데이터 수신
- * - 메모리 전용 캐시 (페이지 새로고침 시 초기화 → 재진입 시 API 재호출)
+ * - 캐싱 없음 — 날짜를 달리해 여러 번 분석할 수 있으므로 매 분석마다 새로 요청
  */
 
 import { create } from 'zustand';
@@ -17,7 +17,6 @@ export type { ConsultationData } from '@/types/api';
 
 interface ConsultationStore {
   consultation: ConsultationData | null;
-  hasFetched: boolean;
   isLoading: boolean;
   error: string | null;
   currentSectionIndex: number;
@@ -32,7 +31,6 @@ interface ConsultationStore {
 
 const initialState = {
   consultation: null,
-  hasFetched: false,
   isLoading: false,
   error: null,
   currentSectionIndex: 0,
@@ -42,7 +40,7 @@ export const useConsultationStore = create<ConsultationStore>()((set) => ({
   ...initialState,
 
   setConsultation: (data: ConsultationData) => {
-    set({ consultation: data, hasFetched: true, isLoading: false, error: null });
+    set({ consultation: data, isLoading: false, error: null });
   },
 
   clearData: () => {

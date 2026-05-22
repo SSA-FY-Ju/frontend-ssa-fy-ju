@@ -39,7 +39,7 @@ const OPTIONS = [
     inactiveColor: '#475569',
   },
   {
-    value: 'UNSATISFIED' as const,
+    value: 'DISSATISFIED' as const,
     emoji: '💫',
     label: '아쉬웠어요',
     sub: '개선이 필요해요',
@@ -58,7 +58,7 @@ const OPTIONS = [
 ];
 
 export function FeedbackModal({ feedbackType, onClose, onSubmitted, exitAction }: FeedbackModalProps) {
-  const [satisfaction, setSatisfaction] = useState<'SATISFIED' | 'UNSATISFIED' | null>(null);
+  const [satisfaction, setSatisfaction] = useState<'SATISFIED' | 'DISSATISFIED' | null>(null);
   const [content, setContent] = useState('');
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);

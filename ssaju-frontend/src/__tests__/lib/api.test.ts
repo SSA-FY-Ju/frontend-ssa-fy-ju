@@ -149,7 +149,7 @@ describe('submitFeedback', () => {
       submitFeedback({
         sajuResultId: 1001,
         feedbackType: 'CAREER_TIMING',
-        satisfactionStatus: 'UNSATISFIED',
+        satisfactionStatus: 'DISSATISFIED',
       }),
     ).rejects.toThrow('피드백 제출 실패');
   });
