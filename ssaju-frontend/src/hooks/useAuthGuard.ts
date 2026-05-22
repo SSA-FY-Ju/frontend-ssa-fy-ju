@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 
 /**
@@ -16,13 +16,13 @@ import { useAuthStore } from '@/stores/authStore';
 export function useAuthGuard(required: boolean = true): { isAllowed: boolean } {
   const [isAllowed, setIsAllowed] = useState(false);
   // 한 번 통과(allowed)한 뒤에는 로그아웃 등으로 isLoggedIn이 바뀌어도 재검사하지 않음
-  // → 로그아웃 후 모달이 뜨는 문제 방지 (헤더 logout 핸들러가 직접 /로 이동시킴)
   const settledRef = useRef(false);
 
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
   const _hasHydrated = useAuthStore((s) => s._hasHydrated);
   const isAuthReady = useAuthStore((s) => s.isAuthReady);
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
+  const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
@@ -42,6 +42,7 @@ export function useAuthGuard(required: boolean = true): { isAllowed: boolean } {
     if (!isLoggedIn) {
       settledRef.current = true;
       openLoginModal();
+      router.push('/'); // 모달 오픈과 동시에 랜딩으로 이동 (모달은 전역이라 유지됨)
       return; // isAllowed = false 유지
     }
 

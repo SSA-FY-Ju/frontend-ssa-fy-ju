@@ -46,7 +46,8 @@ export function useRouteGuard(required: boolean = true): { isAllowed: boolean } 
     if (!isLoggedIn) {
       redirectedRef.current = true;
       openLoginModal();
-      return; // isAllowed = false 유지 → 페이지 렌더 안 함
+      router.push('/'); // 모달 오픈과 동시에 랜딩으로 이동
+      return; // isAllowed = false 유지
     }
 
     if (!birthDate) {
