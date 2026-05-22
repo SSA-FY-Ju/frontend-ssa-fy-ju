@@ -26,8 +26,9 @@ export function middleware(req: NextRequest) {
 
   if (!isProtected) return NextResponse.next();
 
-  const hasRefreshToken = req.cookies.has('refreshToken');
-  if (!hasRefreshToken) {
+  // refreshToken(백엔드 쿠키)은 포워딩 불안정 → Next.js가 직접 세팅하는 sessionValid로 판단
+  const hasSession = req.cookies.has('sessionValid');
+  if (!hasSession) {
     const url = req.nextUrl.clone();
     url.pathname = '/';
     url.searchParams.set('openModal', 'true');

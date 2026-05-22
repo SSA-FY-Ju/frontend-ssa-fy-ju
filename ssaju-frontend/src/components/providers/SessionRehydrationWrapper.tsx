@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useSessionRehydration } from '@/hooks/useSessionRehydration';
 import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuthStore } from '@/stores/authStore';
@@ -31,30 +32,27 @@ export function SessionRehydrationWrapper({
   const setIsAuthReady = useAuthStore((s) => s.setIsAuthReady);
   const logout = useAuthStore((s) => s.logout);
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
+  const searchParams = useSearchParams();
+  const openModalParam = searchParams.get('openModal');
 
   const silentRefreshTriedRef = useRef(false);
-  const modalTriedRef = useRef(false);
 
-  // 미들웨어가 ?openModal=true로 리다이렉트한 경우
-  // isAuthReady를 기다리지 않고 _hasHydrated 즉시 모달 오픈 (지연 없음)
+  // 미들웨어가 ?openModal=true로 리다이렉트한 경우 즉시 모달 오픈
+  // useSearchParams로 URL 변화를 반응적으로 감지 → modalTriedRef 불필요
   useEffect(() => {
-    if (!_hasHydrated || modalTriedRef.current) return;
-    if (typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('openModal') !== 'true') return;
-
-    modalTriedRef.current = true;
+    if (!_hasHydrated) return;
+    if (openModalParam !== 'true') return;
 
     // URL 파라미터 즉시 제거
+    const params = new URLSearchParams(window.location.search);
     params.delete('openModal');
     const newUrl = params.toString()
       ? `${window.location.pathname}?${params.toString()}`
       : window.location.pathname;
     window.history.replaceState({}, '', newUrl);
 
-    // refreshToken이 없어서 미들웨어가 리다이렉트한 것이므로 모달 오픈
     openLoginModal();
-  }, [_hasHydrated, openLoginModal]);
+  }, [_hasHydrated, openModalParam, openLoginModal]);
 
   // Silent refresh: 로그인 상태인데 accessToken 없을 때(브라우저 재시작)
   useEffect(() => {
