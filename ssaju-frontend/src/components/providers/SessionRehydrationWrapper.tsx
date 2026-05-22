@@ -12,6 +12,7 @@ import { config } from '@/lib/config/env';
  * 동작:
  * - 앱 부팅 시 sessionStorage 세션 데이터 복원
  * - isLoggedIn=true이지만 accessToken이 없을 때(브라우저 재시작 등) refreshToken 쿠키로 자동 재발급
+ * - 미들웨어가 ?openModal=true로 리다이렉트한 경우 → Zustand 복원(_hasHydrated) 즉시 모달 오픈
  * - AuthModal 전역 렌더링
  */
 export function SessionRehydrationWrapper({
@@ -29,20 +30,42 @@ export function SessionRehydrationWrapper({
   const setAccessToken = useAuthStore((s) => s.setAccessToken);
   const setIsAuthReady = useAuthStore((s) => s.setIsAuthReady);
   const logout = useAuthStore((s) => s.logout);
+  const openLoginModal = useAuthStore((s) => s.openLoginModal);
 
-  const triedRef = useRef(false);
+  const silentRefreshTriedRef = useRef(false);
+  const modalTriedRef = useRef(false);
 
+  // 미들웨어가 ?openModal=true로 리다이렉트한 경우
+  // isAuthReady를 기다리지 않고 _hasHydrated 즉시 모달 오픈 (지연 없음)
   useEffect(() => {
-    if (!_hasHydrated || triedRef.current) return;
-    triedRef.current = true;
+    if (!_hasHydrated || modalTriedRef.current) return;
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('openModal') !== 'true') return;
 
-    // 로그인 안 됐거나 이미 토큰 있으면 바로 ready
+    modalTriedRef.current = true;
+
+    // URL 파라미터 즉시 제거
+    params.delete('openModal');
+    const newUrl = params.toString()
+      ? `${window.location.pathname}?${params.toString()}`
+      : window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+
+    // refreshToken이 없어서 미들웨어가 리다이렉트한 것이므로 모달 오픈
+    openLoginModal();
+  }, [_hasHydrated, openLoginModal]);
+
+  // Silent refresh: 로그인 상태인데 accessToken 없을 때(브라우저 재시작)
+  useEffect(() => {
+    if (!_hasHydrated || silentRefreshTriedRef.current) return;
+    silentRefreshTriedRef.current = true;
+
     if (!isLoggedIn || accessToken) {
       setIsAuthReady(true);
       return;
     }
 
-    // 로그인 상태인데 토큰 없음(브라우저 재시작) → refreshToken 쿠키로 재발급
     (async () => {
       try {
         console.log('[SessionRehydration] silent refresh 시도...');
@@ -53,14 +76,10 @@ export function SessionRehydrationWrapper({
         console.log('[SessionRehydration] refresh 응답 status:', res.status);
         if (res.ok) {
           const json = await res.json();
-          console.log('[SessionRehydration] refresh 응답 전체:', JSON.stringify(json));
-
-          // 응답 헤더에서 토큰 확인 (login과 동일하게 헤더 우선)
           const authHeader = res.headers.get('authorization') ?? '';
           let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
           if (!token) token = json?.data?.accessToken ?? json?.accessToken ?? '';
 
-          console.log('[SessionRehydration] 추출된 토큰:', token ? '있음' : '없음');
           if (token) {
             console.log('[SessionRehydration] 토큰 재발급 성공');
             setAccessToken(token);
@@ -69,12 +88,10 @@ export function SessionRehydrationWrapper({
             logout();
           }
         } else {
-          // refreshToken 만료 → 조용히 로그아웃
-          console.log('[SessionRehydration] refresh 실패 (status:', res.status, ') → 로그아웃');
+          console.log('[SessionRehydration] refresh 실패 →  로그아웃');
           logout();
         }
       } catch (err) {
-        // 네트워크 오류 → 로그아웃하지 않고 유지 (사용자가 재시도 가능)
         console.log('[SessionRehydration] 네트워크 오류 → 로그인 상태 유지:', err);
       } finally {
         setIsAuthReady(true);
