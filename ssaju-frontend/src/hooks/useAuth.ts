@@ -24,7 +24,13 @@ export function useAuth() {
     try {
       const result = await loginApi(req);
       authStore.setAccessToken(result.accessToken);
-      // TODO: 로그인 후 /api/auth/me 또는 별도 유저 정보 API 연결 시 setUser 호출
+      // 로그인 직후에는 이메일 기반으로 최소 유저 정보만 세팅
+      // 실제 name/userId 등은 마이페이지 진입 시 fetchMyPageData()가 동기화함
+      authStore.setUser({
+        userId: 'unknown',
+        name: req.email.split('@')[0],
+        email: req.email,
+      });
       authStore.setIsLoggedIn(true);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '로그인 중 오류가 발생했습니다.';

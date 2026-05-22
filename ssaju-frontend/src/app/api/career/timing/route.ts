@@ -6,12 +6,14 @@ const BACKEND_URL = process.env.BACKEND_URL!;
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const authorization = req.headers.get('authorization') ?? '';
+  const cookie = req.headers.get('cookie') ?? '';
 
   const res = await fetch(`${BACKEND_URL}/api/career/timing`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...(authorization ? { Authorization: authorization } : {}),
+      ...(cookie ? { Cookie: cookie } : {}),
     },
     body: JSON.stringify(body),
   });

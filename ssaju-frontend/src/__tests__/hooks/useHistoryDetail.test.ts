@@ -16,18 +16,12 @@ jest.mock('@/lib/api/mypage', () => ({
 const { fetchAnalysisRecord } = jest.requireMock('@/lib/api/mypage');
 
 const mockRecord = {
-  recordId: 'record-001',
-  userId: 'user-001',
-  analysisType: 'CAREER_TIMING' as const,
-  data: {
-    sajuResultId: 'saju-001',
-    h1Period: '2025년 상반기',
-    h2Period: '2026년 하반기',
-    h1Confidence: 82,
-    h2Confidence: 65,
-    recommendation: '상반기가 유리합니다.',
-  },
-  createdAt: Date.now(),
+  id: 1,
+  type: 'TIMING' as const,
+  birthDate: '1990-05-15',
+  createdAt: '2025-01-15T10:00:00Z',
+  favoredPeriod: 'H1',
+  confidenceScore: 82,
 };
 
 describe('useHistoryDetail', () => {
@@ -49,7 +43,7 @@ describe('useHistoryDetail', () => {
     const { result } = renderHook(() => useHistoryDetail());
 
     act(() => {
-      result.current.fetchDetail('record-001');
+      result.current.fetchDetail('1', 'TIMING');
     });
 
     expect(result.current.isLoading).toBe(true);
@@ -61,13 +55,13 @@ describe('useHistoryDetail', () => {
     const { result } = renderHook(() => useHistoryDetail());
 
     await act(async () => {
-      await result.current.fetchDetail('record-001');
+      await result.current.fetchDetail('1', 'TIMING');
     });
 
     expect(result.current.record).toEqual(mockRecord);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBeNull();
-    expect(fetchAnalysisRecord).toHaveBeenCalledWith('record-001');
+    expect(fetchAnalysisRecord).toHaveBeenCalledWith('1', 'TIMING');
   });
 
   it('fetchDetail 실패 시 error 설정됨', async () => {
@@ -76,7 +70,7 @@ describe('useHistoryDetail', () => {
     const { result } = renderHook(() => useHistoryDetail());
 
     await act(async () => {
-      await result.current.fetchDetail('invalid-id');
+      await result.current.fetchDetail('invalid-id', 'TIMING');
     });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -91,7 +85,7 @@ describe('useHistoryDetail', () => {
     const { result } = renderHook(() => useHistoryDetail());
 
     await act(async () => {
-      await result.current.fetchDetail('record-001');
+      await result.current.fetchDetail('1', 'TIMING');
     });
 
     expect(result.current.record).not.toBeNull();

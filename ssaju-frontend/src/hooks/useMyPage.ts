@@ -1,21 +1,24 @@
 'use client';
 
 /**
- * 마이페이지 분석 기록 목록 훅 (T099)
+ * 마이페이지 분석 기록 목록 훅
  *
- * - 탭별 기록 조회 (CAREER_TIMING / CONSULTATION / COMPATIBILITY)
- * - 무한 스크롤 지원 (loadMore)
- * - 탭 전환 시 기록 초기화 후 재조회
+ * GET /api/mypage 응답 구조 기반
+ * - analyses: MyPageAnalysisSummary[] 직접 반환 (변환 없음)
+ * - totalCount, totalPages 노출
+ * - 탭별 필터 (CONSULTATION / TIMING / COMPATIBILITY / ALL)
  */
 
 import { useState, useCallback, useRef } from 'react';
-import { fetchAnalysisHistory } from '@/lib/api/mypage';
-import type { AnalysisRecord } from '@/types/api';
+import { fetchMyPageData } from '@/lib/api/mypage';
+import { useAuthStore } from '@/stores/authStore';
+import type { MyPageAnalysisSummary } from '@/types/api';
 
-type AnalysisTab = 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
+export type AnalysisTab = 'ALL' | 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY';
 
 interface UseMyPageReturn {
-  records: AnalysisRecord[];
+  analyses: MyPageAnalysisSummary[];
+  totalCount: number;
   isLoading: boolean;
   isLoadingMore: boolean;
   hasMore: boolean;
@@ -26,41 +29,51 @@ interface UseMyPageReturn {
   loadInitial: (tab: AnalysisTab) => void;
 }
 
-const PAGE_LIMIT = 20;
+const PAGE_SIZE = 10;
 
 export function useMyPage(): UseMyPageReturn {
-  const [records, setRecords] = useState<AnalysisRecord[]>([]);
+  const [analyses, setAnalyses] = useState<MyPageAnalysisSummary[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTabState] = useState<AnalysisTab>('CAREER_TIMING');
+  const [activeTab, setActiveTabState] = useState<AnalysisTab>('ALL');
 
-  // 현재 페이지 추적 (중복 요청 방지)
-  const currentPageRef = useRef(1);
+  const setUser = useAuthStore((s) => s.setUser);
+
+  const currentPageRef = useRef(0);
   const isLoadingMoreRef = useRef(false);
 
-  /** 첫 페이지 로드 */
   const loadInitial = useCallback(async (tab: AnalysisTab) => {
     setIsLoading(true);
     setError(null);
-    setRecords([]);
-    currentPageRef.current = 1;
+    setAnalyses([]);
+    setTotalCount(0);
+    currentPageRef.current = 0;
 
     try {
-      const response = await fetchAnalysisHistory({ type: tab, page: 1, limit: PAGE_LIMIT });
-      setRecords(response.records);
-      setHasMore(response.hasMore);
-      currentPageRef.current = 1;
+      const typeParam = tab === 'ALL' ? undefined : (tab as 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY');
+      const data = await fetchMyPageData({ type: typeParam, page: 0, size: PAGE_SIZE });
+
+      // 유저 정보 동기화
+      setUser({
+        userId: data.userId.toString(),
+        name: data.name,
+        email: data.email,
+      });
+
+      setAnalyses(data.analyses);
+      setTotalCount(data.totalCount);
+      setHasMore(data.currentPage < data.totalPages - 1);
     } catch (err) {
       const message = err instanceof Error ? err.message : '기록을 불러오는 데 실패했습니다.';
       setError(message);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setUser]);
 
-  /** 다음 페이지 로드 (무한 스크롤) */
   const loadMore = useCallback(async () => {
     if (isLoadingMoreRef.current || !hasMore) return;
 
@@ -70,13 +83,11 @@ export function useMyPage(): UseMyPageReturn {
     const nextPage = currentPageRef.current + 1;
 
     try {
-      const response = await fetchAnalysisHistory({
-        type: activeTab,
-        page: nextPage,
-        limit: PAGE_LIMIT,
-      });
-      setRecords((prev) => [...prev, ...response.records]);
-      setHasMore(response.hasMore);
+      const typeParam = activeTab === 'ALL' ? undefined : (activeTab as 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY');
+      const data = await fetchMyPageData({ type: typeParam, page: nextPage, size: PAGE_SIZE });
+
+      setAnalyses((prev) => [...prev, ...data.analyses]);
+      setHasMore(data.currentPage < data.totalPages - 1);
       currentPageRef.current = nextPage;
     } catch (err) {
       const message = err instanceof Error ? err.message : '추가 기록을 불러오는 데 실패했습니다.';
@@ -87,7 +98,6 @@ export function useMyPage(): UseMyPageReturn {
     }
   }, [activeTab, hasMore]);
 
-  /** 탭 전환: 기록 초기화 후 첫 페이지 재로드 */
   const setActiveTab = useCallback(
     (tab: AnalysisTab) => {
       setActiveTabState(tab);
@@ -97,7 +107,8 @@ export function useMyPage(): UseMyPageReturn {
   );
 
   return {
-    records,
+    analyses,
+    totalCount,
     isLoading,
     isLoadingMore,
     hasMore,

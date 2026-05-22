@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useMyPage } from '@/hooks/useMyPage';
@@ -15,19 +15,21 @@ import { DeleteConfirmModal } from '@/components/history/DeleteConfirmModal';
 import { HistoryDetailPage } from '@/components/results/HistoryDetailPage';
 import type { AnalysisRecord } from '@/types/api';
 
-
-const QUICK_ANALYSIS = [
-  { href: '/career-timing', icon: '🌟', label: '관운 분석', desc: '올해의 커리어 운세' },
-  { href: '/consultation', icon: '🤖', label: 'AI 컨설팅', desc: 'AI 맞춤 커리어 조언' },
-  { href: '/compatibility', icon: '🏢', label: '기업 궁합', desc: '기업과의 궁합 확인' },
-];
+const STAT_TYPES = [
+  { key: 'TIMING',        label: '관운 분석', icon: '🌟', color: '#a78bfa', glow: 'rgba(139,92,246,0.25)' },
+  { key: 'CONSULTATION',  label: 'AI 컨설팅', icon: '🤖', color: '#60a5fa', glow: 'rgba(96,165,250,0.25)'  },
+  { key: 'COMPATIBILITY', label: '기업 궁합', icon: '🏢', color: '#34d399', glow: 'rgba(52,211,153,0.25)'  },
+] as const;
 
 export default function MyPage() {
   useAuthGuard(true);
   const router = useRouter();
 
   const { user, logout } = useAuth();
-  const { records, isLoading, isLoadingMore, hasMore, error, activeTab, setActiveTab, loadMore, loadInitial } = useMyPage();
+  const {
+    analyses, totalCount, isLoading, isLoadingMore, hasMore,
+    error, activeTab, setActiveTab, loadMore, loadInitial,
+  } = useMyPage();
   const { record: detailRecord, isLoading: isDetailLoading, fetchDetail, reset: resetDetail } = useHistoryDetail();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [viewingRecord, setViewingRecord] = useState<AnalysisRecord | null>(null);
@@ -41,13 +43,20 @@ export default function MyPage() {
   });
 
   useEffect(() => {
-    if (user) loadInitial(activeTab);
+    if (user) loadInitial('ALL');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {
     if (detailRecord) setViewingRecord(detailRecord);
   }, [detailRecord]);
+
+  // 로드된 데이터에서 타입별 카운트
+  const typeCounts = useMemo(() => ({
+    TIMING:        analyses.filter((a) => a.type === 'TIMING').length,
+    CONSULTATION:  analyses.filter((a) => a.type === 'CONSULTATION').length,
+    COMPATIBILITY: analyses.filter((a) => a.type === 'COMPATIBILITY').length,
+  }), [analyses]);
 
   if (viewingRecord) {
     return (
@@ -68,41 +77,43 @@ export default function MyPage() {
 
   return (
     <div className="h-screen overflow-y-auto text-white pt-16">
-      <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col gap-6">
+      <div className="max-w-2xl mx-auto px-4 py-8 flex flex-col gap-5">
 
         {/* 뒤로가기 */}
         <button
           onClick={() => router.push('/select')}
           className="flex items-center gap-2 text-sm w-fit transition-colors"
-          style={{ color: 'rgba(196,181,253,0.55)' }}
+          style={{ color: 'rgba(196,181,253,0.5)' }}
           onMouseEnter={(e) => { e.currentTarget.style.color = '#c4b5fd'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(196,181,253,0.55)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(196,181,253,0.5)'; }}
         >
           ← 서비스 선택으로
         </button>
 
-        {/* 프로필 카드 */}
+        {/* ── 프로필 카드 ── */}
         <div
           style={{
-            background: 'linear-gradient(135deg, rgba(30,20,60,0.6) 0%, rgba(15,10,35,0.65) 100%)',
-            border: '1px solid rgba(139,92,246,0.2)',
+            background: 'linear-gradient(135deg, rgba(30,20,60,0.7) 0%, rgba(15,10,40,0.75) 100%)',
+            border: '1px solid rgba(139,92,246,0.25)',
             borderRadius: 20,
             padding: '24px',
             backdropFilter: 'blur(16px)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
             position: 'relative',
             overflow: 'hidden',
           }}
         >
-          <div style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          {/* 배경 글로우 */}
+          <div style={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
+          {/* 유저 정보 행 */}
           <div className="flex items-center gap-4">
             <div
               style={{
-                width: 60, height: 60, borderRadius: '50%', flexShrink: 0,
+                width: 56, height: 56, borderRadius: '50%', flexShrink: 0,
                 background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 24, fontWeight: 800, color: '#fff',
+                fontSize: 22, fontWeight: 800, color: '#fff',
                 boxShadow: '0 0 20px rgba(109,40,217,0.4)',
                 border: '2px solid rgba(167,139,250,0.3)',
               }}
@@ -111,9 +122,9 @@ export default function MyPage() {
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-white font-bold text-lg leading-tight truncate">{user?.name ?? '-'}</p>
+              <p className="text-white font-bold text-base leading-tight truncate">{user?.name ?? '-'}</p>
               {user?.email && (
-                <p className="text-xs truncate mt-0.5" style={{ color: 'rgba(196,181,253,0.45)' }}>{user.email}</p>
+                <p className="text-xs mt-0.5 truncate" style={{ color: 'rgba(196,181,253,0.45)' }}>{user.email}</p>
               )}
             </div>
 
@@ -121,11 +132,7 @@ export default function MyPage() {
               onClick={handleLogout}
               disabled={isLoggingOut}
               className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-200"
-              style={{
-                border: '1px solid rgba(239,68,68,0.25)',
-                background: 'rgba(239,68,68,0.07)',
-                color: 'rgba(248,113,113,0.7)',
-              }}
+              style={{ border: '1px solid rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.07)', color: 'rgba(248,113,113,0.7)' }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(239,68,68,0.15)';
                 e.currentTarget.style.color = '#f87171';
@@ -140,50 +147,56 @@ export default function MyPage() {
               {isLoggingOut ? '처리 중...' : '로그아웃'}
             </button>
           </div>
-        </div>
 
-        {/* 빠른 분석 시작 */}
-        <div
-          style={{
-            background: 'rgba(255,255,255,0.03)',
-            border: '1px solid rgba(139,92,246,0.15)',
-            borderRadius: 16,
-            padding: '20px 24px',
-            backdropFilter: 'blur(12px)',
-          }}
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <span style={{ color: '#a78bfa', fontSize: 14 }}>✦</span>
-            <span className="text-sm font-bold" style={{ color: 'rgba(196,181,253,0.8)' }}>빠른 분석 시작</span>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            {QUICK_ANALYSIS.map((item) => (
-              <button
-                key={item.href}
-                onClick={() => router.push(item.href)}
-                className="flex flex-col items-center gap-2 py-4 rounded-xl transition-all"
+          {/* 구분선 */}
+          <div style={{ borderTop: '1px solid rgba(139,92,246,0.15)', margin: '20px 0 16px' }} />
+
+          {/* 분석 현황 — totalCount + 타입별 */}
+          <div>
+            <p className="text-xs mb-3 font-medium" style={{ color: 'rgba(167,139,250,0.55)' }}>나의 분석 현황</p>
+            <div className="grid grid-cols-4 gap-2">
+              {/* 전체 */}
+              <div
                 style={{
-                  background: 'rgba(139,92,246,0.07)',
-                  border: '1px solid rgba(139,92,246,0.15)',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(139,92,246,0.15)';
-                  e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(139,92,246,0.07)';
-                  e.currentTarget.style.borderColor = 'rgba(139,92,246,0.15)';
+                  background: 'rgba(139,92,246,0.1)',
+                  border: '1px solid rgba(139,92,246,0.2)',
+                  borderRadius: 12,
+                  padding: '12px 8px',
+                  textAlign: 'center',
                 }}
               >
-                <span style={{ fontSize: 22 }}>{item.icon}</span>
-                <span className="text-xs font-bold" style={{ color: '#a78bfa' }}>{item.label}</span>
-                <span className="text-xs text-center leading-tight" style={{ color: 'rgba(148,163,184,0.5)' }}>{item.desc}</span>
-              </button>
-            ))}
+                <p className="text-2xl font-black mb-1" style={{ color: '#a78bfa' }}>
+                  {isLoading ? '…' : totalCount}
+                </p>
+                <p className="text-xs" style={{ color: 'rgba(167,139,250,0.6)' }}>전체</p>
+              </div>
+
+              {/* 타입별 */}
+              {STAT_TYPES.map((t) => (
+                <div
+                  key={t.key}
+                  style={{
+                    background: `rgba(${t.key === 'TIMING' ? '139,92,246' : t.key === 'CONSULTATION' ? '96,165,250' : '52,211,153'},0.07)`,
+                    border: `1px solid rgba(${t.key === 'TIMING' ? '139,92,246' : t.key === 'CONSULTATION' ? '96,165,250' : '52,211,153'},0.18)`,
+                    borderRadius: 12,
+                    padding: '12px 8px',
+                    textAlign: 'center',
+                  }}
+                >
+                  <p className="text-lg mb-0.5">{t.icon}</p>
+                  <p className="text-xl font-black mb-1" style={{ color: t.color }}>
+                    {isLoading ? '…' : typeCounts[t.key]}
+                  </p>
+                  <p className="text-xs leading-tight" style={{ color: 'rgba(148,163,184,0.5)' }}>
+                    {t.label.replace(' ', '\n')}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* 분석 기록 */}
+        {/* ── 분석 기록 ── */}
         <div
           style={{
             background: 'rgba(255,255,255,0.02)',
@@ -193,20 +206,35 @@ export default function MyPage() {
             backdropFilter: 'blur(12px)',
           }}
         >
-          <div className="px-6 pt-5 pb-4 flex items-center gap-2">
-            <span style={{ color: '#a78bfa', fontSize: 14 }}>✦</span>
-            <span className="text-sm font-bold" style={{ color: 'rgba(196,181,253,0.8)' }}>분석 기록</span>
+          {/* 헤더 */}
+          <div className="px-5 pt-5 pb-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span style={{ color: '#a78bfa', fontSize: 14 }}>✦</span>
+              <span className="text-sm font-bold" style={{ color: 'rgba(196,181,253,0.8)' }}>분석 기록</span>
+            </div>
+            {!isLoading && totalCount > 0 && (
+              <span
+                className="text-xs px-2.5 py-1 rounded-full"
+                style={{ background: 'rgba(139,92,246,0.12)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.2)' }}
+              >
+                총 {totalCount}건
+              </span>
+            )}
           </div>
 
-          <HistoryTabs activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); loadInitial(tab); }} />
+          {/* 탭 */}
+          <HistoryTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
+          {/* 콘텐츠 */}
           <div className="p-4">
+            {/* 상세 로딩 */}
             {isDetailLoading && (
               <div className="flex justify-center py-8">
                 <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: 'rgba(167,139,250,0.3)', borderTopColor: '#a78bfa' }} />
               </div>
             )}
 
+            {/* 에러 */}
             {error && !isLoading && (
               <div className="text-center py-8">
                 <p className="text-sm mb-3" style={{ color: 'rgba(248,113,113,0.8)' }}>{error}</p>
@@ -220,6 +248,7 @@ export default function MyPage() {
               </div>
             )}
 
+            {/* 로딩 스켈레톤 */}
             {isLoading && !error && (
               <div className="flex flex-col gap-2.5">
                 {[1, 2, 3].map((i) => (
@@ -228,25 +257,25 @@ export default function MyPage() {
               </div>
             )}
 
-            {!isLoading && !error && records.length > 0 && (
+            {/* 기록 목록 */}
+            {!isLoading && !error && analyses.length > 0 && (
               <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} isLoadingMore={isLoadingMore}>
                 <div className="flex flex-col gap-2.5">
-                  {records.map((record) => (
+                  {analyses.map((summary) => (
                     <HistoryCard
-                      key={record.recordId}
-                      record={record}
+                      key={summary.id}
+                      summary={summary}
                       onDelete={(id) => setDeleteTargetId(id)}
-                      onView={(id) => fetchDetail(id)}
+                      onView={(id, type) => fetchDetail(id, type)}
                     />
                   ))}
                 </div>
               </InfiniteScroll>
             )}
 
-            {!isLoading && !error && records.length === 0 && <EmptyState />}
+            {!isLoading && !error && analyses.length === 0 && <EmptyState />}
           </div>
         </div>
-
 
       </div>
 

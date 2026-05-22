@@ -2,13 +2,12 @@
  * mypage API 래퍼 테스트 (src/lib/api/mypage.ts)
  *
  * 검증:
- * - fetchAnalysisHistory: POST /api/my-page/history + 올바른 body
- * - fetchAnalysisRecord: GET /api/my-page/history/:id
- * - deleteAnalysisRecord: DELETE /api/my-page/history/:id + retry:maxAttempts:1
+ * - fetchMyPageData: GET /api/mypage?type=&page=&size=
+ * - fetchAnalysisRecord: GET /api/mypage/analyses/{id}?type={type}
+ * - deleteAnalysisRecord: DELETE /api/my-page/history/:id
  */
 
-import { fetchAnalysisHistory, fetchAnalysisRecord, deleteAnalysisRecord } from '@/lib/api/mypage';
-import type { AnalysisHistoryRequest } from '@/lib/api/mypage';
+import { fetchMyPageData, fetchAnalysisRecord, deleteAnalysisRecord } from '@/lib/api/mypage';
 
 jest.mock('@/lib/api/client', () => ({
   apiFetch: jest.fn(),
@@ -16,58 +15,46 @@ jest.mock('@/lib/api/client', () => ({
 
 const { apiFetch } = jest.requireMock('@/lib/api/client');
 
-describe('fetchAnalysisHistory', () => {
+describe('fetchMyPageData', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('POST /api/my-page/history 로 apiFetch 호출, body 전달', async () => {
+  it('파라미터 없이 GET /api/mypage 호출', async () => {
     const mockResponse = {
-      records: [],
+      userId: 1,
+      email: 'test@example.com',
+      name: '홍길동',
+      analyses: [],
       totalCount: 0,
-      hasMore: false,
-      nextPage: null,
+      currentPage: 0,
+      totalPages: 1,
     };
     apiFetch.mockResolvedValueOnce(mockResponse);
 
-    const request: AnalysisHistoryRequest = {
-      type: 'CAREER_TIMING',
-      page: 1,
-      limit: 10,
-    };
+    const result = await fetchMyPageData();
 
-    const result = await fetchAnalysisHistory(request);
-
-    expect(apiFetch).toHaveBeenCalledWith('/api/my-page/history', {
-      method: 'POST',
-      body: request,
-      timeout: 10000,
-    });
+    expect(apiFetch).toHaveBeenCalledWith('/api/mypage', expect.objectContaining({ method: 'GET' }));
     expect(result).toEqual(mockResponse);
   });
 
-  it('다른 분석 타입(CONSULTATION)으로도 올바르게 호출', async () => {
-    apiFetch.mockResolvedValueOnce({ records: [], totalCount: 0, hasMore: false, nextPage: null });
+  it('type 파라미터 포함 시 쿼리스트링에 추가됨', async () => {
+    apiFetch.mockResolvedValueOnce({
+      userId: 1, email: 'a@b.com', name: '홍', analyses: [], totalCount: 0, currentPage: 0, totalPages: 1,
+    });
 
-    const request: AnalysisHistoryRequest = {
-      type: 'CONSULTATION',
-      page: 2,
-      limit: 5,
-    };
+    await fetchMyPageData({ type: 'TIMING', page: 0, size: 10 });
 
-    await fetchAnalysisHistory(request);
-
-    expect(apiFetch).toHaveBeenCalledWith('/api/my-page/history', expect.objectContaining({
-      body: request,
-    }));
+    const [path] = apiFetch.mock.calls[0];
+    expect(path).toContain('type=TIMING');
+    expect(path).toContain('page=0');
+    expect(path).toContain('size=10');
   });
 
   it('apiFetch 실패 시 에러 전파', async () => {
     apiFetch.mockRejectedValueOnce(new Error('서버 오류'));
 
-    await expect(
-      fetchAnalysisHistory({ type: 'CAREER_TIMING', page: 1, limit: 10 }),
-    ).rejects.toThrow('서버 오류');
+    await expect(fetchMyPageData()).rejects.toThrow('서버 오류');
   });
 });
 
@@ -76,37 +63,34 @@ describe('fetchAnalysisRecord', () => {
     jest.clearAllMocks();
   });
 
-  it('GET /api/my-page/history/:id 로 apiFetch 호출', async () => {
+  it('GET /api/mypage/analyses/{id}?type={type} 로 apiFetch 호출', async () => {
     const mockRecord = {
-      recordId: 'record-001',
-      type: 'CAREER_TIMING',
+      id: 1,
+      type: 'TIMING',
+      birthDate: '1990-05-15',
       createdAt: '2025-01-01T00:00:00Z',
-      result: {},
     };
     apiFetch.mockResolvedValueOnce(mockRecord);
 
-    const result = await fetchAnalysisRecord('record-001');
+    const result = await fetchAnalysisRecord('1', 'TIMING');
 
-    expect(apiFetch).toHaveBeenCalledWith('/api/my-page/history/record-001', {
-      method: 'GET',
-      timeout: 5000,
-    });
+    expect(apiFetch).toHaveBeenCalledWith('/api/mypage/analyses/1?type=TIMING', expect.objectContaining({ method: 'GET' }));
     expect(result).toEqual(mockRecord);
   });
 
-  it('recordId가 URL 경로에 올바르게 포함됨', async () => {
+  it('recordId와 type이 URL에 올바르게 포함됨', async () => {
     apiFetch.mockResolvedValueOnce({});
 
-    await fetchAnalysisRecord('abc-xyz-123');
+    await fetchAnalysisRecord('abc-123', 'CONSULTATION');
 
     const [path] = apiFetch.mock.calls[0];
-    expect(path).toBe('/api/my-page/history/abc-xyz-123');
+    expect(path).toBe('/api/mypage/analyses/abc-123?type=CONSULTATION');
   });
 
   it('apiFetch 실패 시 에러 전파', async () => {
     apiFetch.mockRejectedValueOnce(new Error('기록 없음'));
 
-    await expect(fetchAnalysisRecord('invalid-id')).rejects.toThrow('기록 없음');
+    await expect(fetchAnalysisRecord('invalid-id', 'TIMING')).rejects.toThrow('기록 없음');
   });
 });
 
@@ -120,11 +104,9 @@ describe('deleteAnalysisRecord', () => {
 
     await deleteAnalysisRecord('record-001');
 
-    expect(apiFetch).toHaveBeenCalledWith('/api/my-page/history/record-001', {
+    expect(apiFetch).toHaveBeenCalledWith('/api/my-page/history/record-001', expect.objectContaining({
       method: 'DELETE',
-      timeout: 10000,
-      retry: { maxAttempts: 1 },
-    });
+    }));
   });
 
   it('retry:maxAttempts:1 옵션 포함', async () => {

@@ -8,7 +8,8 @@
  * - POST /api/auth/logout     - 로그아웃
  */
 
-import { apiFetch } from './client';
+import { apiFetch, ApiError } from './client';
+import { config } from '../config/env';
 
 export interface LoginRequest {
   email: string;
@@ -17,7 +18,6 @@ export interface LoginRequest {
 
 export interface LoginResult {
   accessToken: string;
-  accessTokenExpiresIn: number;
 }
 
 export interface SignupRequest {
@@ -30,15 +30,33 @@ export interface SignupRequest {
 
 /**
  * 이메일/패스워드 로그인
- * 성공 시 accessToken 반환
+ * 백엔드가 accessToken을 응답 헤더(Authorization: Bearer ...)로 내려줌
  */
 export async function login(req: LoginRequest): Promise<LoginResult> {
-  return apiFetch<LoginResult>('/api/auth/login', {
+  const res = await fetch(`${config.apiBaseUrl}/api/auth/login`, {
     method: 'POST',
-    body: req,
-    timeout: 10000,
-    retry: { maxAttempts: 1 },
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(req),
   });
+
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    const msg = json?.error?.message ?? json?.message ?? '로그인에 실패했습니다.';
+    throw new ApiError(res.status, json?.error?.code ?? 'LOGIN_FAILED', msg, 'unknown');
+  }
+
+  // accessToken은 응답 헤더에서 읽음
+  const authHeader = res.headers.get('authorization') ?? res.headers.get('Authorization') ?? '';
+  const accessToken = authHeader.startsWith('Bearer ')
+    ? authHeader.slice(7)
+    : authHeader;
+
+  if (!accessToken) {
+    throw new ApiError(500, 'NO_TOKEN', '서버에서 인증 토큰을 받지 못했습니다.', 'unknown');
+  }
+
+  return { accessToken };
 }
 
 /**

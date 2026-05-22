@@ -28,9 +28,10 @@ interface FetchOptions {
 interface ApiResponse<T> {
   success: boolean;
   data: T | null;
-  message: string;
+  message?: string;
   errorCode?: string;
-  timestamp: string;
+  error?: { code: string; message: string; requestId?: string };
+  timestamp: string | number;
   path?: string;
 }
 
@@ -62,8 +63,8 @@ const updateLoadingState = (loading: boolean): void => {
 };
 
 /**
- * 토큰 갱신 시도 (백엔드가 /api/auth/refresh를 지원할 때만 동작)
- * 쿠키 기반 refresh token 전송 → 새 access token 쿠키 수신
+ * 토큰 갱신 시도
+ * refreshToken HttpOnly 쿠키 → 백엔드 → 새 accessToken 응답 → authStore 갱신
  */
 async function tryRefreshToken(): Promise<boolean> {
   try {
@@ -72,22 +73,39 @@ async function tryRefreshToken(): Promise<boolean> {
       method: 'POST',
       credentials: 'include',
     });
-    return response.ok;
+    if (!response.ok) return false;
+
+    const json = await response.json();
+    if (json.success && json.data?.accessToken) {
+      // 새 accessToken을 authStore에 저장
+      if (typeof window !== 'undefined') {
+        const { useAuthStore } = require('@/stores/authStore');
+        useAuthStore.getState().setAccessToken(json.data.accessToken);
+      }
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }
 }
 
 /**
- * 인증 만료 시 클라이언트 상태 초기화
+ * 인증 만료 시 클라이언트 상태 초기화 + 로그인 모달 열기
+ * refreshToken까지 만료된 경우에만 호출됨
  */
 function clearAuthAndRedirect(): void {
   if (typeof window === 'undefined') return;
   try {
     const { useAuthStore } = require('@/stores/authStore');
-    useAuthStore.getState().logout?.();
+    const store = useAuthStore.getState();
+    store.logout?.();
+    // 현재 페이지가 이미 '/'가 아닐 때만 랜딩으로 이동
+    if (window.location.pathname !== '/') {
+      window.location.href = '/';
+    }
   } catch {
-    // 스토어를 사용할 수 없으면 무시
+    window.location.href = '/';
   }
 }
 
@@ -142,6 +160,7 @@ export async function apiFetch<T>(
 
         const response = await fetch(url, {
           method,
+          credentials: 'include', // refreshToken HttpOnly 쿠키 자동 전송 (logout 등에서 필요)
           headers: {
             'Content-Type': 'application/json',
             ...authHeader,
@@ -168,9 +187,9 @@ export async function apiFetch<T>(
           // API 비즈니스 에러
           throw new ApiError(
             response.status,
-            json.errorCode || 'UNKNOWN_ERROR',
-            json.message || 'Unknown error',
-            'unknown',
+            json.error?.code || json.errorCode || 'UNKNOWN_ERROR',
+            json.error?.message || json.message || 'Unknown error',
+            json.error?.requestId || 'unknown',
           );
         }
 
@@ -195,9 +214,9 @@ export async function apiFetch<T>(
           }
           throw new ApiError(
             response.status,
-            json.errorCode || 'CLIENT_ERROR',
-            json.message || response.statusText,
-            'unknown',
+            json.error?.code || json.errorCode || 'CLIENT_ERROR',
+            json.error?.message || json.message || response.statusText,
+            json.error?.requestId || 'unknown',
           );
         }
 
