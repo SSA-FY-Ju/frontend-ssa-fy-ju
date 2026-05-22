@@ -27,7 +27,7 @@ export default function MyPage() {
   const router = useRouter();
 
   const isAuthReady = useAuthStore((s) => s.isAuthReady);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const {
     analyses, totalCount, isLoading, isLoadingMore, hasMore,
     error, activeTab, setActiveTab, loadMore, loadInitial,
@@ -35,8 +35,6 @@ export default function MyPage() {
   const { record: detailRecord, isLoading: isDetailLoading, fetchDetail, reset: resetDetail } = useHistoryDetail();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [viewingRecord, setViewingRecord] = useState<AnalysisRecord | null>(null);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
   const { deleteRecord, isDeleting } = useDeleteHistory({
     onSuccess: () => {
       setDeleteTargetId(null);
@@ -70,12 +68,6 @@ export default function MyPage() {
       />
     );
   }
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    await logout();
-    router.push('/');
-  };
 
   const initial = user?.name?.charAt(0)?.toUpperCase() ?? '?';
 
@@ -132,24 +124,6 @@ export default function MyPage() {
               )}
             </div>
 
-            <button
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-              className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all duration-200"
-              style={{ border: '1px solid rgba(239,68,68,0.25)', background: 'rgba(239,68,68,0.07)', color: 'rgba(248,113,113,0.7)' }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(239,68,68,0.15)';
-                e.currentTarget.style.color = '#f87171';
-                e.currentTarget.style.borderColor = 'rgba(239,68,68,0.45)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(239,68,68,0.07)';
-                e.currentTarget.style.color = 'rgba(248,113,113,0.7)';
-                e.currentTarget.style.borderColor = 'rgba(239,68,68,0.25)';
-              }}
-            >
-              {isLoggingOut ? '처리 중...' : '로그아웃'}
-            </button>
           </div>
 
           {/* 구분선 */}
