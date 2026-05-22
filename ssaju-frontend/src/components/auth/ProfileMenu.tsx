@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
 /**
@@ -23,6 +24,7 @@ export function ProfileMenu() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const router = useRouter();
   const [imgError, setImgError] = useState(false);
   const handleImgError = useCallback(() => setImgError(true), []);
 
@@ -31,6 +33,7 @@ export function ProfileMenu() {
   const handleLogout = async () => {
     setIsOpen(false);
     await logout();
+    router.push('/');
   };
 
   // next/image는 remotePatterns에 없는 도메인을 렌더 시점에 throw함
