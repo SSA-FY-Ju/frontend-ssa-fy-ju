@@ -61,7 +61,6 @@ export function useMyPage(): UseMyPageReturn {
           page: 0,
           size: PAGE_SIZE,
         });
-
         // 실제 응답 구조(profile)에 맞춰 유저 정보 동기화
         if (data.profile) {
           setUser({
@@ -76,9 +75,9 @@ export function useMyPage(): UseMyPageReturn {
           ...item,
           id: (item as any).analysisId || item.id, // analysisId 필드 대응
           type: (item.type === 'SAJU'
-            ? 'CONSULTATION'
-            : item.type === 'CAREER_FORTUNE'
-              ? 'TIMING'
+            ? 'TIMING'
+            : item.type === 'CAREER_CONSULTATION'
+              ? 'CONSULTATION'
               : item.type === 'COMPANY_COMPATIBILITY'
                 ? 'COMPATIBILITY'
                 : item.type) as any,
