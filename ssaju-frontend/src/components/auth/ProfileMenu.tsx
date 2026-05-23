@@ -76,14 +76,14 @@ export function ProfileMenu() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-night-700 bg-night-800 py-1 shadow-xl">
-          <div className="border-b border-night-700 px-4 py-2">
+        <div className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-night-700 bg-night-800 p-1 shadow-xl">
+          <div className="border-b border-night-700 px-3 py-2 mb-1">
             <p className="text-sm font-medium text-white">{user.name}</p>
-            {user.email && <p className="text-xs text-gray-400">{user.email}</p>}
+            {user.email && <p className="text-xs text-gray-400 truncate">{user.email}</p>}
           </div>
           <button
             onClick={handleLogout}
-            className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-night-700 transition-colors"
+            className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-night-700 rounded-lg transition-colors"
           >
             로그아웃
           </button>
