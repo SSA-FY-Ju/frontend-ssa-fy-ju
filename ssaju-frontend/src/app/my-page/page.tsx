@@ -57,6 +57,7 @@ export default function MyPage() {
     if (detailRecord) setViewingRecord(detailRecord);
   }, [detailRecord]);
 
+
   const typeCounts = useMemo(() => ({
     TIMING:        analyses.filter((a) => a.type === 'TIMING').length,
     CONSULTATION:  analyses.filter((a) => a.type === 'CONSULTATION').length,
@@ -142,7 +143,8 @@ export default function MyPage() {
                   textAlign: 'center',
                 }}
               >
-                <p className="text-2xl font-black mb-1" style={{ color: '#a78bfa' }}>
+                <p className="text-lg mb-0.5">✨</p>
+                <p className="text-xl font-black mb-1" style={{ color: '#a78bfa' }}>
                   {isLoading ? '…' : totalCount}
                 </p>
                 <p className="text-xs" style={{ color: 'rgba(167,139,250,0.6)' }}>전체</p>
