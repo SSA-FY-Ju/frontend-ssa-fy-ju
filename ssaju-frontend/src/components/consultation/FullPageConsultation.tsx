@@ -561,7 +561,7 @@ function PivotSection({ timeline, color }: { timeline: ConsultationData['careerT
             </div>
             <div style={{ paddingBottom: i < pivotPoints.length - 1 ? 18 : 0, flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{pt.month}</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{pt.month}월</span>
                 <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 8px', borderRadius: 999, background: `${s.color}18`, border: `1px solid ${s.color}44`, color: s.color }}>
                   {s.label}
                 </span>
@@ -598,7 +598,7 @@ function ForecastSection({ timeline, color }: { timeline: ConsultationData['care
                   background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
                 }}
               >
-                <span style={{ fontSize: 12, fontWeight: 700, color, minWidth: 72, flexShrink: 0 }}>{month}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color, minWidth: 72, flexShrink: 0 }}>{month}월</span>
                 <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.65 }}>{forecast.description}</p>
               </div>
             ))}
@@ -637,8 +637,8 @@ function ForecastSection({ timeline, color }: { timeline: ConsultationData['care
 function RoadmapSection({ data, color }: { data: ConsultationData; color: string }) {
   const { longTermRoadmap } = data;
   const phases = [
-    { label: '0 — 2년', phase: longTermRoadmap.phase0to2years, icon: '🌱' },
-    { label: '3 — 5년', phase: longTermRoadmap.phase3to5years, icon: '🚀' },
+    { label: '0 - 2년', phase: longTermRoadmap.phase0to2years, icon: '🌱' },
+    { label: '3 - 5년', phase: longTermRoadmap.phase3to5years, icon: '🚀' },
   ];
 
   return (
