@@ -16,6 +16,7 @@ export type AnalysisTab = 'ALL' | 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY';
 
 interface UseMyPageReturn {
   analyses: MyPageAnalysisSummary[];
+  allAnalyses: MyPageAnalysisSummary[]; // 탭 필터 전 전체 데이터 (현황 통계용)
   totalCount: number;
   isLoading: boolean;
   isLoadingMore: boolean;
@@ -45,8 +46,9 @@ function filterByTab(
 }
 
 export function useMyPage(): UseMyPageReturn {
-  // 전체 데이터 (API 응답 원본)
+  // 전체 데이터 (탭 필터 전 원본 — 현황 통계에 사용)
   const allAnalysesRef = useRef<MyPageAnalysisSummary[]>([]);
+  const [allAnalyses, setAllAnalyses] = useState<MyPageAnalysisSummary[]>([]);
 
   const [analyses, setAnalyses] = useState<MyPageAnalysisSummary[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -91,6 +93,7 @@ export function useMyPage(): UseMyPageReturn {
         }));
 
         allAnalysesRef.current = mapped;
+        setAllAnalyses(mapped);
         setAnalyses(filterByTab(mapped, tab));
         setTotalCount(data.pagination?.total || 0);
         setHasMore(data.pagination ? data.pagination.page < data.pagination.totalPages - 1 : false);
@@ -122,6 +125,7 @@ export function useMyPage(): UseMyPageReturn {
       }));
 
       allAnalysesRef.current = [...allAnalysesRef.current, ...mapped];
+      setAllAnalyses(allAnalysesRef.current);
       setAnalyses(filterByTab(allAnalysesRef.current, activeTabRef.current));
       setHasMore(data.pagination ? data.pagination.page < data.pagination.totalPages - 1 : false);
       currentPageRef.current = nextPage;
@@ -146,6 +150,7 @@ export function useMyPage(): UseMyPageReturn {
 
   return {
     analyses,
+    allAnalyses,
     totalCount,
     isLoading,
     isLoadingMore,

@@ -31,7 +31,7 @@ export default function MyPage() {
   const { user } = useAuth();
   
   const {
-    analyses, totalCount, isLoading, isLoadingMore, hasMore,
+    analyses, allAnalyses, totalCount, isLoading, isLoadingMore, hasMore,
     error, activeTab, setActiveTab, loadMore, loadInitial,
   } = useMyPage();
   
@@ -57,10 +57,10 @@ export default function MyPage() {
 
 
   const typeCounts = useMemo(() => ({
-    TIMING:        analyses.filter((a) => a.type === 'TIMING').length,
-    CONSULTATION:  analyses.filter((a) => a.type === 'CONSULTATION').length,
-    COMPATIBILITY: analyses.filter((a) => a.type === 'COMPATIBILITY').length,
-  }), [analyses]);
+    TIMING:        allAnalyses.filter((a) => a.type === 'TIMING').length,
+    CONSULTATION:  allAnalyses.filter((a) => a.type === 'CONSULTATION').length,
+    COMPATIBILITY: allAnalyses.filter((a) => a.type === 'COMPATIBILITY').length,
+  }), [allAnalyses]);
 
   if (!isAllowed) return null;
 
@@ -231,7 +231,7 @@ export default function MyPage() {
 
             {!isLoading && !error && analyses.length > 0 && (
               <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} isLoadingMore={isLoadingMore}>
-                <div className="flex flex-col gap-2.5">
+                <div key={activeTab} className="flex flex-col gap-2.5" style={{ animation: 'fadeInUp 0.22s ease' }}>
                   {analyses.map((summary) => (
                     <HistoryCard
                       key={`${summary.type}_${summary.id}`}
@@ -244,7 +244,11 @@ export default function MyPage() {
               </InfiniteScroll>
             )}
 
-            {!isLoading && !error && analyses.length === 0 && <EmptyState />}
+            {!isLoading && !error && analyses.length === 0 && (
+              <div key={activeTab} style={{ animation: 'fadeInUp 0.22s ease' }}>
+                <EmptyState />
+              </div>
+            )}
           </div>
         </div>
 
