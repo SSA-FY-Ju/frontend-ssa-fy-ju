@@ -25,7 +25,16 @@ export async function fetchMyPageData(
   headers: Record<string, string> = {},
 ): Promise<MyPageData> {
   const query = new URLSearchParams();
-  if (params.type) query.append('type', params.type);
+  
+  // 백엔드 명세에 맞춰 타입 매핑
+  if (params.type) {
+    let typeParam = params.type;
+    if (typeParam === 'TIMING') typeParam = 'CAREER_FORTUNE' as any;
+    else if (typeParam === 'CONSULTATION') typeParam = 'SAJU' as any;
+    else if (typeParam === 'COMPATIBILITY') typeParam = 'COMPANY_COMPATIBILITY' as any;
+    query.append('type', typeParam);
+  }
+  
   if (params.page !== undefined) query.append('page', params.page.toString());
   if (params.size !== undefined) query.append('size', params.size.toString());
 
@@ -47,7 +56,12 @@ export async function fetchAnalysisRecord(
   recordId: string | number,
   type: string,
 ): Promise<AnalysisRecord> {
-  return apiFetch<AnalysisRecord>(`/api/mypage/analyses/${recordId}?type=${type}`, {
+  // 백엔드 명세에 맞춰 타입 매핑
+  let typeParam = type;
+  if (typeParam === 'TIMING') typeParam = 'CAREER_FORTUNE';
+  else if (typeParam === 'CONSULTATION') typeParam = 'SAJU';
+
+  return apiFetch<AnalysisRecord>(`/api/mypage/analyses/${recordId}?type=${typeParam}`, {
     method: 'GET',
     timeout: 5000,
   });

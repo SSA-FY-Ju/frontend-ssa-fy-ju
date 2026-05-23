@@ -28,11 +28,10 @@ export default function CareerTimingPage() {
   const hasFeedback = !!sajuResultId && feedbackGivenIds.includes(`${sajuResultId}_CAREER_TIMING`);
 
   useEffect(() => {
-    if (hasHydrated && birthDate && phase === 'idle') {
+    if (isAllowed && hasHydrated && birthDate && phase === 'idle') {
       submitAnalysis(birthDate, birthTime ?? '12:00');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasHydrated, birthDate]);
+  }, [isAllowed, hasHydrated, birthDate, birthTime, phase, submitAnalysis]);
 
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [feedbackIsExitMode, setFeedbackIsExitMode] = useState(false);

@@ -36,6 +36,8 @@ export function useCareerTiming() {
   // API 호출 인자 보존 (disclaimer 완료 후 사용)
   const pendingArgsRef = useRef<{ birthDate: string; birthTime: string } | null>(null);
 
+  const user = useAuthStore((s) => s.user);
+
   /** disclaimer 완료 후 실제 API 호출 */
   const runApiCall = async () => {
     const args = pendingArgsRef.current;
@@ -47,6 +49,7 @@ export function useCareerTiming() {
       const request: CareerTimingRequest = {
         birthDate: args.birthDate,
         birthTime: args.birthTime,
+        targetName: user?.name || '사용자',
       };
 
       const data = await fetchCareerTiming(request);

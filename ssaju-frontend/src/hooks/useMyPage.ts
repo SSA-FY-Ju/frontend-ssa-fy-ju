@@ -54,18 +54,33 @@ export function useMyPage(): UseMyPageReturn {
 
     try {
       const typeParam = tab === 'ALL' ? undefined : (tab as 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY');
-      const data = await fetchMyPageData({ type: typeParam, page: 0, size: PAGE_SIZE });
-
-      // 유저 정보 동기화
-      setUser({
-        userId: data.userId.toString(),
-        name: data.name,
-        email: data.email,
+      const data = await fetchMyPageData({ 
+        type: typeParam, 
+        page: 0, 
+        size: PAGE_SIZE 
       });
 
-      setAnalyses(data.analyses);
-      setTotalCount(data.totalCount);
-      setHasMore(data.currentPage < data.totalPages - 1);
+      // 실제 응답 구조(profile)에 맞춰 유저 정보 동기화
+      if (data.profile) {
+        setUser({
+          userId: data.profile.id.toString(),
+          name: data.profile.name,
+          email: data.profile.email,
+        });
+      }
+
+      // 백엔드 타입(SAJU, CAREER_FORTUNE, COMPANY_COMPATIBILITY) -> 프런트엔드 타입(CONSULTATION, TIMING, COMPATIBILITY) 변환
+      const mappedAnalyses = (data.analyses || []).map(item => ({
+        ...item,
+        id: (item as any).analysisId || item.id, // analysisId 필드 대응
+        type: (item.type === 'SAJU' ? 'CONSULTATION' : 
+               item.type === 'CAREER_FORTUNE' ? 'TIMING' : 
+               item.type === 'COMPANY_COMPATIBILITY' ? 'COMPATIBILITY' : item.type) as any
+      }));
+
+      setAnalyses(mappedAnalyses);
+      setTotalCount(data.pagination?.total || 0);
+      setHasMore(data.pagination ? data.pagination.page < data.pagination.totalPages - 1 : false);
     } catch (err) {
       const message = err instanceof Error ? err.message : '기록을 불러오는 데 실패했습니다.';
       setError(message);
@@ -84,10 +99,22 @@ export function useMyPage(): UseMyPageReturn {
 
     try {
       const typeParam = activeTab === 'ALL' ? undefined : (activeTab as 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY');
-      const data = await fetchMyPageData({ type: typeParam, page: nextPage, size: PAGE_SIZE });
+      const data = await fetchMyPageData({ 
+        type: typeParam, 
+        page: nextPage, 
+        size: PAGE_SIZE 
+      });
 
-      setAnalyses((prev) => [...prev, ...data.analyses]);
-      setHasMore(data.currentPage < data.totalPages - 1);
+      const mappedAnalyses = (data.analyses || []).map(item => ({
+        ...item,
+        id: (item as any).analysisId || item.id,
+        type: (item.type === 'SAJU' ? 'CONSULTATION' : 
+               item.type === 'CAREER_FORTUNE' ? 'TIMING' : 
+               item.type === 'COMPANY_COMPATIBILITY' ? 'COMPATIBILITY' : item.type) as any
+      }));
+
+      setAnalyses((prev) => [...prev, ...mappedAnalyses]);
+      setHasMore(data.pagination ? data.pagination.page < data.pagination.totalPages - 1 : false);
       currentPageRef.current = nextPage;
     } catch (err) {
       const message = err instanceof Error ? err.message : '추가 기록을 불러오는 데 실패했습니다.';

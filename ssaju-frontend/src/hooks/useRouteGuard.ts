@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { toast } from 'sonner';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -33,6 +33,7 @@ export function useRouteGuard(required: boolean = true): { isAllowed: boolean } 
   const isAuthReady = useAuthStore((s) => s.isAuthReady);
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     // 허용 완료 또는 birthDate 리다이렉트 후에는 재실행하지 않음

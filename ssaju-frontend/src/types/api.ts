@@ -24,6 +24,7 @@ export interface ApiResponse<T> {
 export interface CareerTimingRequest {
   birthDate: string; // YYYY-MM-DD
   birthTime?: string; // HH:mm (기본값: 12:00)
+  targetName?: string;
 }
 
 /**
@@ -41,6 +42,7 @@ export interface CareerTimingResult {
 export interface ConsultationRequest {
   birthDate: string;
   birthTime?: string;
+  targetName?: string;
 }
 
 /** 추천 산업 */

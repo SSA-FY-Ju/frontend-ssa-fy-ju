@@ -15,6 +15,7 @@ import { useState, useRef } from 'react';
 import { fetchConsultation } from '@/lib/api/career';
 import { useConsultationStore } from '@/stores/consultationStore';
 import { useSessionStore } from '@/stores/sessionStore';
+import { useAuthStore } from '@/stores/authStore';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
 import type { ConsultationRequest } from '@/types/api';
 
@@ -27,6 +28,7 @@ export function useConsultation() {
   const pendingArgsRef = useRef<{ birthDate: string; birthTime: string } | null>(null);
 
   const consultationStore = useConsultationStore();
+  const user = useAuthStore((s) => s.user);
 
   /** disclaimer 완료 후 실제 API 호출 */
   const runApiCall = async () => {
@@ -40,6 +42,7 @@ export function useConsultation() {
       const request: ConsultationRequest = {
         birthDate: args.birthDate,
         birthTime: args.birthTime,
+        targetName: user?.name || '사용자', // 유저 이름 포함
       };
 
       const data = await fetchConsultation(request);

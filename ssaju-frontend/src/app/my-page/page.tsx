@@ -233,7 +233,7 @@ export default function MyPage() {
                 <div className="flex flex-col gap-2.5">
                   {analyses.map((summary) => (
                     <HistoryCard
-                      key={summary.id}
+                      key={`${summary.type}_${summary.id}`}
                       summary={summary}
                       onDelete={(id) => setDeleteTargetId(id)}
                       onView={(id, type) => fetchDetail(id, type)}

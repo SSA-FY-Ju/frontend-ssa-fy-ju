@@ -45,11 +45,10 @@ export default function ConsultationPage() {
   const hasFeedback = !!sajuResultId && feedbackGivenIds.includes(`${sajuResultId}_CONSULTATION`);
 
   useEffect(() => {
-    if (hasHydrated && birthDate && phase === 'idle') {
+    if (isAllowed && hasHydrated && birthDate && phase === 'idle') {
       submitConsultation(birthDate, birthTime ?? '12:00');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasHydrated]);
+  }, [isAllowed, hasHydrated, birthDate, birthTime, phase, submitConsultation]);
 
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [feedbackIsExitMode, setFeedbackIsExitMode] = useState(false);
