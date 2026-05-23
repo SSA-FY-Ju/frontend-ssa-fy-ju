@@ -4,12 +4,14 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { WithdrawalModal } from '@/components/auth/WithdrawalModal';
 
 /**
  * 로그인 후 프로필 메뉴
  */
 export function ProfileMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
 
@@ -77,17 +79,31 @@ export function ProfileMenu() {
 
       {isOpen && (
         <div className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-night-700 bg-night-800 p-1 shadow-xl">
-          <div className="border-b border-night-700 px-3 py-2 mb-1">
+          <div className="px-3 py-2">
             <p className="text-sm font-medium text-white">{user.name}</p>
             {user.email && <p className="text-xs text-gray-400 truncate">{user.email}</p>}
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-night-700 rounded-lg transition-colors"
-          >
-            로그아웃
-          </button>
+          <div className="border-t border-night-700 mt-1 pt-1">
+            <button
+              onClick={handleLogout}
+              className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-night-700 rounded-lg transition-colors"
+            >
+              로그아웃
+            </button>
+          </div>
+          <div className="border-t border-night-700 mt-1 pt-1">
+            <button
+              onClick={() => { setIsOpen(false); setIsWithdrawalOpen(true); }}
+              className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-night-700 rounded-lg transition-colors"
+            >
+              회원 탈퇴
+            </button>
+          </div>
         </div>
+      )}
+
+      {isWithdrawalOpen && (
+        <WithdrawalModal onClose={() => setIsWithdrawalOpen(false)} />
       )}
     </div>
   );

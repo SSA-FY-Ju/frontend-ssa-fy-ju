@@ -98,3 +98,16 @@ export async function logout(): Promise<void> {
     retry: { maxAttempts: 1 },
   });
 }
+
+/**
+ * 회원 탈퇴
+ * 비밀번호 확인 후 계정 삭제, refreshToken 쿠키 제거
+ */
+export async function deleteAccount(password: string): Promise<void> {
+  await apiFetch<void>('/api/users/me', {
+    method: 'DELETE',
+    body: { password },
+    timeout: 10000,
+    retry: { maxAttempts: 1 },
+  });
+}

@@ -170,6 +170,7 @@ export default function MyPage() {
               ))}
             </div>
           </div>
+
         </div>
 
         {/* ── 분석 기록 ── */}
@@ -255,6 +256,7 @@ export default function MyPage() {
         onClose={() => setDeleteTargetId(null)}
         isDeleting={isDeleting}
       />
+
     </div>
   );
 }
