@@ -63,44 +63,87 @@ const updateLoadingState = (loading: boolean): void => {
 };
 
 /**
+ * 토큰 갱신 잠금 변수 (중복 갱신 방지)
+ */
+let refreshPromise: Promise<boolean> | null = null;
+
+/**
  * 토큰 갱신 시도
  * refreshToken HttpOnly 쿠키 → 백엔드 → 새 accessToken 응답 → authStore 갱신
  */
-async function tryRefreshToken(): Promise<boolean> {
-  try {
-    const baseUrl = (config.apiBaseUrl || '').replace(/\/$/, '');
-    const response = await fetch(`${baseUrl}/api/auth/refresh`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({}),
-      credentials: 'include',
-    });
-    if (!response.ok) return false;
-
-    const json = await response.json().catch(() => ({}));
-    
-    // 1순위: 응답 헤더 Authorization
-    const authHeader = response.headers.get('authorization') ?? '';
-    let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
-
-    // 2순위: 응답 바디
-    if (!token) {
-      token = json.data?.accessToken ?? json.accessToken ?? '';
-    }
-
-    if (token) {
-      // 새 accessToken을 authStore에 저장
-      if (typeof window !== 'undefined') {
-        const { useAuthStore } = require('@/stores/authStore');
-        useAuthStore.getState().setAccessToken(token);
-      }
-      return true;
-    }
-    return false;
-  } catch (err) {
-    console.error('[tryRefreshToken] Error:', err);
-    return false;
+export async function tryRefreshToken(): Promise<boolean> {
+  if (refreshPromise) {
+    return refreshPromise;
   }
+
+  refreshPromise = (async () => {
+    try {
+      const baseUrl = (config.apiBaseUrl || '').replace(/\/$/, '');
+      const response = await fetch(`${baseUrl}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+        credentials: 'include',
+      });
+      if (!response.ok) return false;
+
+      const json = await response.json().catch(() => ({}));
+
+      // 1순위: 응답 헤더 Authorization (대소문자 무관하게 처리)
+      const authHeader = response.headers.get('authorization') ?? response.headers.get('Authorization') ?? '';
+      let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+
+      // 2순위: 응답 바디
+      if (!token) {
+        token = json.data?.accessToken ?? json.accessToken ?? '';
+      }
+
+      if (token) {
+        // 새 accessToken을 authStore에 저장 및 로그인 상태 업데이트
+        if (typeof window !== 'undefined') {
+          const { useAuthStore } = require('@/stores/authStore');
+          const store = useAuthStore.getState();
+          store.setAccessToken(token);
+          store.setIsLoggedIn(true);
+
+          // 유저 정보 동기화 시도 (마이페이지 정보 활용)
+          try {
+            const userRes = await fetch(`${baseUrl}/api/mypage`, {
+              headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              credentials: 'include'
+            });
+            
+            if (userRes.ok) {
+              const userJson = await userRes.json();
+
+              // 실제 로그 데이터 구조에 따른 유저 정보 추출 (data.profile.id, name, email)
+              const profile = userJson.data?.profile;
+              if (profile && (profile.id !== undefined && profile.id !== null)) {
+                store.setUser({
+                  userId: String(profile.id),
+                  name: profile.name || '사용자',
+                  email: profile.email || ''
+                });
+              }
+            }
+          } catch (userErr) {
+            // 동기화 실패 시 무시
+          }
+        }
+        return true;
+      }
+      return false;
+    } catch (err) {
+      return false;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
 
 
@@ -151,9 +194,6 @@ export async function apiFetch<T>(
           // 스토어 접근 실패 시 무시
         }
 
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[API →] ${method} ${url}`, body ?? '');
-        }
 
         const response = await fetch(url, {
           method,
@@ -173,9 +213,6 @@ export async function apiFetch<T>(
         if (response.ok) {
           const json = (await response.json()) as ApiResponse<T>;
 
-          if (process.env.NODE_ENV === 'development') {
-            console.log(`[API ←] ${method} ${url} ${response.status}`, json);
-          }
 
           if (json.success) {
             return json.data as T;
@@ -206,9 +243,6 @@ export async function apiFetch<T>(
         // 4xx 에러 (재시도 하지 않음)
         if (response.status >= 400 && response.status < 500) {
           const json = (await response.json()) as ApiResponse<T>;
-          if (process.env.NODE_ENV === 'development') {
-            console.warn(`[API ←] ${method} ${url} ${response.status}`, json);
-          }
           throw new ApiError(
             response.status,
             json.error?.code || json.errorCode || 'CLIENT_ERROR',
@@ -231,10 +265,6 @@ export async function apiFetch<T>(
         if (isRetryable && attempt < maxAttempts - 1) {
           // 지수 백오프
           const backoffMs = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
-          console.warn(
-            `[apiFetch] Attempt ${attempt + 1} failed, retrying in ${backoffMs}ms...`,
-            error,
-          );
           await new Promise((resolve) => setTimeout(resolve, backoffMs));
           continue;
         }

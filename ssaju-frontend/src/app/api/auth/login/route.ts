@@ -26,7 +26,6 @@ export async function POST(req: NextRequest) {
     if (backendRefreshToken) {
       const cookieValue = `refreshToken=${backendRefreshToken}; HttpOnly; Path=/; SameSite=Lax`;
       nextResponse.headers.append('set-cookie', cookieValue);
-      console.log('[login] Refresh token header converted to cookie');
     }
 
     // 3. 기존 Set-Cookie 헤더들도 정제하여 전달

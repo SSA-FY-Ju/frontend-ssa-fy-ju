@@ -22,6 +22,7 @@ export interface MyPageRequest {
  */
 export async function fetchMyPageData(
   params: MyPageRequest = {},
+  headers: Record<string, string> = {},
 ): Promise<MyPageData> {
   const query = new URLSearchParams();
   if (params.type) query.append('type', params.type);
@@ -34,6 +35,7 @@ export async function fetchMyPageData(
   return apiFetch<MyPageData>(path, {
     method: 'GET',
     timeout: 10000,
+    headers,
   });
 }
 

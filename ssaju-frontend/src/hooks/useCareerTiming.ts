@@ -50,7 +50,6 @@ export function useCareerTiming() {
       };
 
       const data = await fetchCareerTiming(request);
-      console.log('[관운 분석] API 응답:', data);
       setResult(data);
       setPhase('result');
 

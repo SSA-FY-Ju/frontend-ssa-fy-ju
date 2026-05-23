@@ -24,7 +24,6 @@ export async function POST(req: NextRequest) {
 
     if (refreshToken) {
       headers['Refresh-Token'] = refreshToken;
-      console.log('[refresh] Using Refresh-Token header as per spec');
     }
 
     const res = await fetch(`${BACKEND_URL}/api/auth/refresh`, {
@@ -32,8 +31,6 @@ export async function POST(req: NextRequest) {
       headers,
       body: JSON.stringify({}),
     });
-
-    console.log('[refresh] backend status:', res.status);
 
     // 3. 백엔드 응답 헤더에서 새 토큰들 추출
     const newAccessToken = res.headers.get('authorization') ?? res.headers.get('Authorization') ?? '';
@@ -52,7 +49,6 @@ export async function POST(req: NextRequest) {
       // 보안 속성 정제 및 경로 강제
       const cookieValue = `refreshToken=${newRefreshToken}; HttpOnly; Path=/; SameSite=Lax`;
       nextResponse.headers.append('set-cookie', cookieValue);
-      console.log('[refresh] New refresh token set as cookie');
     }
 
     // 백엔드에서 추가로 내려준 Set-Cookie가 있다면 함께 전달 (중복 방지 로직 포함 권장)

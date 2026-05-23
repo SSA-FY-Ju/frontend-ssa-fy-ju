@@ -84,7 +84,9 @@ export function Header() {
             마이페이지
           </button>
         ) : (
-          isLoggedIn ? <ProfileMenu /> : <LoginButton />
+          <div className="flex items-center gap-4">
+            {isLoggedIn ? <ProfileMenu /> : <LoginButton />}
+          </div>
         )}
       </div>
     </header>

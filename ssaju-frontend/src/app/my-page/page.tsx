@@ -47,10 +47,11 @@ export default function MyPage() {
 
   useEffect(() => {
     // 세션 확인이 끝나고 토큰이 있을 때만 데이터를 불러옴 (무분별한 401 방지)
-    if (isAuthReady && user && accessToken) {
+    // user 정보가 없더라도 accessToken이 있다면 loadInitial이 호출되어 정보를 동기화함
+    if (isAuthReady && accessToken) {
       loadInitial('ALL');
     }
-  }, [isAuthReady, user, accessToken, loadInitial]);
+  }, [isAuthReady, accessToken, loadInitial]);
 
   useEffect(() => {
     if (detailRecord) setViewingRecord(detailRecord);

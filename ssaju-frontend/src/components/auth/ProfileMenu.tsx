@@ -28,7 +28,7 @@ export function ProfileMenu() {
   const [imgError, setImgError] = useState(false);
   const handleImgError = useCallback(() => setImgError(true), []);
 
-  if (!user) return null;
+  if (!user || !user.name) return null;
 
   const handleLogout = async () => {
     setIsOpen(false);
@@ -59,12 +59,12 @@ export function ProfileMenu() {
       >
         {showAvatar ? (
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-star-500 text-sm font-bold text-night-900">
-            {user.name.charAt(0)}
+            {user.name?.charAt(0) || '?'}
           </div>
         ) : (
           <Image
             src={user.profileImage!}
-            alt={user.name}
+            alt={user.name || '사용자'}
             width={32}
             height={32}
             className="rounded-full object-cover"

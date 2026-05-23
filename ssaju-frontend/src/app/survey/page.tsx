@@ -11,7 +11,6 @@ export default function SurveyPage() {
 
   const handleSubmit = () => {
     // POST to API
-    console.log('Feedback submitted:', { satisfaction, feedback });
     setSubmitted(true);
 
     // Redirect after 2 seconds

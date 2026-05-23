@@ -46,14 +46,18 @@ export function useRouteGuard(required: boolean = true): { isAllowed: boolean } 
 
     if (!_hasHydrated || !authHydrated || !isAuthReady) return;
 
+    // [핵심 수정] isAuthReady가 완료된 시점에서 실제 isLoggedIn 상태를 엄격하게 체크
     if (!isLoggedIn) {
-      // 확실하게 비로그인인 경우에만 처리
       if (settledRef.current !== 'login-redirect') {
         settledRef.current = 'login-redirect';
-        console.log('[useRouteGuard] User not logged in. Redirecting to landing.');
-        openLoginModal();
-        router.push('/');
+        
+        // 메인 페이지가 아니면 리다이렉트 및 로그인 모달 유도
+        if (pathname !== '/') {
+          router.push('/');
+          setTimeout(() => openLoginModal(), 100);
+        }
       }
+      setIsAllowed(false);
       return;
     }
 

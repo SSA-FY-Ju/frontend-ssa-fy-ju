@@ -28,8 +28,8 @@ export function useAuthGuard(required: boolean = true): { isAllowed: boolean } {
   const pathname = usePathname();
 
   useEffect(() => {
-    // 허용 완료 후에는 재실행하지 않음
-    if (settledRef.current === 'allowed') return;
+    // 허용 완료 후에는 재실행하지 않음 (단, 로그인 상태가 유지되는 동안만)
+    if (settledRef.current === 'allowed' && isLoggedIn) return;
 
     if (!required) {
       settledRef.current = 'allowed';
@@ -37,21 +37,16 @@ export function useAuthGuard(required: boolean = true): { isAllowed: boolean } {
       return;
     }
     if (!_hasHydrated || !isAuthReady) return;
-    if (pathname === '/') {
-      settledRef.current = 'allowed';
-      setIsAllowed(true);
-      return;
-    }
 
+    // [핵심 수정] 인증 확인 프로세스 완료 후 실제 로그인 여부 엄격 체크
     if (!isLoggedIn) {
-      // 확실하게 비로그인인 경우에만 처리 (isAuthReady=true인 상태에서 isLoggedIn=false)
-      if (settledRef.current !== 'redirected') {
+      if (pathname !== '/' && settledRef.current !== 'redirected') {
         settledRef.current = 'redirected';
-        console.log('[useAuthGuard] User not logged in. Redirecting to landing.');
-        openLoginModal();
         router.push('/');
+        setTimeout(() => openLoginModal(), 100);
       }
-      return; // isAllowed = false 유지
+      setIsAllowed(false);
+      return;
     }
 
     // 로그인 상태 확인 완료 → 허용

@@ -28,7 +28,7 @@ export function Providers({ children }: { children: ReactNode }): React.ReactEle
           for (const registration of registrations) {
             if (registration.active?.scriptURL.includes('mockServiceWorker.js')) {
               registration.unregister().then((success) => {
-                if (success) console.log('[MSW] Service Worker unregistered successfully.');
+                // 해제 성공 시 별도 로그 남기지 않음
               });
             }
           }

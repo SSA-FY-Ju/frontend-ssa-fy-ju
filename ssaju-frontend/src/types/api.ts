@@ -335,16 +335,23 @@ export interface MyPageAnalysisSummary {
 }
 
 /**
- * 마이페이지 데이터 (API 명세 기준)
+ * 마이페이지 데이터 (실제 응답 기준)
  */
 export interface MyPageData {
-  userId: number;
-  email: string;
-  name: string;
+  profile: {
+    id: number;
+    name: string;
+    email: string;
+    createdAt: string;
+    lastLoginAt: string;
+  };
   analyses: MyPageAnalysisSummary[];
-  totalCount: number;
-  currentPage: number;
-  totalPages: number;
+  pagination: {
+    page: number;
+    size: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 /**

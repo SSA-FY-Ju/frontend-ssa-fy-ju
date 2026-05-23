@@ -5,6 +5,7 @@ import { useAnalysisStore } from '@/stores/analysisStore';
 import { useConsultationStore } from '@/stores/consultationStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import { login as loginApi, signup as signupApi, logout as logoutApi } from '@/lib/api/auth';
+import { fetchMyPageData } from '@/lib/api/mypage';
 import type { LoginRequest, SignupRequest } from '@/lib/api/auth';
 
 /**
@@ -23,15 +24,32 @@ export function useAuth() {
     authStore.setLoginError(null);
     try {
       const result = await loginApi(req);
-      authStore.setAccessToken(result.accessToken);
-      // 로그인 직후에는 이메일 기반으로 최소 유저 정보만 세팅
-      // 실제 name/userId 등은 마이페이지 진입 시 fetchMyPageData()가 동기화함
-      authStore.setUser({
-        userId: 'unknown',
-        name: req.email.split('@')[0],
-        email: req.email,
-      });
+      const token = result.accessToken;
+      authStore.setAccessToken(token);
       authStore.setIsLoggedIn(true);
+
+      // [핵심 추가] 로그인 직후 즉시 마이페이지 정보를 가져와 유저 정보 동기화
+      try {
+        const myPageData = await fetchMyPageData(
+          { page: 0, size: 1 },
+          { Authorization: `Bearer ${token}` }
+        );
+
+        if (myPageData?.profile) {
+          authStore.setUser({
+            userId: String(myPageData.profile.id),
+            name: myPageData.profile.name,
+            email: myPageData.profile.email,
+          });
+        }
+      } catch (userErr) {
+        // 실패하더라도 토큰이 있으므로 기본 정보는 세팅
+        authStore.setUser({
+          userId: 'unknown',
+          name: req.email.split('@')[0],
+          email: req.email,
+        });
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '로그인 중 오류가 발생했습니다.';
       authStore.setLoginError(message);

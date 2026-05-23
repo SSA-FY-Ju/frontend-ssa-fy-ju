@@ -8,29 +8,41 @@ export async function POST(req: NextRequest) {
     const authorization = req.headers.get('authorization') ?? '';
     const cookieHeader = req.headers.get('cookie') ?? '';
 
+    // 백엔드 명세에 맞춰 refreshToken 추출 및 헤더 추가
+    const cookies = cookieHeader.split(';').map(c => c.trim());
+    const refreshTokenCookie = cookies.find(c => c.startsWith('refreshToken=') || c.startsWith('refresh_token='));
+    const refreshToken = refreshTokenCookie?.split('=')[1];
+
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(authorization ? { Authorization: authorization } : {}),
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
+    };
+
+    if (refreshToken) {
+      headers['Refresh-Token'] = refreshToken;
+    }
+
     const res = await fetch(`${BACKEND_URL}/api/auth/logout`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(authorization ? { Authorization: authorization } : {}),
-        ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-      },
+      headers,
     });
 
     const data = await res.json().catch(() => ({}));
     const nextResponse = NextResponse.json(data, { status: res.status });
 
-    // 백엔드가 refreshToken 쿠키를 삭제하는 Set-Cookie 헤더를 전달
+    // 백엔드에서 온 모든 Set-Cookie 헤더를 브라우저로 전달
+    // 특히 토큰 만료(Max-Age=0) 쿠키가 포함되어야 함
     const setCookies = typeof res.headers.getSetCookie === 'function'
       ? res.headers.getSetCookie()
       : (res.headers.get('set-cookie') ? [res.headers.get('set-cookie')!] : []);
 
     setCookies.forEach((cookie) => {
-      // 삭제 쿠키라도 속성 정리를 해주는 것이 안전
-      const processed = cookie
-        .replace(/Domain=[^;]+(; )?/gi, '')
-        .replace(/Secure(; )?/gi, '');
-      
+      // 보안상 SameSite=Lax 및 Path=/ 보장
+      let processed = cookie;
+      if (!cookie.toLowerCase().includes('path=')) {
+        processed += '; Path=/';
+      }
       nextResponse.headers.append('set-cookie', processed);
     });
 

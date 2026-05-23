@@ -51,7 +51,6 @@ export async function GET(request: NextRequest) {
     if (backendRefreshToken) {
       const cookieValue = `refreshToken=${backendRefreshToken}; HttpOnly; Path=/; SameSite=Lax`;
       redirectResponse.headers.append('set-cookie', cookieValue);
-      console.log('[callback] Refresh token header converted to cookie');
     }
 
     // 2. 백엔드가 설정하는 다른 쿠키들도 전달
