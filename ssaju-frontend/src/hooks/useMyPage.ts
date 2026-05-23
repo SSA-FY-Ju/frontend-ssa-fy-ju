@@ -3,10 +3,8 @@
 /**
  * 마이페이지 분석 기록 목록 훅
  *
- * GET /api/mypage 응답 구조 기반
- * - analyses: MyPageAnalysisSummary[] 직접 반환 (변환 없음)
- * - totalCount, totalPages 노출
- * - 탭별 필터 (CONSULTATION / TIMING / COMPATIBILITY / ALL)
+ * - API는 전체(ALL) 1회만 호출
+ * - 탭 전환은 클라이언트에서 필터링 (추가 API 호출 없음)
  */
 
 import { useState, useCallback, useRef } from 'react';
@@ -31,7 +29,25 @@ interface UseMyPageReturn {
 
 const PAGE_SIZE = 10;
 
+function mapType(rawType: string): 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY' {
+  if (rawType === 'SAJU') return 'TIMING';
+  if (rawType === 'CAREER_CONSULTATION') return 'CONSULTATION';
+  if (rawType === 'COMPANY_COMPATIBILITY') return 'COMPATIBILITY';
+  return rawType as 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY';
+}
+
+function filterByTab(
+  all: MyPageAnalysisSummary[],
+  tab: AnalysisTab,
+): MyPageAnalysisSummary[] {
+  if (tab === 'ALL') return all;
+  return all.filter((a) => a.type === tab);
+}
+
 export function useMyPage(): UseMyPageReturn {
+  // 전체 데이터 (API 응답 원본)
+  const allAnalysesRef = useRef<MyPageAnalysisSummary[]>([]);
+
   const [analyses, setAnalyses] = useState<MyPageAnalysisSummary[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -44,6 +60,7 @@ export function useMyPage(): UseMyPageReturn {
 
   const currentPageRef = useRef(0);
   const isLoadingMoreRef = useRef(false);
+  const activeTabRef = useRef<AnalysisTab>('ALL');
 
   const loadInitial = useCallback(
     async (tab: AnalysisTab) => {
@@ -51,17 +68,14 @@ export function useMyPage(): UseMyPageReturn {
       setError(null);
       setAnalyses([]);
       setTotalCount(0);
+      allAnalysesRef.current = [];
       currentPageRef.current = 0;
+      activeTabRef.current = tab;
 
       try {
-        const typeParam =
-          tab === 'ALL' ? undefined : (tab as 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY');
-        const data = await fetchMyPageData({
-          type: typeParam,
-          page: 0,
-          size: PAGE_SIZE,
-        });
-        // 실제 응답 구조(profile)에 맞춰 유저 정보 동기화
+        // type 파라미터 없이 전체 조회
+        const data = await fetchMyPageData({ page: 0, size: PAGE_SIZE });
+
         if (data.profile) {
           setUser({
             userId: data.profile.id.toString(),
@@ -70,20 +84,14 @@ export function useMyPage(): UseMyPageReturn {
           });
         }
 
-        // 백엔드 타입(SAJU, CAREER_FORTUNE, COMPANY_COMPATIBILITY) -> 프런트엔드 타입(CONSULTATION, TIMING, COMPATIBILITY) 변환
-        const mappedAnalyses = (data.analyses || []).map((item) => ({
+        const mapped = (data.analyses || []).map((item) => ({
           ...item,
-          id: (item as any).analysisId || item.id, // analysisId 필드 대응
-          type: (item.type === 'SAJU'
-            ? 'TIMING'
-            : item.type === 'CAREER_CONSULTATION'
-              ? 'CONSULTATION'
-              : item.type === 'COMPANY_COMPATIBILITY'
-                ? 'COMPATIBILITY'
-                : item.type) as any,
+          id: (item as any).analysisId || item.id,
+          type: mapType((item as any).type as string),
         }));
 
-        setAnalyses(mappedAnalyses);
+        allAnalysesRef.current = mapped;
+        setAnalyses(filterByTab(mapped, tab));
         setTotalCount(data.pagination?.total || 0);
         setHasMore(data.pagination ? data.pagination.page < data.pagination.totalPages - 1 : false);
       } catch (err) {
@@ -105,29 +113,16 @@ export function useMyPage(): UseMyPageReturn {
     const nextPage = currentPageRef.current + 1;
 
     try {
-      const typeParam =
-        activeTab === 'ALL'
-          ? undefined
-          : (activeTab as 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY');
-      const data = await fetchMyPageData({
-        type: typeParam,
-        page: nextPage,
-        size: PAGE_SIZE,
-      });
+      const data = await fetchMyPageData({ page: nextPage, size: PAGE_SIZE });
 
-      const mappedAnalyses = (data.analyses || []).map((item) => ({
+      const mapped = (data.analyses || []).map((item) => ({
         ...item,
         id: (item as any).analysisId || item.id,
-        type: (item.type === 'SAJU'
-          ? 'CONSULTATION'
-          : item.type === 'CAREER_FORTUNE'
-            ? 'TIMING'
-            : item.type === 'COMPANY_COMPATIBILITY'
-              ? 'COMPATIBILITY'
-              : item.type) as any,
+        type: mapType((item as any).type as string),
       }));
 
-      setAnalyses((prev) => [...prev, ...mappedAnalyses]);
+      allAnalysesRef.current = [...allAnalysesRef.current, ...mapped];
+      setAnalyses(filterByTab(allAnalysesRef.current, activeTabRef.current));
       setHasMore(data.pagination ? data.pagination.page < data.pagination.totalPages - 1 : false);
       currentPageRef.current = nextPage;
     } catch (err) {
@@ -137,14 +132,16 @@ export function useMyPage(): UseMyPageReturn {
       setIsLoadingMore(false);
       isLoadingMoreRef.current = false;
     }
-  }, [activeTab, hasMore]);
+  }, [hasMore]);
 
   const setActiveTab = useCallback(
     (tab: AnalysisTab) => {
       setActiveTabState(tab);
-      loadInitial(tab);
+      activeTabRef.current = tab;
+      // API 재호출 없이 기존 데이터에서 필터링
+      setAnalyses(filterByTab(allAnalysesRef.current, tab));
     },
-    [loadInitial],
+    [],
   );
 
   return {
