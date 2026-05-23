@@ -9,42 +9,66 @@ const BACKEND_URL = process.env.BACKEND_URL!;
  * 백엔드 → Next.js → 브라우저 방향으로 Set-Cookie(새 refreshToken)를 전달
  */
 export async function POST(req: NextRequest) {
-  const cookieHeader = req.headers.get('cookie') ?? '';
+  try {
+    const cookieHeader = req.headers.get('cookie') ?? '';
+    
+    // 1. 브라우저 쿠키에서 refreshToken 추출
+    const cookies = cookieHeader.split(';').map(c => c.trim());
+    const refreshTokenCookie = cookies.find(c => c.startsWith('refreshToken=') || c.startsWith('refresh_token='));
+    const refreshToken = refreshTokenCookie?.split('=')[1];
 
-  console.log('[refresh] incoming cookies:', cookieHeader ? cookieHeader.substring(0, 80) + '...' : '(없음)');
-
-  const res = await fetch(`${BACKEND_URL}/api/auth/refresh`, {
-    method: 'POST',
-    headers: {
+    // 2. 백엔드 명세에 맞춰 헤더 설정 (Refresh-Token: {token})
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
-    },
-  });
+    };
 
-  console.log('[refresh] backend status:', res.status);
+    if (refreshToken) {
+      headers['Refresh-Token'] = refreshToken;
+      console.log('[refresh] Using Refresh-Token header as per spec');
+    }
 
-  const authHeader = res.headers.get('authorization') ?? res.headers.get('Authorization') ?? '';
-  console.log('[refresh] Authorization header:', authHeader ? '있음' : '없음');
+    const res = await fetch(`${BACKEND_URL}/api/auth/refresh`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({}),
+    });
 
-  const data = await res.json();
-  const nextResponse = NextResponse.json(data, { status: res.status });
+    console.log('[refresh] backend status:', res.status);
 
-  // 백엔드가 Authorization 헤더로 토큰을 내려줄 경우 브라우저로 전달
-  if (authHeader) {
-    nextResponse.headers.set('authorization', authHeader);
+    // 3. 백엔드 응답 헤더에서 새 토큰들 추출
+    const newAccessToken = res.headers.get('authorization') ?? res.headers.get('Authorization') ?? '';
+    const newRefreshToken = res.headers.get('refresh-token') ?? res.headers.get('Refresh-Token') ?? '';
+    
+    const data = await res.json().catch(() => ({}));
+    const nextResponse = NextResponse.json(data, { status: res.status });
+
+    // 4. 새 AccessToken 브라우저로 전달
+    if (newAccessToken) {
+      nextResponse.headers.set('authorization', newAccessToken);
+    }
+
+    // 5. 새 RefreshToken을 HttpOnly 쿠키로 설정하여 브라우저로 전달
+    if (newRefreshToken) {
+      // 보안 속성 정제 및 경로 강제
+      const cookieValue = `refreshToken=${newRefreshToken}; HttpOnly; Path=/; SameSite=Lax`;
+      nextResponse.headers.append('set-cookie', cookieValue);
+      console.log('[refresh] New refresh token set as cookie');
+    }
+
+    // 백엔드에서 추가로 내려준 Set-Cookie가 있다면 함께 전달 (중복 방지 로직 포함 권장)
+    const otherSetCookies = typeof res.headers.getSetCookie === 'function' 
+      ? res.headers.getSetCookie() 
+      : [];
+    
+    otherSetCookies.forEach(cookie => {
+      if (!cookie.startsWith('refreshToken=')) {
+        nextResponse.headers.append('set-cookie', cookie);
+      }
+    });
+
+    return nextResponse;
+  } catch (err) {
+    console.error('[API Refresh Proxy] Error:', err);
+    return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });
   }
-
-  // 갱신된 refreshToken 쿠키를 브라우저로 전달
-  // getSetCookie()가 없는 환경 대비 fallback 포함
-  const setCookies: string[] =
-    typeof res.headers.getSetCookie === 'function'
-      ? res.headers.getSetCookie()
-      : (res.headers.get('set-cookie') ? [res.headers.get('set-cookie')!] : []);
-
-  console.log('[refresh] set-cookie count:', setCookies.length);
-  setCookies.forEach((cookie) => {
-    nextResponse.headers.append('set-cookie', cookie);
-  });
-
-  return nextResponse;
 }

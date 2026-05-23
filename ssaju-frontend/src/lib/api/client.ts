@@ -68,46 +68,41 @@ const updateLoadingState = (loading: boolean): void => {
  */
 async function tryRefreshToken(): Promise<boolean> {
   try {
-    const baseUrl = config.apiBaseUrl;
+    const baseUrl = (config.apiBaseUrl || '').replace(/\/$/, '');
     const response = await fetch(`${baseUrl}/api/auth/refresh`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
       credentials: 'include',
     });
     if (!response.ok) return false;
 
-    const json = await response.json();
-    if (json.success && json.data?.accessToken) {
+    const json = await response.json().catch(() => ({}));
+    
+    // 1순위: 응답 헤더 Authorization
+    const authHeader = response.headers.get('authorization') ?? '';
+    let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+
+    // 2순위: 응답 바디
+    if (!token) {
+      token = json.data?.accessToken ?? json.accessToken ?? '';
+    }
+
+    if (token) {
       // 새 accessToken을 authStore에 저장
       if (typeof window !== 'undefined') {
         const { useAuthStore } = require('@/stores/authStore');
-        useAuthStore.getState().setAccessToken(json.data.accessToken);
+        useAuthStore.getState().setAccessToken(token);
       }
       return true;
     }
     return false;
-  } catch {
+  } catch (err) {
+    console.error('[tryRefreshToken] Error:', err);
     return false;
   }
 }
 
-/**
- * 인증 만료 시 클라이언트 상태 초기화 + 로그인 모달 열기
- * refreshToken까지 만료된 경우에만 호출됨
- */
-function clearAuthAndRedirect(): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const { useAuthStore } = require('@/stores/authStore');
-    const store = useAuthStore.getState();
-    store.logout?.();
-    // 현재 페이지가 이미 '/'가 아닐 때만 랜딩으로 이동
-    if (window.location.pathname !== '/') {
-      window.location.href = '/';
-    }
-  } catch {
-    window.location.href = '/';
-  }
-}
 
 /**
  * 중앙 API fetch 래퍼
@@ -128,8 +123,10 @@ export async function apiFetch<T>(
     headers = {},
   } = options;
 
-  const baseUrl = config.apiBaseUrl;
-  const url = `${baseUrl}${path}`;
+  const baseUrl = config.apiBaseUrl || '';
+  // 경로가 /로 시작하고 baseUrl이 /로 끝나면 중복 방지
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const url = `${baseUrl.replace(/\/$/, '')}${cleanPath}`;
 
   updateLoadingState(true);
 
@@ -197,12 +194,12 @@ export async function apiFetch<T>(
         if (response.status === 401 && attempt === 0) {
           const refreshed = await tryRefreshToken();
           if (refreshed) {
-            // 재시도 (attempt 루프는 continue로 돌리지 않고 break 후 재귀 호출)
+            // 재시도
             lastError = new Error('TOKEN_REFRESHED');
             continue;
           }
-          // 갱신 실패 → 로그아웃 처리
-          clearAuthAndRedirect();
+          // [수정] 갱신 실패 시 자동으로 모달을 띄우지 않음
+          // 대신 ApiError(401)를 던져서 컴포넌트가 처리하게 함
           throw new ApiError(401, 'UNAUTHORIZED', '인증이 만료되었습니다. 다시 로그인해주세요.', 'unknown');
         }
 

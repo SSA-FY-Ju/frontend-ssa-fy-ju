@@ -27,11 +27,14 @@ export default function MyPage() {
   const router = useRouter();
 
   const isAuthReady = useAuthStore((s) => s.isAuthReady);
+  const accessToken = useAuthStore((s) => s.accessToken);
   const { user } = useAuth();
+  
   const {
     analyses, totalCount, isLoading, isLoadingMore, hasMore,
     error, activeTab, setActiveTab, loadMore, loadInitial,
   } = useMyPage();
+  
   const { record: detailRecord, isLoading: isDetailLoading, fetchDetail, reset: resetDetail } = useHistoryDetail();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [viewingRecord, setViewingRecord] = useState<AnalysisRecord | null>(null);
@@ -43,15 +46,16 @@ export default function MyPage() {
   });
 
   useEffect(() => {
-    if (isAuthReady && user) loadInitial('ALL');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthReady, user]);
+    // 세션 확인이 끝나고 토큰이 있을 때만 데이터를 불러옴 (무분별한 401 방지)
+    if (isAuthReady && user && accessToken) {
+      loadInitial('ALL');
+    }
+  }, [isAuthReady, user, accessToken, loadInitial]);
 
   useEffect(() => {
     if (detailRecord) setViewingRecord(detailRecord);
   }, [detailRecord]);
 
-  // 로드된 데이터에서 타입별 카운트
   const typeCounts = useMemo(() => ({
     TIMING:        analyses.filter((a) => a.type === 'TIMING').length,
     CONSULTATION:  analyses.filter((a) => a.type === 'CONSULTATION').length,
@@ -99,10 +103,8 @@ export default function MyPage() {
             overflow: 'hidden',
           }}
         >
-          {/* 배경 글로우 */}
           <div style={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
-          {/* 유저 정보 행 */}
           <div className="flex items-center gap-4">
             <div
               style={{
@@ -123,17 +125,13 @@ export default function MyPage() {
                 <p className="text-xs mt-0.5 truncate" style={{ color: 'rgba(196,181,253,0.45)' }}>{user.email}</p>
               )}
             </div>
-
           </div>
 
-          {/* 구분선 */}
           <div style={{ borderTop: '1px solid rgba(139,92,246,0.15)', margin: '20px 0 16px' }} />
 
-          {/* 분석 현황 — totalCount + 타입별 */}
           <div>
             <p className="text-xs mb-3 font-medium" style={{ color: 'rgba(167,139,250,0.55)' }}>나의 분석 현황</p>
             <div className="grid grid-cols-4 gap-2">
-              {/* 전체 */}
               <div
                 style={{
                   background: 'rgba(139,92,246,0.1)',
@@ -149,7 +147,6 @@ export default function MyPage() {
                 <p className="text-xs" style={{ color: 'rgba(167,139,250,0.6)' }}>전체</p>
               </div>
 
-              {/* 타입별 */}
               {STAT_TYPES.map((t) => (
                 <div
                   key={t.key}
@@ -184,7 +181,6 @@ export default function MyPage() {
             backdropFilter: 'blur(12px)',
           }}
         >
-          {/* 헤더 */}
           <div className="px-5 pt-5 pb-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span style={{ color: '#a78bfa', fontSize: 14 }}>✦</span>
@@ -200,19 +196,16 @@ export default function MyPage() {
             )}
           </div>
 
-          {/* 탭 */}
           <HistoryTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
-          {/* 콘텐츠 */}
           <div className="p-4">
-            {/* 상세 로딩 */}
             {isDetailLoading && (
               <div className="flex justify-center py-8">
                 <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: 'rgba(167,139,250,0.3)', borderTopColor: '#a78bfa' }} />
               </div>
             )}
 
-            {/* 에러 */}
+            {/* 에러 표시: 단순히 에러 메시지만 노출 (사용자의 요구사항 준수) */}
             {error && !isLoading && (
               <div className="text-center py-8">
                 <p className="text-sm mb-3" style={{ color: 'rgba(248,113,113,0.8)' }}>{error}</p>
@@ -226,7 +219,6 @@ export default function MyPage() {
               </div>
             )}
 
-            {/* 로딩 스켈레톤 */}
             {isLoading && !error && (
               <div className="flex flex-col gap-2.5">
                 {[1, 2, 3].map((i) => (
@@ -235,7 +227,6 @@ export default function MyPage() {
               </div>
             )}
 
-            {/* 기록 목록 */}
             {!isLoading && !error && analyses.length > 0 && (
               <InfiniteScroll onLoadMore={loadMore} hasMore={hasMore} isLoadingMore={isLoadingMore}>
                 <div className="flex flex-col gap-2.5">

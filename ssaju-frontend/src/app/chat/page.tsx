@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import ChatInput from '@/components/landing/ChatInput';
@@ -8,11 +8,7 @@ import type { PageState } from '@/components/landing/types';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useSessionStore } from '@/stores/sessionStore';
 
-/**
- * 채팅형 입력 페이지
- * 생년월일과 시간을 대화 형식으로 입력받습니다
- */
-export default function ChatPage() {
+function ChatPageInner() {
   const { isAllowed } = useAuthGuard(true);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -38,4 +34,16 @@ export default function ChatPage() {
 
   if (!isAllowed || !selectedService) return null;
   return <ChatInput onStateChange={handleStateChange} />;
+}
+
+/**
+ * 채팅형 입력 페이지
+ * 생년월일과 시간을 대화 형식으로 입력받습니다
+ */
+export default function ChatPage() {
+  return (
+    <Suspense>
+      <ChatPageInner />
+    </Suspense>
+  );
 }

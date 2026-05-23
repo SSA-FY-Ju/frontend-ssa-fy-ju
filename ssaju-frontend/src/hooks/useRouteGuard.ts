@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useAuthStore } from '@/stores/authStore';
@@ -21,7 +21,11 @@ import { useAuthStore } from '@/stores/authStore';
  */
 export function useRouteGuard(required: boolean = true): { isAllowed: boolean } {
   const [isAllowed, setIsAllowed] = useState(false);
-  const redirectedRef = useRef(false);
+  // 'allowed'        → 모든 조건 통과
+  // 'login-redirect' → 미로그인 리다이렉트 완료 (isLoggedIn 변경 시 재평가 허용)
+  // 'birth-redirect' → birthDate 없어 /chat 리다이렉트 완료
+  // null             → 아직 판정 전
+  const settledRef = useRef<'allowed' | 'login-redirect' | 'birth-redirect' | null>(null);
 
   const { birthDate, _hasHydrated } = useSessionStore();
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
@@ -29,36 +33,42 @@ export function useRouteGuard(required: boolean = true): { isAllowed: boolean } 
   const isAuthReady = useAuthStore((s) => s.isAuthReady);
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
   const router = useRouter();
-  const pathname = usePathname();
 
   useEffect(() => {
+    // 허용 완료 또는 birthDate 리다이렉트 후에는 재실행하지 않음
+    if (settledRef.current === 'allowed' || settledRef.current === 'birth-redirect') return;
+
     if (!required) {
+      settledRef.current = 'allowed';
       setIsAllowed(true);
       return;
     }
+
     if (!_hasHydrated || !authHydrated || !isAuthReady) return;
-    if (pathname?.startsWith('/survey')) {
-      setIsAllowed(true);
-      return;
-    }
-    if (redirectedRef.current) return;
 
     if (!isLoggedIn) {
-      redirectedRef.current = true;
-      openLoginModal();
-      router.push('/'); // 모달 오픈과 동시에 랜딩으로 이동
-      return; // isAllowed = false 유지
+      // 확실하게 비로그인인 경우에만 처리
+      if (settledRef.current !== 'login-redirect') {
+        settledRef.current = 'login-redirect';
+        console.log('[useRouteGuard] User not logged in. Redirecting to landing.');
+        openLoginModal();
+        router.push('/');
+      }
+      return;
     }
 
     if (!birthDate) {
-      redirectedRef.current = true;
+      // birthDate 리다이렉트는 한 번만 실행
+      settledRef.current = 'birth-redirect';
       toast.info('생년월일을 먼저 입력해주세요');
       router.push('/chat?fromGuard=1');
-      return; // isAllowed = false 유지
+      return;
     }
 
+    settledRef.current = 'allowed';
     setIsAllowed(true);
-  }, [required, _hasHydrated, authHydrated, isAuthReady, isLoggedIn, birthDate, pathname, router, openLoginModal]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [required, _hasHydrated, authHydrated, isAuthReady, isLoggedIn, birthDate, openLoginModal]);
 
   return { isAllowed };
 }
