@@ -8,9 +8,13 @@ import type { MyPageData } from '@/types/api';
 
 /** 목 마이페이지 데이터 */
 export const mockMyPageData: MyPageData = {
-  userId: 1,
-  email: 'test@example.com',
-  name: '김사주',
+  profile: {
+    id: 1,
+    name: '김사주',
+    email: 'test@example.com',
+    createdAt: '2026-01-01T00:00:00',
+    lastLoginAt: '2026-05-24T00:00:00',
+  },
   analyses: [
     {
       id: 101,
@@ -57,9 +61,12 @@ export const mockMyPageData: MyPageData = {
       createdAt: '2026-04-15T11:30:00',
     },
   ],
-  totalCount: 6,
-  currentPage: 0,
-  totalPages: 1,
+  pagination: {
+    page: 0,
+    size: 10,
+    total: 6,
+    totalPages: 1,
+  },
 };
 
 export const mypageHandlers = [

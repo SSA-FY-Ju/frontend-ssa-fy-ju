@@ -16,7 +16,7 @@
  * - useRef로 중복 요청 방지 (T055b)
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { fetchCareerTiming } from '@/lib/api/career';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
 import { useSessionStore } from '@/stores/sessionStore';
@@ -39,7 +39,7 @@ export function useCareerTiming() {
   const user = useAuthStore((s) => s.user);
 
   /** disclaimer 완료 후 실제 API 호출 */
-  const runApiCall = async () => {
+  const runApiCall = useCallback(async () => {
     const args = pendingArgsRef.current;
     if (!args) return;
 
@@ -78,7 +78,8 @@ export function useCareerTiming() {
       isRequestingRef.current = false;
       pendingArgsRef.current = null;
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { isVisible: disclaimerVisible, isFading: disclaimerFading, start: startDisclaimer, reset: resetDisclaimer } =
     useDisclaimerTimer({ onComplete: runApiCall });
@@ -88,7 +89,7 @@ export function useCareerTiming() {
    * @param birthDate - 생년월일 (YYYY-MM-DD)
    * @param birthTime - 태어난 시간 (HH:mm, 기본값 12:00)
    */
-  const submitAnalysis = (birthDate: string, birthTime: string = '12:00') => {
+  const submitAnalysis = useCallback((birthDate: string, birthTime: string = '12:00') => {
     // 이미 진행 중이면 무시 (T055b)
     if (isRequestingRef.current) return;
     isRequestingRef.current = true;
@@ -100,17 +101,17 @@ export function useCareerTiming() {
 
     // 고지 문구 1.5초 표시 시작
     startDisclaimer();
-  };
+  }, [startDisclaimer]);
 
   /** 상태 초기화 */
-  const reset = () => {
+  const reset = useCallback(() => {
     resetDisclaimer();
     setResult(null);
     setError(null);
     setPhase('idle');
     isRequestingRef.current = false;
     pendingArgsRef.current = null;
-  };
+  }, [resetDisclaimer]);
 
   return {
     phase,

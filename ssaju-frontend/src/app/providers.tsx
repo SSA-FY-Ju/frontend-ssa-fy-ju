@@ -27,7 +27,7 @@ export function Providers({ children }: { children: ReactNode }): React.ReactEle
         navigator.serviceWorker.getRegistrations().then((registrations) => {
           for (const registration of registrations) {
             if (registration.active?.scriptURL.includes('mockServiceWorker.js')) {
-              registration.unregister().then((success) => {
+              registration.unregister().then(() => {
                 // 해제 성공 시 별도 로그 남기지 않음
               });
             }

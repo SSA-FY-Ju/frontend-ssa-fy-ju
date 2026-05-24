@@ -88,8 +88,10 @@ export function useMyPage(): UseMyPageReturn {
 
         const mapped = (data.analyses || []).map((item) => ({
           ...item,
-          id: (item as any).analysisId || item.id,
-          type: mapType((item as any).type as string),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          id: (item as Record<string, any>).analysisId || item.id,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          type: mapType((item as Record<string, any>).type as string),
         }));
 
         allAnalysesRef.current = mapped;
@@ -120,8 +122,10 @@ export function useMyPage(): UseMyPageReturn {
 
       const mapped = (data.analyses || []).map((item) => ({
         ...item,
-        id: (item as any).analysisId || item.id,
-        type: mapType((item as any).type as string),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        id: (item as Record<string, any>).analysisId || item.id,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        type: mapType((item as Record<string, any>).type as string),
       }));
 
       allAnalysesRef.current = [...allAnalysesRef.current, ...mapped];
