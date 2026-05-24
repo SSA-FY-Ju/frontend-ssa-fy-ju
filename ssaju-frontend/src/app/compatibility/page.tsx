@@ -4,9 +4,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useCompatibility } from '@/hooks/useCompatibility';
 import { usePageExitGuard } from '@/hooks/usePageExitGuard';
-import { fetchDartCompanyDetail } from '@/lib/api/company';
 import type { DartCompany } from '@/hooks/useCompanyAutocomplete';
-import { preloadCorpList } from '@/hooks/useCompanyAutocomplete';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { CompanyAutocomplete } from '@/components/forms/CompanyAutocomplete';
@@ -43,7 +41,6 @@ export default function CompatibilityPage() {
   const { isAllowed } = useRouteGuard(true);
   const { phase, result, error, disclaimerVisible, disclaimerFading, submitCompatibility, reset } =
     useCompatibility();
-  const [companyLookupLoading, setCompanyLookupLoading] = useState(false);
 
   const sessionBirthDate = useSessionStore((s) => s.birthDate);
   const sessionBirthTime = useSessionStore((s) => s.birthTime);
@@ -60,9 +57,8 @@ export default function CompatibilityPage() {
   const [roleCategory, setRoleCategory] = useState<RoleCategory>('TECH_BACKEND');
   const [roleDetailName, setRoleDetailName] = useState('');
 
-  // 최종 기업명·corpCode (직접 입력 or 드롭다운 선택)
+  // 최종 기업명 (직접 입력 or 드롭다운 선택)
   const finalCompanyName = selectedCompany?.corpName ?? (directMode ? directInput : '');
-  const finalCorpCode = selectedCompany?.corpCode ?? null;
 
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [feedbackIsExitMode, setFeedbackIsExitMode] = useState(false);
@@ -109,32 +105,18 @@ export default function CompatibilityPage() {
   };
 
   // "궁합 분석 시작하기" 버튼 클릭 → 분석 시작
-  const handleManualSubmit = async () => {
+  const handleManualSubmit = () => {
     const trimmed = finalCompanyName.trim();
     if (!trimmed) return;
-
-    setCompanyLookupLoading(true);
 
     const defaultLabel = ROLE_CATEGORIES.find(r => r.value === roleCategory)?.label ?? '';
     const targetRole: TargetRole = { category: roleCategory, detailName: roleDetailName || defaultLabel };
 
-    let foundingDate: string | undefined;
-    if (finalCorpCode) {
-      try {
-        const detail = await fetchDartCompanyDetail(finalCorpCode);
-        if (detail?.foundingDate) foundingDate = detail.foundingDate;
-      } catch {
-        // 설립일 조회 실패 시 없이 진행
-      }
-    }
-
-    setCompanyLookupLoading(false);
     submitCompatibility(
       sessionBirthDate ?? '',
       sessionBirthTime ?? '12:00',
       targetRole,
       trimmed,
-      foundingDate,
     );
   };
 
@@ -143,11 +125,7 @@ export default function CompatibilityPage() {
     setSelectedCompany(null);
     setDirectMode(false);
     setDirectInput('');
-    setCompanyLookupLoading(false);
   };
-
-  // 기업 목록 백그라운드 프리로드 (타이핑 전에 준비)
-  useEffect(() => { preloadCorpList(); }, []);
 
   if (!isAllowed) return null;
 
@@ -305,7 +283,7 @@ export default function CompatibilityPage() {
                       selectedName={selectedCompany?.corpName}
                       onSelect={handleCompanySelect}
                       onClear={() => setSelectedCompany(null)}
-                      disabled={companyLookupLoading}
+                      disabled={false}
                     />
                     {!selectedCompany && (
                       <button
@@ -421,7 +399,7 @@ export default function CompatibilityPage() {
                 )}
                 <button
                   onClick={handleManualSubmit}
-                  disabled={!finalCompanyName.trim() || companyLookupLoading}
+                  disabled={!finalCompanyName.trim()}
                   style={{
                     position: 'relative',
                     overflow: 'hidden',
@@ -438,11 +416,11 @@ export default function CompatibilityPage() {
                     fontSize: 14,
                     fontWeight: 800,
                     letterSpacing: '0.07em',
-                    cursor: finalCompanyName.trim() && !companyLookupLoading ? 'pointer' : 'default',
+                    cursor: finalCompanyName.trim() ? 'pointer' : 'default',
                     transition: 'all 0.28s cubic-bezier(0.22,1,0.36,1)',
                   }}
                   onMouseEnter={(e) => {
-                    if (finalCompanyName.trim() && !companyLookupLoading) {
+                    if (finalCompanyName.trim()) {
                       e.currentTarget.style.transform = 'translateY(-2px)';
                       e.currentTarget.style.filter = 'brightness(1.12)';
                     }
@@ -466,12 +444,7 @@ export default function CompatibilityPage() {
                     position: 'relative', zIndex: 1,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
                   }}>
-                    {companyLookupLoading ? (
-                      <>
-                        <span style={{ fontSize: 14 }}>⏳</span>
-                        <span>설립일 조회 중...</span>
-                      </>
-                    ) : finalCompanyName.trim() ? (
+                    {finalCompanyName.trim() ? (
                       <>
                         <span style={{ fontSize: 11, opacity: 0.75, letterSpacing: '0.1em' }}>✦</span>
                         <span>궁합 분석 시작하기</span>

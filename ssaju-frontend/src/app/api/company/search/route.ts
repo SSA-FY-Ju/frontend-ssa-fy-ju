@@ -1,69 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server';
-import AdmZip from 'adm-zip';
 
-const DART_API_KEY = process.env.DART_API_KEY;
-const CORP_CODE_URL = `https://opendart.fss.or.kr/api/corpCode.xml?crtfc_key=${DART_API_KEY}`;
-const CACHE_TTL = 24 * 60 * 60 * 1000; // 24시간
+const FSC_API_KEY = process.env.FSC_API_KEY;
+const FSC_BASE_URL =
+  'https://apis.data.go.kr/1160100/service/GetCorpBasicInfoService_V2/getCorpOutline_V2';
 
-export interface DartCompanyItem {
-  corpName: string;
-  corpCode: string;
-  stockCode: string; // 상장사: 종목코드, 비상장: ''
+// 서버 메모리 캐시 — Next.js 인스턴스 수명 내 유지 (기업명은 자주 안 바뀜)
+const CACHE_TTL = 6 * 60 * 60 * 1000; // 6시간
+const serverCache = new Map<string, { list: { corpName: string }[]; at: number }>();
+
+/** XML에서 특정 태그 값을 모두 추출 */
+function extractXmlValues(xml: string, tag: string): string[] {
+  const regex = new RegExp(`<${tag}>([^<]*)<\/${tag}>`, 'g');
+  const results: string[] = [];
+  let match;
+  while ((match = regex.exec(xml)) !== null) {
+    const val = match[1].trim();
+    if (val) results.push(val);
+  }
+  return results;
 }
 
-// 서버 메모리 캐시 (Next.js 인스턴스 수명 내)
-let corpCache: DartCompanyItem[] | null = null;
-let corpCacheAt = 0;
-
-async function getCorpList(): Promise<DartCompanyItem[]> {
-  if (corpCache && Date.now() - corpCacheAt < CACHE_TTL) return corpCache;
-
-  const res = await fetch(CORP_CODE_URL);
-  if (!res.ok) throw new Error('DART corpCode 다운로드 실패');
-
-  const buf = Buffer.from(await res.arrayBuffer());
-  const zip = new AdmZip(buf);
-  const xml = zip.readAsText('CORPCODE.xml');
-
-  // <list>…</list> 블록 파싱
-  const blocks = xml.match(/<list>[\s\S]*?<\/list>/g) ?? [];
-  const list: DartCompanyItem[] = blocks.map((block) => {
-    const get = (tag: string) => block.match(new RegExp(`<${tag}>([^<]*)<\/${tag}>`))?.[1]?.trim() ?? '';
-    return {
-      corpName: get('corp_name'),
-      corpCode: get('corp_code'),
-      stockCode: get('stock_code'),
-    };
-  }).filter((c) => c.corpName && c.corpCode);
-
-  corpCache = list;
-  corpCacheAt = Date.now();
-  return list;
-}
-
-/** 기업명 검색 — DART corpCode.xml 기반 */
+/** 기업명 검색 — 금융위원회 기업기본정보 API 프록시 (XML 응답 파싱) */
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get('q')?.trim();
   if (!q || q.length < 1) return NextResponse.json({ list: [] });
 
-  if (!DART_API_KEY) {
-    return NextResponse.json({ error: 'DART_API_KEY not configured' }, { status: 500 });
+  if (!FSC_API_KEY) {
+    return NextResponse.json({ error: 'FSC_API_KEY not configured' }, { status: 500 });
+  }
+
+  // 서버 캐시 확인
+  const cacheKey = q.toLowerCase();
+  const cached = serverCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < CACHE_TTL) {
+    return NextResponse.json({ list: cached.list });
   }
 
   try {
-    const all = await getCorpList();
-    const lower = q.toLowerCase();
+    const url = new URL(FSC_BASE_URL);
+    url.searchParams.set('serviceKey', FSC_API_KEY);
+    url.searchParams.set('corpNm', q);
+    url.searchParams.set('numOfRows', '20');
+    url.searchParams.set('pageNo', '1');
 
-    // 우선순위: 앞글자 일치 > 포함 일치
-    const startsWith = all.filter((c) => c.corpName.toLowerCase().startsWith(lower));
-    const contains = all.filter(
-      (c) => !c.corpName.toLowerCase().startsWith(lower) && c.corpName.toLowerCase().includes(lower)
-    );
+    const res = await fetch(url.toString(), { cache: 'no-store' });
+    if (!res.ok) throw new Error(`FSC API HTTP error: ${res.status}`);
 
-    const result = [...startsWith, ...contains].slice(0, 10);
-    return NextResponse.json({ list: result });
+    const xml = await res.text();
+
+    // 에러 응답 확인
+    const resultCode = xml.match(/<resultCode>([^<]*)<\/resultCode>/)?.[1];
+    if (resultCode && resultCode !== '00') {
+      console.error('[FSC search] API error code:', resultCode);
+      return NextResponse.json({ list: [] });
+    }
+
+    // corpNm 추출 — 중복 제거 후 최대 10건
+    const names = extractXmlValues(xml, 'corpNm');
+    const unique = [...new Set(names)].slice(0, 10);
+    const list = unique.map((corpName) => ({ corpName }));
+
+    // 서버 캐시 저장
+    serverCache.set(cacheKey, { list, at: Date.now() });
+
+    return NextResponse.json({ list });
   } catch (e) {
-    console.error('[DART search]', e);
+    console.error('[FSC company search]', e);
     return NextResponse.json({ list: [] }, { status: 500 });
   }
 }

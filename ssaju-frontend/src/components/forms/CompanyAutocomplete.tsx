@@ -152,7 +152,7 @@ export function CompanyAutocomplete({
         >
           {suggestions.map((company, index) => (
             <li
-              key={company.corpCode}
+              key={`${company.corpName}-${index}`}
               id={`autocomplete-item-${index}`}
               role="option"
               aria-selected={index === highlightedIndex}
