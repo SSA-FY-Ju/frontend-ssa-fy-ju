@@ -3,37 +3,38 @@
 // 파일 크기 예외: 입력 필드·드롭다운·키보드 접근성(WAI-ARIA)이 하나의 자동완성
 // 위젯을 구성하므로 분리 시 aria-controls 등 접근성 연결이 끊김
 /**
- * 기업명 자동완성 드롭다운 (T083b)
+ * 기업명 자동완성 드롭다운
  *
  * 기능:
- * - useCompanyAutocomplete 훅을 통해 debounce 300ms로 API 호출 (Hook 계층 경유)
+ * - 내부 query 상태로 검색 — 부모에게 직접 입력값을 올리지 않음
+ * - 드롭다운 항목 선택 시에만 onSelect 콜백 호출 (선택만 허용)
+ * - selectedName이 있으면 chip 표시 모드로 전환 (onClear로 초기화)
  * - 최대 10개 항목 드롭다운 표시
- * - 항목 선택 시 onSelect 콜백 호출
  * - 키보드 접근성 (ArrowUp/Down, Enter, Escape)
  */
 
-import { useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useCompanyAutocomplete } from '@/hooks/useCompanyAutocomplete';
 import type { DartCompany } from '@/hooks/useCompanyAutocomplete';
 
 interface CompanyAutocompleteProps {
-  value: string;
-  onChange: (value: string) => void;
+  selectedName?: string;
   onSelect: (company: DartCompany) => void;
+  onClear?: () => void;
   disabled?: boolean;
 }
 
 export function CompanyAutocomplete({
-  value,
-  onChange,
+  selectedName,
   onSelect,
+  onClear,
   disabled = false,
 }: CompanyAutocompleteProps) {
+  const [query, setQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
   const { suggestions, isOpen, highlightedIndex, search, close, navigateUp, navigateDown } =
     useCompanyAutocomplete();
 
-  // close는 내부 state setter만 호출하므로 ref를 통해 최신 참조 유지
   const closeRef = useRef(close);
   closeRef.current = close;
 
@@ -46,48 +47,65 @@ export function CompanyAutocomplete({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []); // closeRef를 통해 최신 함수 참조 — deps 불필요
+  }, []);
 
-  /** 입력 변경 시 부모에 알리고 훅에 검색 요청 */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
-    search(e.target.value);
+    const val = e.target.value;
+    setQuery(val);
+    search(val);
   };
 
-  /** 항목 선택 */
   const handleSelect = (company: DartCompany) => {
     onSelect(company);
+    setQuery('');
     close();
   };
 
-  /** 키보드 네비게이션 */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!isOpen) return;
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      navigateDown();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      navigateUp();
-    } else if (e.key === 'Enter' && highlightedIndex >= 0) {
-      e.preventDefault();
-      handleSelect(suggestions[highlightedIndex]);
-    } else if (e.key === 'Escape') {
-      close();
-    }
+    if (e.key === 'ArrowDown') { e.preventDefault(); navigateDown(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); navigateUp(); }
+    else if (e.key === 'Enter' && highlightedIndex >= 0) { e.preventDefault(); handleSelect(suggestions[highlightedIndex]); }
+    else if (e.key === 'Escape') { close(); }
   };
+
+  /** 선택된 기업이 있으면 chip 표시 */
+  if (selectedName) {
+    return (
+      <div
+        style={{
+          display: 'flex', alignItems: 'center', gap: 10,
+          padding: '11px 14px', borderRadius: 12,
+          background: 'rgba(139,92,246,0.1)',
+          border: '1px solid rgba(139,92,246,0.4)',
+        }}
+      >
+        <span style={{ fontSize: 13, color: '#c4b5fd', fontWeight: 600, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {selectedName}
+        </span>
+        {onClear && (
+          <button
+            onClick={onClear}
+            aria-label="선택 취소"
+            style={{ color: 'rgba(196,181,253,0.45)', fontSize: 18, lineHeight: 1, cursor: 'pointer', background: 'none', border: 'none', padding: '0 2px', flexShrink: 0 }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#c4b5fd')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(196,181,253,0.45)')}
+          >×</button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="relative">
       <input
         id="companyName"
         type="text"
-        value={value}
+        value={query}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         disabled={disabled}
-        placeholder="예: 삼성전자"
+        placeholder="기업명을 검색하세요 (예: 삼성전자)"
         autoComplete="off"
         aria-autocomplete="list"
         aria-controls={isOpen ? 'company-autocomplete-list' : undefined}
@@ -152,7 +170,6 @@ export function CompanyAutocomplete({
                 transition: 'all 0.12s',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between',
                 gap: 8,
               }}
             >
