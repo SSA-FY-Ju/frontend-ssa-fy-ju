@@ -206,6 +206,16 @@ function CoreSection({ data, color }: { data: ConsultationData; color: string })
         </div>
       </div>
 
+      {/* 분석 요약 */}
+      {data.analysisSummary && (
+        <div style={{ padding: '10px 14px', borderRadius: 10, background: `${color}0c`, border: `1px solid ${color}22`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.6, flex: 1 }}>{data.analysisSummary}</p>
+          {data.openaiModelVersion && (
+            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: '0.1em', flexShrink: 0 }}>{data.openaiModelVersion}</span>
+          )}
+        </div>
+      )}
+
       {/* 분석 근거 */}
       <div>
         <Label color={color}>분석 근거</Label>
@@ -327,6 +337,26 @@ function SajuSection({ profile, color }: { profile: ConsultationData['sajuProfil
             </span>
           ))}
         </div>
+
+        {/* 십신 특성 설명 */}
+        {profile.tenGodCharacteristics && Object.keys(profile.tenGodCharacteristics).length > 0 && (
+          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {profile.keyTenGods
+              .filter((god) => profile.tenGodCharacteristics![god])
+              .map((god) => (
+                <div
+                  key={god}
+                  style={{
+                    padding: '12px 14px', borderRadius: 12,
+                    background: `${color}08`, border: `1px solid ${color}20`,
+                  }}
+                >
+                  <p style={{ fontSize: 12, fontWeight: 900, color, fontFamily: 'serif', marginBottom: 4 }}>{god}</p>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7 }}>{profile.tenGodCharacteristics![god]}</p>
+                </div>
+              ))}
+          </div>
+        )}
       </div>
     </div>
   );

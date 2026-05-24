@@ -60,6 +60,7 @@ export interface SajuProfile {
   fiveElementsAnalysis: string;
   tenGodDistribution: Record<string, number>;
   keyTenGods: string[];
+  tenGodCharacteristics?: Record<string, string>; // 십신별 특성 설명
 }
 
 /** 재무 스타일 */
@@ -173,13 +174,14 @@ export interface CareerTimeline {
  * AI 컨설팅 응답
  */
 export interface ConsultationData {
-  sajuResultId: number;
+  consultationId?: number;      // 백엔드 분석 ID (피드백 연동용)
+  sajuResultId?: number;        // 하위 호환용
   industries: Industry[];
   interviewTips: string[];
   strengths: string[];
   cautions: string[];
-  favoredPeriod: string;       // "H1" | "H2"
-  confidenceScore: number;     // 0-100
+  favoredPeriod: string;        // "H1" | "H2"
+  confidenceScore: number;      // 0-100
   reasoning: string;
   sajuProfile: SajuProfile;
   wealthStyle: WealthStyle;
@@ -191,6 +193,8 @@ export interface ConsultationData {
   workStyle: ConsultationWorkStyle;
   relationshipStrategy: RelationshipStrategy;
   careerTimeline: CareerTimeline;
+  analysisSummary?: string;     // 전체 분석 요약
+  openaiModelVersion?: string;  // 사용된 OpenAI 모델 버전
 }
 
 /** 직무 카테고리 */
