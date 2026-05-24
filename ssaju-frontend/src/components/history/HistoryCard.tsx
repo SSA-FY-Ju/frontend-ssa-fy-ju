@@ -53,9 +53,6 @@ function formatBirthDate(dateString: string): string {
 }
 
 function getResultText(summary: MyPageAnalysisSummary): string {
-  if (summary.type === 'COMPATIBILITY') {
-    return '궁합 분석 완료';
-  }
   const period = summary.favoredPeriod === 'H1' ? '상반기 유리' : summary.favoredPeriod === 'H2' ? '하반기 유리' : '';
   const score = summary.confidenceScore != null ? `신뢰도 ${summary.confidenceScore}%` : '';
   return [period, score].filter(Boolean).join(' · ');

@@ -2,8 +2,8 @@
  * useMyPage 훅 테스트 (T110)
  *
  * - 초기 로드: loadInitial 후 analyses 배열에 데이터 있음
- * - 탭 전환: setActiveTab 후 analyses 초기화 및 새 fetch
- * - loadMore: hasMore=true 상태에서 다음 페이지 fetch
+ * - 탭 전환: setActiveTab 후 클라이언트 필터링
+ * - 페이지네이션: setPage 로 페이지 이동
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react';
@@ -20,26 +20,20 @@ jest.mock('@/stores/authStore', () => ({
 
 const { fetchMyPageData } = jest.requireMock('@/lib/api/mypage');
 
-const mockSummary = {
-  id: 1,
-  type: 'TIMING' as const,
+const makeSummary = (id: number, type: 'TIMING' | 'CONSULTATION' | 'COMPATIBILITY' = 'TIMING') => ({
+  id,
+  type,
   birthDate: '1990-05-15',
   createdAt: '2025-01-15T10:00:00Z',
   favoredPeriod: 'H1',
   confidenceScore: 82,
-};
+});
 
-const mockSummary2 = { ...mockSummary, id: 2 };
-
-const mockMyPageResponse = {
-  userId: 1,
-  email: 'test@example.com',
-  name: '홍길동',
-  analyses: [mockSummary],
-  totalCount: 1,
-  currentPage: 0,
-  totalPages: 1,
-};
+const mockMyPageResponse = (analyses: ReturnType<typeof makeSummary>[]) => ({
+  profile: { id: 1, name: '홍길동', email: 'test@example.com', createdAt: '', lastLoginAt: '' },
+  analyses,
+  pagination: { page: 0, size: 1000, total: analyses.length, totalPages: 1 },
+});
 
 describe('useMyPage', () => {
   beforeEach(() => {
@@ -55,21 +49,19 @@ describe('useMyPage', () => {
   });
 
   it('loadInitial 호출 후 analyses 데이터 설정됨', async () => {
-    fetchMyPageData.mockResolvedValueOnce(mockMyPageResponse);
+    const summaries = [makeSummary(1)];
+    fetchMyPageData.mockResolvedValueOnce(mockMyPageResponse(summaries));
 
     const { result } = renderHook(() => useMyPage());
 
-    act(() => {
-      result.current.loadInitial('ALL');
-    });
+    act(() => { result.current.loadInitial('ALL'); });
 
     expect(result.current.isLoading).toBe(true);
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    expect(result.current.analyses).toEqual([mockSummary]);
+    expect(result.current.analyses).toEqual(summaries);
     expect(result.current.totalCount).toBe(1);
-    expect(result.current.hasMore).toBe(false);
     expect(result.current.error).toBeNull();
   });
 
@@ -78,9 +70,7 @@ describe('useMyPage', () => {
 
     const { result } = renderHook(() => useMyPage());
 
-    act(() => {
-      result.current.loadInitial('ALL');
-    });
+    act(() => { result.current.loadInitial('ALL'); });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
@@ -88,87 +78,42 @@ describe('useMyPage', () => {
     expect(result.current.analyses).toEqual([]);
   });
 
-  it('setActiveTab 호출 시 analyses 초기화 및 새 fetch 실행', async () => {
-    fetchMyPageData.mockResolvedValueOnce(mockMyPageResponse);
+  it('setActiveTab 호출 시 클라이언트 필터링으로 analyses 변경됨', async () => {
+    const summaries = [makeSummary(1, 'TIMING'), makeSummary(2, 'CONSULTATION')];
+    fetchMyPageData.mockResolvedValueOnce(mockMyPageResponse(summaries));
 
     const { result } = renderHook(() => useMyPage());
 
-    await act(async () => {
-      result.current.loadInitial('ALL');
-    });
-
-    await waitFor(() => expect(result.current.analyses).toHaveLength(1));
-
-    const consultationResponse = {
-      ...mockMyPageResponse,
-      analyses: [mockSummary2],
-    };
-    fetchMyPageData.mockResolvedValueOnce(consultationResponse);
-
-    act(() => {
-      result.current.setActiveTab('CONSULTATION');
-    });
-
-    // 탭 전환 직후 analyses 초기화
-    expect(result.current.analyses).toEqual([]);
-
-    await waitFor(() => expect(result.current.analyses).toEqual([mockSummary2]));
-    expect(result.current.activeTab).toBe('CONSULTATION');
-  });
-
-  it('loadMore: hasMore=true 상태에서 다음 페이지 fetch', async () => {
-    const page1Response = {
-      ...mockMyPageResponse,
-      analyses: [mockSummary],
-      totalCount: 2,
-      currentPage: 0,
-      totalPages: 2,
-    };
-    const page2Response = {
-      ...mockMyPageResponse,
-      analyses: [mockSummary2],
-      totalCount: 2,
-      currentPage: 1,
-      totalPages: 2,
-    };
-
-    fetchMyPageData
-      .mockResolvedValueOnce(page1Response)
-      .mockResolvedValueOnce(page2Response);
-
-    const { result } = renderHook(() => useMyPage());
-
-    await act(async () => {
-      result.current.loadInitial('ALL');
-    });
-
-    await waitFor(() => expect(result.current.analyses).toHaveLength(1));
-    expect(result.current.hasMore).toBe(true);
-
-    await act(async () => {
-      result.current.loadMore();
-    });
-
+    await act(async () => { result.current.loadInitial('ALL'); });
     await waitFor(() => expect(result.current.analyses).toHaveLength(2));
-    expect(result.current.hasMore).toBe(false);
+
+    act(() => { result.current.setActiveTab('TIMING'); });
+
+    expect(result.current.analyses).toHaveLength(1);
+    expect(result.current.analyses[0].type).toBe('TIMING');
+    expect(result.current.activeTab).toBe('TIMING');
+
+    // 탭 전환은 추가 API 호출 없음
+    expect(fetchMyPageData).toHaveBeenCalledTimes(1);
   });
 
-  it('hasMore=false 상태에서 loadMore 호출 시 fetch 안 함', async () => {
-    fetchMyPageData.mockResolvedValueOnce(mockMyPageResponse);
+  it('setPage 호출 시 해당 페이지 슬라이스 반환됨', async () => {
+    // 4개 → PAGE_SIZE=3이므로 2페이지 (3개, 1개)
+    const summaries = [1, 2, 3, 4].map((id) => makeSummary(id));
+    fetchMyPageData.mockResolvedValueOnce(mockMyPageResponse(summaries));
 
     const { result } = renderHook(() => useMyPage());
 
-    await act(async () => {
-      result.current.loadInitial('ALL');
-    });
+    await act(async () => { result.current.loadInitial('ALL'); });
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    await waitFor(() => expect(result.current.hasMore).toBe(false));
+    expect(result.current.analyses).toHaveLength(3);
+    expect(result.current.currentPage).toBe(0);
+    expect(result.current.totalPages).toBe(2);
 
-    act(() => {
-      result.current.loadMore();
-    });
+    act(() => { result.current.setPage(1); });
 
-    // 한 번만 호출 (loadInitial)
-    expect(fetchMyPageData).toHaveBeenCalledTimes(1);
+    expect(result.current.analyses).toHaveLength(1);
+    expect(result.current.currentPage).toBe(1);
   });
 });

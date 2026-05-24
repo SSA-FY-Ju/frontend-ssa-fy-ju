@@ -5,6 +5,7 @@
  *
  * - API는 전체(ALL) 1회만 호출
  * - 탭 전환은 클라이언트에서 필터링 (추가 API 호출 없음)
+ * - 페이지네이션: 클라이언트에서 PAGE_SIZE 단위로 슬라이싱
  */
 
 import { useState, useCallback, useRef } from 'react';
@@ -15,20 +16,20 @@ import type { MyPageAnalysisSummary } from '@/types/api';
 export type AnalysisTab = 'ALL' | 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY';
 
 interface UseMyPageReturn {
-  analyses: MyPageAnalysisSummary[];
-  allAnalyses: MyPageAnalysisSummary[]; // 탭 필터 전 전체 데이터 (현황 통계용)
+  analyses: MyPageAnalysisSummary[];       // 현재 페이지에 표시할 카드
+  allAnalyses: MyPageAnalysisSummary[];    // 탭 필터 전 전체 데이터 (현황 통계용)
   totalCount: number;
+  currentPage: number;
+  totalPages: number;
   isLoading: boolean;
-  isLoadingMore: boolean;
-  hasMore: boolean;
   error: string | null;
   activeTab: AnalysisTab;
   setActiveTab: (tab: AnalysisTab) => void;
-  loadMore: () => void;
+  setPage: (page: number) => void;
   loadInitial: (tab: AnalysisTab) => void;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 3;
 
 function mapType(rawType: string): 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY' {
   if (rawType === 'SAJU') return 'TIMING';
@@ -46,37 +47,47 @@ function filterByTab(
 }
 
 export function useMyPage(): UseMyPageReturn {
-  // 전체 데이터 (탭 필터 전 원본 — 현황 통계에 사용)
+  // 탭 필터 전 원본 전체 데이터 (현황 통계용)
   const allAnalysesRef = useRef<MyPageAnalysisSummary[]>([]);
   const [allAnalyses, setAllAnalyses] = useState<MyPageAnalysisSummary[]>([]);
 
-  const [analyses, setAnalyses] = useState<MyPageAnalysisSummary[]>([]);
+  // 현재 탭 기준 필터링된 전체 목록
+  const filteredRef = useRef<MyPageAnalysisSummary[]>([]);
+
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTabState] = useState<AnalysisTab>('ALL');
 
+  // 카드 목록·현재 페이지·총 페이지를 하나의 state로 묶어 단일 setState로 동기화
+  const [pageView, setPageView] = useState<{
+    items: MyPageAnalysisSummary[];
+    currentPage: number;
+    totalPages: number;
+  }>({ items: [], currentPage: 0, totalPages: 1 });
+
   const setUser = useAuthStore((s) => s.setUser);
 
-  const currentPageRef = useRef(0);
-  const isLoadingMoreRef = useRef(false);
-  const activeTabRef = useRef<AnalysisTab>('ALL');
+  function applyPage(filtered: MyPageAnalysisSummary[], page: number) {
+    const start = page * PAGE_SIZE;
+    setPageView({
+      items: filtered.slice(start, start + PAGE_SIZE),
+      currentPage: page,
+      totalPages: Math.ceil(filtered.length / PAGE_SIZE) || 1,
+    });
+  }
 
   const loadInitial = useCallback(
     async (tab: AnalysisTab) => {
       setIsLoading(true);
       setError(null);
-      setAnalyses([]);
+      setPageView({ items: [], currentPage: 0, totalPages: 1 });
       setTotalCount(0);
       allAnalysesRef.current = [];
-      currentPageRef.current = 0;
-      activeTabRef.current = tab;
+      filteredRef.current = [];
 
       try {
-        // type 파라미터 없이 전체 조회
-        const data = await fetchMyPageData({ page: 0, size: PAGE_SIZE });
+        const data = await fetchMyPageData({ page: 0, size: 1000 });
 
         if (data.profile) {
           setUser({
@@ -96,9 +107,12 @@ export function useMyPage(): UseMyPageReturn {
 
         allAnalysesRef.current = mapped;
         setAllAnalyses(mapped);
-        setAnalyses(filterByTab(mapped, tab));
-        setTotalCount(data.pagination?.total || 0);
-        setHasMore(data.pagination ? data.pagination.page < data.pagination.totalPages - 1 : false);
+        setTotalCount(mapped.length);
+
+        const filtered = filterByTab(mapped, tab);
+        filteredRef.current = filtered;
+        setActiveTabState(tab);
+        applyPage(filtered, 0);
       } catch (err) {
         const message = err instanceof Error ? err.message : '기록을 불러오는 데 실패했습니다.';
         setError(message);
@@ -109,60 +123,28 @@ export function useMyPage(): UseMyPageReturn {
     [setUser],
   );
 
-  const loadMore = useCallback(async () => {
-    if (isLoadingMoreRef.current || !hasMore) return;
+  const setActiveTab = useCallback((tab: AnalysisTab) => {
+    setActiveTabState(tab);
+    const filtered = filterByTab(allAnalysesRef.current, tab);
+    filteredRef.current = filtered;
+    applyPage(filtered, 0);
+  }, []);
 
-    isLoadingMoreRef.current = true;
-    setIsLoadingMore(true);
-
-    const nextPage = currentPageRef.current + 1;
-
-    try {
-      const data = await fetchMyPageData({ page: nextPage, size: PAGE_SIZE });
-
-      const mapped = (data.analyses || []).map((item) => ({
-        ...item,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        id: (item as Record<string, any>).analysisId || item.id,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        type: mapType((item as Record<string, any>).type as string),
-      }));
-
-      allAnalysesRef.current = [...allAnalysesRef.current, ...mapped];
-      setAllAnalyses(allAnalysesRef.current);
-      setAnalyses(filterByTab(allAnalysesRef.current, activeTabRef.current));
-      setHasMore(data.pagination ? data.pagination.page < data.pagination.totalPages - 1 : false);
-      currentPageRef.current = nextPage;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : '추가 기록을 불러오는 데 실패했습니다.';
-      setError(message);
-    } finally {
-      setIsLoadingMore(false);
-      isLoadingMoreRef.current = false;
-    }
-  }, [hasMore]);
-
-  const setActiveTab = useCallback(
-    (tab: AnalysisTab) => {
-      setActiveTabState(tab);
-      activeTabRef.current = tab;
-      // API 재호출 없이 기존 데이터에서 필터링
-      setAnalyses(filterByTab(allAnalysesRef.current, tab));
-    },
-    [],
-  );
+  const setPage = useCallback((page: number) => {
+    applyPage(filteredRef.current, page);
+  }, []);
 
   return {
-    analyses,
+    analyses: pageView.items,
     allAnalyses,
     totalCount,
+    currentPage: pageView.currentPage,
+    totalPages: pageView.totalPages,
     isLoading,
-    isLoadingMore,
-    hasMore,
     error,
     activeTab,
     setActiveTab,
-    loadMore,
+    setPage,
     loadInitial,
   };
 }
