@@ -198,297 +198,290 @@ export default function CompatibilityPage() {
             <div style={{ width: '100%', maxWidth: 480 }}>
 
               {/* 헤더 */}
-              <div style={{ textAlign: 'center', marginBottom: 40 }}>
+              <div style={{ textAlign: 'center', marginBottom: 52 }}>
                 <div style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  background: 'rgba(139,92,246,0.1)',
-                  border: '1px solid rgba(139,92,246,0.25)',
-                  borderRadius: 100, padding: '5px 14px',
-                  marginBottom: 20,
+                  display: 'inline-flex', alignItems: 'center', gap: 8,
+                  background: 'linear-gradient(135deg, rgba(139,92,246,0.15), rgba(99,102,241,0.08))',
+                  border: '1px solid rgba(139,92,246,0.28)',
+                  borderRadius: 100, padding: '6px 18px',
+                  marginBottom: 24,
+                  backdropFilter: 'blur(8px)',
                 }}>
-                  <span style={{ fontSize: 10, color: '#a78bfa' }}>✦</span>
-                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.2em', color: '#a78bfa', textTransform: 'uppercase' }}>
+                  <span style={{ fontSize: 9, color: '#c4b5fd', opacity: 0.7 }}>✦</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', color: '#c4b5fd', textTransform: 'uppercase' }}>
                     Compatibility Analysis
                   </span>
+                  <span style={{ fontSize: 9, color: '#c4b5fd', opacity: 0.7 }}>✦</span>
                 </div>
                 <h1 style={{
-                  fontSize: 'clamp(2rem, 5vw, 2.8rem)',
+                  fontSize: 'clamp(2.2rem, 5vw, 3rem)',
                   fontWeight: 900,
-                  color: '#fff',
+                  background: 'linear-gradient(135deg, #ffffff 0%, #d8b4fe 45%, #a78bfa 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
                   letterSpacing: '-0.03em',
                   lineHeight: 1.1,
-                  marginBottom: 12,
-                  textShadow: '0 0 60px rgba(139,92,246,0.5)',
+                  marginBottom: 14,
                 }}>
                   기업 궁합 분석
                 </h1>
-                <p style={{ fontSize: 14, color: 'rgba(196,181,253,0.5)', lineHeight: 1.7 }}>
+                <p style={{ fontSize: 13, color: 'rgba(196,181,253,0.4)', lineHeight: 1.7 }}>
                   사주로 보는 나와 기업의 별빛 인연
                 </p>
               </div>
 
-              {/* 에러 카드 */}
+              {/* 에러 메시지 */}
               {phase === 'error' && error && (
                 <div style={{
-                  marginBottom: 20,
-                  borderRadius: 16,
+                  marginBottom: 28,
+                  borderRadius: 14,
                   background: 'rgba(239,68,68,0.06)',
-                  border: '1px solid rgba(239,68,68,0.25)',
-                  padding: '20px 22px',
-                  display: 'flex', flexDirection: 'column', gap: 14,
+                  border: '1px solid rgba(239,68,68,0.2)',
+                  padding: '14px 18px',
+                  display: 'flex', alignItems: 'center', gap: 14,
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                      background: 'rgba(239,68,68,0.12)',
-                      border: '1px solid rgba(239,68,68,0.25)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <span style={{ fontSize: 16 }}>⚠</span>
-                    </div>
-                    <div>
-                      <p style={{ fontSize: 13, fontWeight: 700, color: '#fca5a5', marginBottom: 4 }}>
-                        분석에 실패했습니다
-                      </p>
-                      <p style={{ fontSize: 12, color: 'rgba(252,165,165,0.7)', lineHeight: 1.6 }}>
-                        {getDisplayMessage(new Error(error))}
-                      </p>
-                    </div>
-                  </div>
+                  <span style={{ fontSize: 16, flexShrink: 0 }}>⚠</span>
+                  <p style={{ fontSize: 12, color: 'rgba(252,165,165,0.8)', flex: 1 }}>
+                    {getDisplayMessage(new Error(error))}
+                  </p>
                   <button
                     onClick={handleReset}
                     style={{
-                      width: '100%', padding: '11px',
-                      borderRadius: 10, border: '1px solid rgba(239,68,68,0.3)',
+                      padding: '6px 14px', borderRadius: 8,
+                      border: '1px solid rgba(239,68,68,0.3)',
                       background: 'rgba(239,68,68,0.1)',
-                      color: '#fca5a5', fontSize: 13, fontWeight: 700,
-                      cursor: 'pointer', transition: 'all 0.2s',
-                      letterSpacing: '0.02em',
+                      color: '#fca5a5', fontSize: 11, fontWeight: 700,
+                      cursor: 'pointer', flexShrink: 0,
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.background = 'rgba(239,68,68,0.18)';
-                      e.currentTarget.style.borderColor = 'rgba(239,68,68,0.5)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.background = 'rgba(239,68,68,0.1)';
-                      e.currentTarget.style.borderColor = 'rgba(239,68,68,0.3)';
-                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.2)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(239,68,68,0.1)')}
                   >
-                    ↺ &nbsp;처음부터 다시
+                    다시 시도
                   </button>
                 </div>
               )}
 
-              {/* 폼 카드 */}
-              <div
-                style={{
-                  position: 'relative',
-                  backdropFilter: 'blur(20px)',
-                  background: 'linear-gradient(160deg, rgba(30,20,60,0.6) 0%, rgba(10,8,30,0.65) 100%)',
-                  border: '1px solid rgba(139,92,246,0.22)',
-                  borderRadius: 24,
-                  overflow: 'hidden',
-                  boxShadow: '0 24px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(139,92,246,0.06) inset',
-                }}
-              >
-                {/* 상단 장식선 */}
-                <div style={{
-                  height: 2,
-                  background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.7), rgba(99,102,241,0.7), transparent)',
-                }} />
+              {/* ── 기업명 ── */}
+              <div style={{ marginBottom: 44 }}>
+                <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(196,181,253,0.6)', marginBottom: 12 }}>
+                  기업명
+                </p>
 
-                <div style={{ padding: '30px 28px 28px' }}>
-
-                  {/* Step 1 — 기업명 */}
-                  <div style={{ marginBottom: 20 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <span style={{
-                        width: 20, height: 20, borderRadius: 6,
-                        background: 'rgba(139,92,246,0.2)',
-                        border: '1px solid rgba(139,92,246,0.4)',
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 10, fontWeight: 800, color: '#a78bfa', flexShrink: 0,
-                      }}>1</span>
-                      <label style={{ fontSize: 12, fontWeight: 700, color: 'rgba(196,181,253,0.75)', letterSpacing: '0.05em' }}>
-                        기업명
-                      </label>
-                    </div>
-
-                    {directMode ? (
-                      /* 직접 입력 모드 */
-                      <div>
-                        <input
-                          type="text"
-                          value={directInput}
-                          onChange={(e) => setDirectInput(e.target.value)}
-                          placeholder="기업명을 직접 입력하세요"
-                          autoFocus
-                          style={{
-                            width: '100%', padding: '12px 16px', borderRadius: 12,
-                            background: 'rgba(255,255,255,0.05)',
-                            border: '1px solid rgba(139,92,246,0.35)',
-                            color: '#fff', fontSize: 14, outline: 'none',
-                            boxSizing: 'border-box', transition: 'border-color 0.2s',
-                          }}
-                          onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.7)')}
-                          onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.35)')}
-                        />
-                        <button
-                          onClick={() => { setDirectMode(false); setDirectInput(''); }}
-                          style={{
-                            marginTop: 8, fontSize: 11, color: 'rgba(196,181,253,0.45)',
-                            cursor: 'pointer', background: 'none', border: 'none', paddingLeft: 4,
-                          }}
-                          onMouseEnter={(e) => (e.currentTarget.style.color = '#c4b5fd')}
-                          onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(196,181,253,0.45)')}
-                        >
-                          ← 검색으로 돌아가기
-                        </button>
-                      </div>
-                    ) : (
-                      /* 자동완성 검색 모드 */
-                      <div>
-                        <CompanyAutocomplete
-                          selectedName={selectedCompany?.corpName}
-                          onSelect={handleCompanySelect}
-                          onClear={() => setSelectedCompany(null)}
-                          disabled={companyLookupLoading}
-                        />
-                        {!selectedCompany && (
-                          <button
-                            onClick={() => setDirectMode(true)}
-                            style={{
-                              marginTop: 8, fontSize: 11, color: 'rgba(196,181,253,0.4)',
-                              cursor: 'pointer', background: 'none', border: 'none', paddingLeft: 4,
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.color = '#c4b5fd')}
-                            onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(196,181,253,0.4)')}
-                          >
-                            목록에 없는 기업이라면?
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 구분선 */}
-                  <div style={{ height: 1, background: 'rgba(139,92,246,0.1)', marginBottom: 20 }} />
-
-                  {/* Step 2 — 직군 선택 */}
-                  <div style={{ marginBottom: 16 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <span style={{
-                        width: 20, height: 20, borderRadius: 6,
-                        background: 'rgba(139,92,246,0.2)',
-                        border: '1px solid rgba(139,92,246,0.4)',
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 10, fontWeight: 800, color: '#a78bfa', flexShrink: 0,
-                      }}>2</span>
-                      <label style={{ fontSize: 12, fontWeight: 700, color: 'rgba(196,181,253,0.75)', letterSpacing: '0.05em' }}>
-                        직군 선택
-                      </label>
-                    </div>
-                    <select
-                      value={roleCategory}
-                      onChange={(e) => setRoleCategory(e.target.value as RoleCategory)}
-                      style={{
-                        width: '100%', padding: '12px 14px', borderRadius: 12,
-                        background: 'rgba(139,92,246,0.07)',
-                        border: '1px solid rgba(139,92,246,0.22)',
-                        color: '#e2e8f0', fontSize: 13, fontWeight: 500,
-                        outline: 'none', cursor: 'pointer',
-                        appearance: 'none',
-                        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23a78bfa' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E")`,
-                        backgroundRepeat: 'no-repeat',
-                        backgroundPosition: 'right 14px center',
-                        paddingRight: 36,
-                      }}
-                    >
-                      {ROLE_CATEGORIES.map((r) => (
-                        <option key={r.value} value={r.value} style={{ background: '#1a1040' }}>
-                          {r.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Step 3 — 세부 직무명 */}
-                  <div style={{ marginBottom: 28 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                      <span style={{
-                        width: 20, height: 20, borderRadius: 6,
-                        background: 'rgba(139,92,246,0.12)',
-                        border: '1px solid rgba(139,92,246,0.25)',
-                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 10, fontWeight: 800, color: 'rgba(167,139,250,0.6)', flexShrink: 0,
-                      }}>3</span>
-                      <label style={{ fontSize: 12, fontWeight: 700, color: 'rgba(196,181,253,0.5)', letterSpacing: '0.05em' }}>
-                        세부 직무명 <span style={{ fontWeight: 400, opacity: 0.6 }}>(선택)</span>
-                      </label>
-                    </div>
+                {directMode ? (
+                  <div>
                     <input
                       type="text"
-                      value={roleDetailName}
-                      onChange={(e) => setRoleDetailName(e.target.value)}
-                      placeholder="예: Spring Boot 백엔드 개발자"
+                      value={directInput}
+                      onChange={(e) => setDirectInput(e.target.value)}
+                      placeholder="기업명을 직접 입력하세요"
+                      autoFocus
                       style={{
-                        width: '100%', padding: '12px 14px', borderRadius: 12,
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid rgba(139,92,246,0.15)',
-                        color: '#e2e8f0', fontSize: 13, outline: 'none',
+                        width: '100%', padding: '15px 20px', borderRadius: 16,
+                        background: 'rgba(255,255,255,0.05)',
+                        border: '1px solid rgba(139,92,246,0.35)',
+                        color: '#fff', fontSize: 15, outline: 'none',
                         boxSizing: 'border-box', transition: 'border-color 0.2s',
+                        backdropFilter: 'blur(12px)',
                       }}
-                      onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.45)')}
-                      onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.15)')}
+                      onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.7)')}
+                      onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.35)')}
                     />
+                    <button
+                      onClick={() => { setDirectMode(false); setDirectInput(''); }}
+                      style={{
+                        marginTop: 10, fontSize: 11, color: 'rgba(196,181,253,0.38)',
+                        cursor: 'pointer', background: 'none', border: 'none', paddingLeft: 4,
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = '#c4b5fd')}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(196,181,253,0.38)')}
+                    >
+                      ← 검색으로 돌아가기
+                    </button>
                   </div>
+                ) : (
+                  <div>
+                    <CompanyAutocomplete
+                      selectedName={selectedCompany?.corpName}
+                      onSelect={handleCompanySelect}
+                      onClear={() => setSelectedCompany(null)}
+                      disabled={companyLookupLoading}
+                    />
+                    {!selectedCompany && (
+                      <button
+                        onClick={() => setDirectMode(true)}
+                        style={{
+                          marginTop: 10, fontSize: 11, color: 'rgba(196,181,253,0.35)',
+                          cursor: 'pointer', background: 'none', border: 'none', paddingLeft: 4,
+                        }}
+                        onMouseEnter={(e) => (e.currentTarget.style.color = '#c4b5fd')}
+                        onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(196,181,253,0.35)')}
+                      >
+                        목록에 없는 기업이라면?
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
 
-                  {/* 분석 시작 버튼 */}
-                  <button
-                    onClick={handleManualSubmit}
-                    disabled={!finalCompanyName.trim() || companyLookupLoading}
-                    style={{
-                      position: 'relative',
-                      width: '100%',
-                      padding: '15px',
-                      borderRadius: 14,
-                      background: finalCompanyName.trim()
-                        ? 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)'
-                        : 'rgba(255,255,255,0.04)',
-                      border: finalCompanyName.trim()
-                        ? '1px solid rgba(139,92,246,0.5)'
-                        : '1px solid rgba(255,255,255,0.07)',
-                      color: finalCompanyName.trim() ? '#fff' : 'rgba(255,255,255,0.18)',
-                      fontSize: 14,
-                      fontWeight: 800,
-                      cursor: finalCompanyName.trim() && !companyLookupLoading ? 'pointer' : 'not-allowed',
-                      boxShadow: finalCompanyName.trim()
-                        ? '0 8px 32px rgba(109,40,217,0.45), 0 0 0 1px rgba(139,92,246,0.2) inset'
-                        : 'none',
-                      transition: 'all 0.25s',
-                      letterSpacing: '0.04em',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (finalCompanyName.trim() && !companyLookupLoading) {
-                        e.currentTarget.style.boxShadow = '0 12px 40px rgba(109,40,217,0.6), 0 0 0 1px rgba(139,92,246,0.3) inset';
-                        e.currentTarget.style.transform = 'translateY(-1px)';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.boxShadow = finalCompanyName.trim()
-                        ? '0 8px 32px rgba(109,40,217,0.45), 0 0 0 1px rgba(139,92,246,0.2) inset'
-                        : 'none';
-                      e.currentTarget.style.transform = 'translateY(0)';
-                    }}
-                  >
-                    {companyLookupLoading
-                      ? '⏳  설립일 조회 중...'
-                      : finalCompanyName.trim()
-                        ? '✦  궁합 분석 시작하기'
-                        : '기업명을 먼저 선택해주세요'}
-                  </button>
-
+              {/* ── 직군 선택 — 칩 그리드 ── */}
+              <div style={{ marginBottom: 40 }}>
+                <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(196,181,253,0.6)', marginBottom: 14 }}>
+                  직군
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {ROLE_CATEGORIES.map((r) => {
+                    const active = roleCategory === r.value;
+                    return (
+                      <button
+                        key={r.value}
+                        onClick={() => setRoleCategory(r.value)}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 100,
+                          background: active
+                            ? 'linear-gradient(135deg, rgba(124,58,237,0.9) 0%, rgba(99,102,241,0.85) 100%)'
+                            : 'rgba(255,255,255,0.04)',
+                          border: active
+                            ? '1px solid rgba(139,92,246,0.6)'
+                            : '1px solid rgba(139,92,246,0.18)',
+                          color: active ? '#fff' : 'rgba(196,181,253,0.5)',
+                          fontSize: 12,
+                          fontWeight: active ? 700 : 400,
+                          cursor: 'pointer',
+                          transition: 'all 0.18s',
+                          boxShadow: active ? '0 4px 20px rgba(109,40,217,0.4)' : 'none',
+                          letterSpacing: active ? '0.02em' : '0',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!active) {
+                            e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)';
+                            e.currentTarget.style.color = 'rgba(196,181,253,0.8)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!active) {
+                            e.currentTarget.style.borderColor = 'rgba(139,92,246,0.18)';
+                            e.currentTarget.style.color = 'rgba(196,181,253,0.5)';
+                          }
+                        }}
+                      >
+                        {r.label}
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+
+              {/* ── 세부 직무명 ── */}
+              <div style={{ marginBottom: 48 }}>
+                <p style={{ fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', color: 'rgba(196,181,253,0.6)', marginBottom: 12 }}>
+                  세부 직무명 <span style={{ fontSize: 11, fontWeight: 400, color: 'rgba(196,181,253,0.35)', letterSpacing: 0 }}>(선택)</span>
+                </p>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    value={roleDetailName}
+                    onChange={(e) => setRoleDetailName(e.target.value)}
+                    placeholder="예: Spring Boot 백엔드, UI/UX 디자이너"
+                    style={{
+                      width: '100%',
+                      background: 'rgba(139,92,246,0.05)',
+                      border: '1px solid rgba(139,92,246,0.15)',
+                      borderRadius: 12,
+                      color: 'rgba(255,255,255,0.8)',
+                      fontSize: 13,
+                      padding: '12px 16px',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      transition: 'border-color 0.2s, background 0.2s',
+                    }}
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)';
+                      e.currentTarget.style.background = 'rgba(139,92,246,0.08)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = 'rgba(139,92,246,0.15)';
+                      e.currentTarget.style.background = 'rgba(139,92,246,0.05)';
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* ── 분석 시작 버튼 ── */}
+              <div style={{ position: 'relative' }}>
+                {/* 버튼 아래 ambient glow */}
+                {finalCompanyName.trim() && (
+                  <div style={{
+                    position: 'absolute', bottom: -12, left: '10%', right: '10%', height: 40,
+                    background: 'radial-gradient(ellipse, rgba(109,40,217,0.55) 0%, transparent 70%)',
+                    filter: 'blur(16px)',
+                    pointerEvents: 'none',
+                  }} />
+                )}
+                <button
+                  onClick={handleManualSubmit}
+                  disabled={!finalCompanyName.trim() || companyLookupLoading}
+                  style={{
+                    position: 'relative',
+                    overflow: 'hidden',
+                    width: '100%',
+                    padding: '18px 24px',
+                    borderRadius: 20,
+                    background: finalCompanyName.trim()
+                      ? 'linear-gradient(135deg, #6d28d9 0%, #5b21b6 40%, #4f46e5 100%)'
+                      : 'rgba(255,255,255,0.03)',
+                    border: finalCompanyName.trim()
+                      ? '1px solid rgba(167,139,250,0.45)'
+                      : '1px solid rgba(255,255,255,0.06)',
+                    color: finalCompanyName.trim() ? '#fff' : 'rgba(255,255,255,0.18)',
+                    fontSize: 14,
+                    fontWeight: 800,
+                    letterSpacing: '0.07em',
+                    cursor: finalCompanyName.trim() && !companyLookupLoading ? 'pointer' : 'default',
+                    transition: 'all 0.28s cubic-bezier(0.22,1,0.36,1)',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (finalCompanyName.trim() && !companyLookupLoading) {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.filter = 'brightness(1.12)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.filter = 'brightness(1)';
+                  }}
+                >
+                  {/* 상단 유리 반사 */}
+                  {finalCompanyName.trim() && (
+                    <span style={{
+                      position: 'absolute', top: 0, left: 0, right: 0, height: '52%',
+                      background: 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 100%)',
+                      borderRadius: '20px 20px 0 0',
+                      pointerEvents: 'none',
+                    }} />
+                  )}
+                  {/* 텍스트 */}
+                  <span style={{
+                    position: 'relative', zIndex: 1,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+                  }}>
+                    {companyLookupLoading ? (
+                      <>
+                        <span style={{ fontSize: 14 }}>⏳</span>
+                        <span>설립일 조회 중...</span>
+                      </>
+                    ) : finalCompanyName.trim() ? (
+                      <>
+                        <span style={{ fontSize: 11, opacity: 0.75, letterSpacing: '0.1em' }}>✦</span>
+                        <span>궁합 분석 시작하기</span>
+                        <span style={{ fontSize: 11, opacity: 0.75, letterSpacing: '0.1em' }}>✦</span>
+                      </>
+                    ) : (
+                      <span style={{ fontSize: 13 }}>기업명을 먼저 선택해주세요</span>
+                    )}
+                  </span>
+                </button>
               </div>
 
             </div>
