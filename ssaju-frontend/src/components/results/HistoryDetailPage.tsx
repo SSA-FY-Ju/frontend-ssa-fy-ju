@@ -121,7 +121,7 @@ function CompatibilitySummary({ data }: { data: CompatibilityResult }) {
         <h3 className="text-star-400 text-sm font-medium mb-3">예상 면접 질문</h3>
         <div className="flex flex-col gap-2">
           {data.expectedInterviewQuestions.map((q, i) => (
-            <p key={i} className="text-white/75 text-sm leading-relaxed">Q{i + 1}. {q}</p>
+            <p key={i} className="text-white/75 text-sm leading-relaxed">Q{i + 1}. {q.question}</p>
           ))}
         </div>
       </div>

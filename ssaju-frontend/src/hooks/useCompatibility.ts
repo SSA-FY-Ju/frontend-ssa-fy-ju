@@ -69,9 +69,8 @@ export function useCompatibility() {
       isRequestingRef.current = false;
 
       useSessionStore.getState().setLastAnalysisType('COMPATIBILITY');
-      // 백엔드가 sajuResultId를 주면 사용, 없으면 로컬 fallback (백엔드 추가 전 임시)
-      const resultId = data.sajuResultId != null
-        ? String(data.sajuResultId)
+      const resultId = data.compatibilityId != null
+        ? String(data.compatibilityId)
         : `COMPATIBILITY_${args.birthDate}_${args.birthTime}_${args.companyName}`;
       useSessionStore.getState().setSajuResultId(resultId);
 

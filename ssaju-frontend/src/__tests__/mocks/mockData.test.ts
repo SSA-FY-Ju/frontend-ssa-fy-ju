@@ -75,8 +75,8 @@ describe('mockCompatibilityResult', () => {
 
   it('analysisBreakdown 4개 항목 존재', () => {
     expect(Array.isArray(mockCompatibilityResult.expectedInterviewQuestions)).toBe(true);
-    expect(Array.isArray(mockCompatibilityResult.roleCompatibilities)).toBe(true);
-    expect(Array.isArray(mockCompatibilityResult.monthlyForecasts)).toBe(true);
+    expect(Array.isArray(mockCompatibilityResult.roleCompatibility)).toBe(true);
+    expect(Array.isArray(mockCompatibilityResult.monthlyForecast)).toBe(true);
     expect(Array.isArray(mockCompatibilityResult.cautions)).toBe(true);
   });
 });

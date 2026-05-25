@@ -26,10 +26,9 @@ export function CompatibilityResult({ result, onReset }: CompatibilityResultProp
           </div>
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
             {[
-              { label: '십신 궁합', value: result.analysisBreakdown.tenGodCompatibility },
-              { label: '오행 궁합', value: result.analysisBreakdown.fiveElementsMatch },
-              { label: '지장간 궁합', value: result.analysisBreakdown.hiddenStemAlignment },
-              { label: '리더십 매칭', value: result.analysisBreakdown.leadershipFit },
+              { label: '성향 일치도', value: result.analysisBreakdown.characterMatch },
+              { label: '잠재 시너지', value: result.analysisBreakdown.potentialSynergy },
+              { label: '장기 안정성', value: result.analysisBreakdown.longTermStability },
             ].map(({ label, value }) => {
               const barColor = value >= 80 ? '#22c55e' : value >= 60 ? '#f59e0b' : '#ef4444';
               return (
@@ -61,7 +60,7 @@ export function CompatibilityResult({ result, onReset }: CompatibilityResultProp
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {result.expectedInterviewQuestions.map((q, i) => (
             <p key={i} style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.6 }}>
-              Q{i + 1}. {q}
+              Q{i + 1}. {q.question}
             </p>
           ))}
         </div>

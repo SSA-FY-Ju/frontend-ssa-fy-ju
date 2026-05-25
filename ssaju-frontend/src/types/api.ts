@@ -239,19 +239,34 @@ export interface TargetRoleAnalysis {
   warning: string;      // 주의사항
 }
 
-/** 오행 분석 */
+/** 오행 분석 (실제 응답 구조) */
 export interface FiveElementsAnalysis {
-  userElements: Record<string, number>;    // 사용자 오행 (木/火/土/金/水)
-  companyElements: Record<string, number>; // 기업 오행
-  analysis: string;                        // 오행 적합도 종합 분석
+  userDistribution: Record<string, number>;    // 사용자 오행 (木/火/土/金/水)
+  companyDistribution: Record<string, number>; // 기업 오행
+  synergyDescription: string;                  // 오행 시너지 설명
 }
 
-/** 세부 점수 분석 */
+/** 세부 점수 분석 (실제 응답 구조) */
 export interface AnalysisBreakdown {
-  tenGodCompatibility: number;   // 십신 궁합 0-100
-  fiveElementsMatch: number;     // 오행 궁합 0-100
-  hiddenStemAlignment: number;   // 지장간 궁합 0-100
-  leadershipFit: number;         // 리더십 매칭 0-100
+  characterMatch: number;      // 성향 일치도 0-100
+  potentialSynergy: number;    // 잠재 시너지 0-100
+  longTermStability: number;   // 장기 안정성 0-100
+}
+
+/** 전략 제안 */
+export interface ActionableStrategy {
+  interviewKeywords: string[];
+  weaknessDefense: string;
+  bestTiming: {
+    luckyDays: string[];
+    preferredTime: string;
+  };
+}
+
+/** 예상 면접 질문 */
+export interface InterviewQuestion {
+  question: string;
+  intent: string;
 }
 
 /** 직군별 궁합 */
@@ -259,27 +274,32 @@ export interface RoleCompatibility {
   roleName: string;
   score: number;
   reason: string;
+  tag?: string;
 }
 
-/** 월별 운세 예측 */
+/** 월별 운세 예측 (실제 응답 구조) */
 export interface MonthlyForecast {
-  month: string;              // "YYYY-MM"
-  favorabilityScore: number;  // 유리도 0-10
+  month: number;                           // 월 숫자 (5, 6, 7...)
+  score: number;                           // 유리도 0-100
+  status: 'LUCKY' | 'CAUTION' | 'NORMAL';
   advice: string;
 }
 
 /**
- * 기업 호환성 결과
+ * 기업 호환성 결과 (실제 백엔드 응답 구조)
  */
 export interface CompatibilityResult {
-  sajuResultId?: number;                         // 피드백 연동용 ID (백엔드 추가 예정)
-  compatibilityScore: number;                   // 종합 궁합 점수 0-100
-  targetRoleAnalysis: TargetRoleAnalysis;       // 직군 분석
-  fiveElementsAnalysis: FiveElementsAnalysis;   // 오행 분석
-  analysisBreakdown: AnalysisBreakdown;         // 세부 점수
-  expectedInterviewQuestions: string[];          // 예상 면접 질문
-  roleCompatibilities: RoleCompatibility[];      // 직군별 궁합
-  monthlyForecasts: MonthlyForecast[];           // 월별 운세
+  compatibilityId?: number;                      // 피드백 연동용 ID
+  requestContext?: { companyName: string; targetRole: TargetRole };
+  compatibilityScore: number;                    // 종합 궁합 점수 0-100
+  summary?: string;                              // 한줄 요약
+  targetRoleAnalysis: TargetRoleAnalysis;        // 직군 분석
+  fiveElements: FiveElementsAnalysis;            // 오행 분석
+  analysisBreakdown: AnalysisBreakdown;          // 세부 점수
+  actionableStrategy?: ActionableStrategy;       // 전략 제안
+  expectedInterviewQuestions: InterviewQuestion[]; // 예상 면접 질문
+  roleCompatibility: RoleCompatibility[];        // 직군별 궁합
+  monthlyForecast: MonthlyForecast[];            // 월별 운세
   cautions: string[];                            // 주의사항
 }
 

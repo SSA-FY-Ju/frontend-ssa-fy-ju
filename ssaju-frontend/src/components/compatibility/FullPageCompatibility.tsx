@@ -101,6 +101,7 @@ export function FullPageCompatibility({ result, companyName, hasFeedback, onFeed
               score={result.compatibilityScore}
               companyName={companyName}
               breakdown={result.analysisBreakdown}
+              summary={result.summary}
               color={SECTIONS[0].color}
             />
           </SlideShell>
@@ -116,7 +117,7 @@ export function FullPageCompatibility({ result, companyName, hasFeedback, onFeed
         {/* 3. 오행 분석 */}
         <SwiperSlide style={{ height: '100vh' }}>
           <SlideShell section={SECTIONS[2]}>
-            <OhangSection data={result.fiveElementsAnalysis} color={SECTIONS[2].color} />
+            <OhangSection data={result.fiveElements} color={SECTIONS[2].color} />
           </SlideShell>
         </SwiperSlide>
 
@@ -125,7 +126,8 @@ export function FullPageCompatibility({ result, companyName, hasFeedback, onFeed
           <SlideShell section={SECTIONS[3]} scrollable>
             <InterviewSection
               questions={result.expectedInterviewQuestions}
-              roles={result.roleCompatibilities}
+              roles={result.roleCompatibility}
+              strategy={result.actionableStrategy}
               color={SECTIONS[3].color}
             />
           </SlideShell>
@@ -134,7 +136,7 @@ export function FullPageCompatibility({ result, companyName, hasFeedback, onFeed
         {/* 5. 월별 운세 */}
         <SwiperSlide style={{ height: '100vh' }}>
           <SlideShell section={SECTIONS[4]} scrollable>
-            <MonthlySection forecasts={result.monthlyForecasts} color={SECTIONS[4].color} />
+            <MonthlySection forecasts={result.monthlyForecast} bestTiming={result.actionableStrategy?.bestTiming} color={SECTIONS[4].color} />
           </SlideShell>
         </SwiperSlide>
 
@@ -249,10 +251,11 @@ function SlideShell({
 /* ── 1. 종합 점수 섹션 ─────────────────────────── */
 
 function ScoreSection({
-  score, companyName, breakdown, color,
+  score, companyName, breakdown, summary, color,
 }: {
   score: number; companyName: string;
   breakdown: CompatibilityResult['analysisBreakdown'];
+  summary?: string;
   color: string;
 }) {
   const gradeColor = score >= 80 ? '#f59e0b' : score >= 60 ? '#22c55e' : score >= 40 ? '#06b6d4' : '#ef4444';
@@ -261,10 +264,9 @@ function ScoreSection({
   const offset = circumference * (1 - score / 100);
 
   const bars = [
-    { label: '십신 궁합',  value: breakdown.tenGodCompatibility },
-    { label: '오행 궁합',  value: breakdown.fiveElementsMatch },
-    { label: '지장간 궁합', value: breakdown.hiddenStemAlignment },
-    { label: '리더십 매칭', value: breakdown.leadershipFit },
+    { label: '성향 일치도',  value: breakdown.characterMatch },
+    { label: '잠재 시너지', value: breakdown.potentialSynergy },
+    { label: '장기 안정성', value: breakdown.longTermStability },
   ];
 
   return (
@@ -315,6 +317,19 @@ function ScoreSection({
           );
         })}
       </div>
+
+      {/* 한줄 요약 */}
+      {summary && (
+        <div style={{
+          padding: '14px 18px', borderRadius: 12,
+          background: `${color}0c`, border: `1px solid ${color}25`,
+          textAlign: 'center',
+        }}>
+          <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.7, fontStyle: 'italic' }}>
+            {summary}
+          </p>
+        </div>
+      )}
 
       <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.15)', letterSpacing: '0.1em', textAlign: 'center' }}>
         스크롤로 자세한 분석 보기 ↓
@@ -368,18 +383,20 @@ const ELEMENT_COLORS: Record<string, string> = {
   '水': '#3b82f6',
 };
 
-function OhangSection({ data, color }: { data: CompatibilityResult['fiveElementsAnalysis']; color: string }) {
+function OhangSection({ data, color }: { data: CompatibilityResult['fiveElements']; color: string }) {
   const elements = ['木', '火', '土', '金', '水'];
+  const userEl = data?.userDistribution ?? {};
+  const companyEl = data?.companyDistribution ?? {};
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       {/* 오행 비교 바 */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {elements.map((el) => {
-          const userVal = data.userElements[el] ?? 0;
-          const companyVal = data.companyElements[el] ?? 0;
+          const userVal = userEl[el] ?? 0;
+          const companyVal = companyEl[el] ?? 0;
           const elColor = ELEMENT_COLORS[el] ?? color;
-          const maxVal = Math.max(...elements.map((e) => Math.max(data.userElements[e] ?? 0, data.companyElements[e] ?? 0, 1)));
+          const maxVal = Math.max(...elements.map((e) => Math.max(userEl[e] ?? 0, companyEl[e] ?? 0, 1)));
 
           return (
             <div key={el} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -410,7 +427,7 @@ function OhangSection({ data, color }: { data: CompatibilityResult['fiveElements
       {/* 종합 분석 */}
       <div style={{ padding: '16px', borderRadius: 12, background: `${color}0a`, border: `1px solid ${color}22` }}>
         <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color, opacity: 0.55, textTransform: 'uppercase', marginBottom: 10 }}>종합 분석</p>
-        <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.75 }}>{data.analysis}</p>
+        <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.75 }}>{data?.synergyDescription}</p>
       </div>
     </div>
   );
@@ -419,18 +436,52 @@ function OhangSection({ data, color }: { data: CompatibilityResult['fiveElements
 /* ── 4. 면접 준비 섹션 ─────────────────────────── */
 
 function InterviewSection({
-  questions, roles, color,
-}: { questions: string[]; roles: CompatibilityResult['roleCompatibilities']; color: string }) {
+  questions, roles, strategy, color,
+}: {
+  questions: CompatibilityResult['expectedInterviewQuestions'];
+  roles: CompatibilityResult['roleCompatibility'];
+  strategy?: CompatibilityResult['actionableStrategy'];
+  color: string;
+}) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+      {/* 면접 키워드 */}
+      {strategy?.interviewKeywords && strategy.interviewKeywords.length > 0 && (
+        <div>
+          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color, opacity: 0.55, textTransform: 'uppercase', marginBottom: 10 }}>핵심 키워드</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {strategy.interviewKeywords.map((kw, i) => (
+              <span key={i} style={{
+                padding: '5px 14px', borderRadius: 999, fontSize: 12, fontWeight: 700,
+                background: `${color}15`, border: `1px solid ${color}35`, color,
+              }}>{kw}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 약점 방어 전략 */}
+      {strategy?.weaknessDefense && (
+        <div style={{ padding: '14px 16px', borderRadius: 12, background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.18)' }}>
+          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color: '#f87171', opacity: 0.6, textTransform: 'uppercase', marginBottom: 8 }}>약점 방어 전략</p>
+          <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.75)', lineHeight: 1.7 }}>{strategy.weaknessDefense}</p>
+        </div>
+      )}
+
       {/* 예상 면접 질문 */}
       <div>
         <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color, opacity: 0.55, textTransform: 'uppercase', marginBottom: 12 }}>예상 면접 질문</p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {questions.map((q, i) => (
-            <div key={i} style={{ display: 'flex', gap: 12, padding: '12px 14px', borderRadius: 10, background: `${color}0a`, border: `1px solid ${color}1a` }}>
-              <span style={{ fontSize: 10, fontWeight: 800, color, opacity: 0.5, flexShrink: 0, paddingTop: 2 }}>Q{i + 1}</span>
-              <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.65 }}>{q}</p>
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '12px 14px', borderRadius: 10, background: `${color}0a`, border: `1px solid ${color}1a` }}>
+              <div style={{ display: 'flex', gap: 12 }}>
+                <span style={{ fontSize: 10, fontWeight: 800, color, opacity: 0.5, flexShrink: 0, paddingTop: 2 }}>Q{i + 1}</span>
+                <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.8)', lineHeight: 1.65 }}>{q.question}</p>
+              </div>
+              {q.intent && (
+                <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.5, paddingLeft: 24 }}>{q.intent}</p>
+              )}
             </div>
           ))}
         </div>
@@ -448,8 +499,13 @@ function InterviewSection({
                   <p style={{ fontSize: 18, fontWeight: 900, color: roleColor, lineHeight: 1 }}>{role.score}</p>
                   <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 1 }}>점</p>
                 </div>
-                <div>
-                  <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#fff', marginBottom: 4 }}>{role.roleName}</p>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <p style={{ fontSize: '0.875rem', fontWeight: 700, color: '#fff' }}>{role.roleName}</p>
+                    {role.tag && (
+                      <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: `${roleColor}20`, color: roleColor }}>{role.tag}</span>
+                    )}
+                  </div>
                   <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.55 }}>{role.reason}</p>
                 </div>
               </div>
@@ -463,21 +519,51 @@ function InterviewSection({
 
 /* ── 5. 월별 운세 섹션 ─────────────────────────── */
 
-function MonthlySection({ forecasts, color }: { forecasts: CompatibilityResult['monthlyForecasts']; color: string }) {
+function MonthlySection({
+  forecasts, bestTiming, color,
+}: {
+  forecasts: CompatibilityResult['monthlyForecast'];
+  bestTiming?: NonNullable<CompatibilityResult['actionableStrategy']>['bestTiming'];
+  color: string;
+}) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+      {/* 행운의 날 + 시간대 */}
+      {bestTiming && (
+        <div style={{ padding: '14px 16px', borderRadius: 12, background: `${color}0c`, border: `1px solid ${color}25`, marginBottom: 4 }}>
+          <p style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.2em', color, opacity: 0.55, textTransform: 'uppercase', marginBottom: 10 }}>행운의 날</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: bestTiming.preferredTime ? 10 : 0 }}>
+            {bestTiming.luckyDays.map((day: string, i: number) => (
+              <span key={i} style={{
+                padding: '4px 12px', borderRadius: 999, fontSize: 12, fontWeight: 700,
+                background: `${color}18`, border: `1px solid ${color}35`, color,
+              }}>{day}</span>
+            ))}
+          </div>
+          {bestTiming.preferredTime && (
+            <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.55)', marginTop: 4 }}>
+              ⏰ 추천 시간대: <span style={{ color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{bestTiming.preferredTime}</span>
+            </p>
+          )}
+        </div>
+      )}
+
       <p style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, marginBottom: 4 }}>
         별자리가 가장 밝게 빛나는 날, 도전하세요
       </p>
       {forecasts.map((f, i) => {
-        const barColor = f.favorabilityScore >= 8 ? '#22c55e' : f.favorabilityScore >= 6 ? '#f59e0b' : f.favorabilityScore >= 4 ? '#06b6d4' : '#f87171';
+        const isLucky = f.status === 'LUCKY';
+        const isCaution = f.status === 'CAUTION';
+        const barColor = isLucky ? '#22c55e' : isCaution ? '#f87171' : '#06b6d4';
+        const dotsFilled = Math.round(f.score / 10);
         return (
           <div key={i} style={{ display: 'flex', gap: 14, padding: '14px 16px', borderRadius: 12, background: `${color}08`, border: `1px solid ${color}18` }}>
             <div style={{ minWidth: 56 }}>
-              <p style={{ fontSize: 11, fontWeight: 800, color, opacity: 0.7 }}>{f.month}</p>
+              <p style={{ fontSize: 11, fontWeight: 800, color, opacity: 0.7 }}>{f.month}월</p>
               <div style={{ display: 'flex', gap: 2, marginTop: 6 }}>
                 {Array.from({ length: 10 }).map((_, j) => (
-                  <div key={j} style={{ width: 4, height: 4, borderRadius: 999, background: j < f.favorabilityScore ? barColor : 'rgba(255,255,255,0.08)' }} />
+                  <div key={j} style={{ width: 4, height: 4, borderRadius: 999, background: j < dotsFilled ? barColor : 'rgba(255,255,255,0.08)' }} />
                 ))}
               </div>
             </div>
@@ -534,23 +620,6 @@ function RightNavigator({
         })}
       </nav>
 
-      <nav aria-label="섹션 빠른 이동" className="lg:hidden sticky top-0 z-40 bg-night-900/95 backdrop-blur-sm border-b border-night-800 overflow-x-auto scrollbar-hide">
-        <div className="flex min-w-max px-3 py-0.5">
-          {sections.map((section, i) => {
-            const isActive = i === activeIndex;
-            return (
-              <button
-                key={section.key} onClick={() => onNavigate(i)}
-                aria-current={isActive ? 'true' : undefined}
-                className={['relative px-3 py-3 text-xs font-medium whitespace-nowrap transition-colors duration-200 min-h-[44px] flex items-center', isActive ? 'text-star-400' : 'text-gray-300/45 hover:text-star-300'].join(' ')}
-              >
-                {section.label}
-                {isActive && <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-star-500 rounded-full" />}
-              </button>
-            );
-          })}
-        </div>
-      </nav>
     </>
   );
 }
