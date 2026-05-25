@@ -4,17 +4,14 @@ import { useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useMyPage } from '@/hooks/useMyPage';
-import { useHistoryDetail } from '@/hooks/useHistoryDetail';
 import { useDeleteHistory } from '@/hooks/useDeleteHistory';
 import { useAuth } from '@/hooks/useAuth';
 import { HistoryTabs } from '@/components/history/HistoryTabs';
 import { HistoryCard } from '@/components/history/HistoryCard';
 import { EmptyState } from '@/components/history/EmptyState';
 import { DeleteConfirmModal } from '@/components/history/DeleteConfirmModal';
-import { HistoryDetailPage } from '@/components/results/HistoryDetailPage';
 import { useAuthStore } from '@/stores/authStore';
 import { useState } from 'react';
-import type { AnalysisRecord } from '@/types/api';
 
 const STAT_TYPES = [
   { key: 'TIMING',        label: '관운 분석', icon: '🌟', color: '#a78bfa' },
@@ -35,9 +32,7 @@ export default function MyPage() {
     error, activeTab, setActiveTab, currentPage, totalPages, setPage, loadInitial,
   } = useMyPage();
 
-  const { record: detailRecord, isLoading: isDetailLoading, fetchDetail, reset: resetDetail } = useHistoryDetail();
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [viewingRecord, setViewingRecord] = useState<AnalysisRecord | null>(null);
   const { deleteRecord, isDeleting } = useDeleteHistory({
     onSuccess: () => {
       setDeleteTargetId(null);
@@ -51,10 +46,6 @@ export default function MyPage() {
     }
   }, [isAuthReady, accessToken, loadInitial]);
 
-  useEffect(() => {
-    if (detailRecord) setViewingRecord(detailRecord);
-  }, [detailRecord]);
-
   const typeCounts = useMemo(() => ({
     TIMING:        allAnalyses.filter((a) => a.type === 'TIMING').length,
     CONSULTATION:  allAnalyses.filter((a) => a.type === 'CONSULTATION').length,
@@ -62,15 +53,6 @@ export default function MyPage() {
   }), [allAnalyses]);
 
   if (!isAllowed) return null;
-
-  if (viewingRecord) {
-    return (
-      <HistoryDetailPage
-        record={viewingRecord}
-        onBack={() => { setViewingRecord(null); resetDetail(); }}
-      />
-    );
-  }
 
   const initial = user?.name?.charAt(0)?.toUpperCase() ?? '?';
 
@@ -203,12 +185,6 @@ export default function MyPage() {
 
           {/* 카드 목록 */}
           <div className="flex flex-col p-3">
-            {isDetailLoading && (
-              <div className="flex justify-center py-6">
-                <div className="w-5 h-5 border-2 rounded-full animate-spin" style={{ borderColor: 'rgba(167,139,250,0.3)', borderTopColor: '#a78bfa' }} />
-              </div>
-            )}
-
             {error && !isLoading && (
               <div className="flex flex-col items-center justify-center flex-1 gap-3">
                 <p className="text-sm" style={{ color: 'rgba(248,113,113,0.8)' }}>{error}</p>
@@ -241,7 +217,7 @@ export default function MyPage() {
                     key={`${summary.type}_${summary.id}`}
                     summary={summary}
                     onDelete={(id) => setDeleteTargetId(id)}
-                    onView={(id, type) => fetchDetail(id, type)}
+                    onView={(id, type) => router.push(`/my-page/${id}?type=${type}`)}
                   />
                 ))}
               </div>

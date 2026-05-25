@@ -51,9 +51,13 @@ export async function fetchAnalysisRecord(
   recordId: string | number,
   type: string,
 ): Promise<AnalysisRecord> {
-  let typeParam = type;
-  if (typeParam === 'TIMING') typeParam = 'SAJU';
-  // CONSULTATION, COMPATIBILITY는 백엔드가 그대로 받음
+  // 프론트 타입 → 백엔드 enum 매핑
+  const TYPE_MAP: Record<string, string> = {
+    TIMING:        'SAJU',
+    CONSULTATION:  'CAREER_CONSULTATION',
+    COMPATIBILITY: 'COMPANY_COMPATIBILITY',
+  };
+  const typeParam = TYPE_MAP[type] ?? type;
 
   return apiFetch<AnalysisRecord>(`/api/mypage/analyses/${recordId}?type=${typeParam}`, {
     method: 'GET',
