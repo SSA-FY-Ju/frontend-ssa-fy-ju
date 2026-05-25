@@ -8,6 +8,7 @@ import type { DartCompany } from '@/hooks/useCompanyAutocomplete';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { CompanyAutocomplete } from '@/components/forms/CompanyAutocomplete';
+import { FoundingDatePicker } from '@/components/forms/FoundingDatePicker';
 import type { RoleCategory, TargetRole } from '@/types/api';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { LoadingProgress } from '@/components/results/LoadingProgress';
@@ -39,7 +40,7 @@ const ROLE_CATEGORIES: { value: RoleCategory; label: string }[] = [
 
 export default function CompatibilityPage() {
   const { isAllowed } = useRouteGuard(true);
-  const { phase, result, error, disclaimerVisible, disclaimerFading, submitCompatibility, reset } =
+  const { phase, result, error, disclaimerVisible, disclaimerFading, submitCompatibility, submitWithFoundingDate, reset } =
     useCompatibility();
 
   const sessionBirthDate = useSessionStore((s) => s.birthDate);
@@ -469,6 +470,21 @@ export default function CompatibilityPage() {
           }}>
             <div style={{ width: '100%', maxWidth: 480 }}>
               <LoadingProgress message="기업 궁합을 분석하고 있습니다..." />
+            </div>
+          </div>
+        )}
+
+        {/* ── 설립일자 직접 입력 (404 fallback) ── */}
+        {phase === 'founding-date-needed' && (
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            minHeight: 'calc(100vh - 4rem)', padding: '48px 16px',
+          }}>
+            <div style={{ width: '100%', maxWidth: 420 }}>
+              <FoundingDatePicker
+                companyName={finalCompanyName}
+                onConfirm={submitWithFoundingDate}
+              />
             </div>
           </div>
         )}

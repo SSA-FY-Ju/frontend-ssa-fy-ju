@@ -17,13 +17,14 @@
 
 import { useState, useRef } from 'react';
 import { fetchCompatibility } from '@/lib/api/company';
+import { ApiError } from '@/lib/api/client';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useAuthStore } from '@/stores/authStore';
 import type { CompatibilityResult, CompatibilityRequest, TargetRole } from '@/types/api';
 
-type Phase = 'idle' | 'disclaimer' | 'loading' | 'result' | 'error';
+type Phase = 'idle' | 'disclaimer' | 'loading' | 'result' | 'error' | 'founding-date-needed';
 
 interface CompatibilityArgs {
   birthDate: string;
@@ -64,6 +65,8 @@ export function useCompatibility() {
       const data = await fetchCompatibility(request);
       setResult(data);
       setPhase('result');
+      pendingArgsRef.current = null;
+      isRequestingRef.current = false;
 
       useSessionStore.getState().setLastAnalysisType('COMPATIBILITY');
       // 백엔드가 sajuResultId를 주면 사용, 없으면 로컬 fallback (백엔드 추가 전 임시)
@@ -81,13 +84,19 @@ export function useCompatibility() {
         useAnalysisStore.getState().setCompatibilityInputs(args as unknown as Record<string, unknown>);
       }
     } catch (err) {
+      isRequestingRef.current = false;
+
+      // 404: 설립일자 조회 실패 → 직접 입력 단계 (pendingArgs 보존)
+      if (err instanceof ApiError && err.statusCode === 404) {
+        setPhase('founding-date-needed');
+        return;
+      }
+
+      pendingArgsRef.current = null;
       const message = err instanceof Error ? err.message : '기업 궁합 분석 중 오류가 발생했습니다.';
       setError(message);
       setPhase('error');
       useAnalysisStore.getState().setCompatibilityError(message);
-    } finally {
-      isRequestingRef.current = false;
-      pendingArgsRef.current = null;
     }
   };
 
@@ -118,6 +127,23 @@ export function useCompatibility() {
     startDisclaimer();
   };
 
+  /**
+   * 설립일자 직접 입력 후 재제출 (disclaimer 건너뜀)
+   * companyFoundingTime은 09:00으로 고정
+   */
+  const submitWithFoundingDate = (foundingDate: string) => {
+    const args = pendingArgsRef.current;
+    if (!args || isRequestingRef.current) return;
+
+    isRequestingRef.current = true;
+    pendingArgsRef.current = {
+      ...args,
+      companyFoundingDate: foundingDate,
+      companyFoundingTime: '09:00',
+    };
+    runApiCall();
+  };
+
   /** 상태 초기화 */
   const reset = () => {
     resetDisclaimer();
@@ -136,6 +162,7 @@ export function useCompatibility() {
     disclaimerFading,
     loading: phase === 'loading',
     submitCompatibility,
+    submitWithFoundingDate,
     reset,
   };
 }
