@@ -23,13 +23,8 @@ type FeedbackType = 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
 // UI 내부 값 → API enum 매핑
 const FEEDBACK_TYPE_MAP: Record<FeedbackType, FeedbackRequest['feedbackType']> = {
   CAREER_TIMING:  'CAREER_TIMING',
-  CONSULTATION:   'CAREER_CONSULTATION',
-  COMPATIBILITY:  'COMPANY_COMPATIBILITY',
-};
-
-const SATISFACTION_MAP: Record<'SATISFIED' | 'DISSATISFIED', FeedbackRequest['satisfactionStatus']> = {
-  SATISFIED:    'SATISFIED',
-  DISSATISFIED: 'DISSATISFIED',
+  CONSULTATION:   'CONSULTATION',
+  COMPATIBILITY:  'COMPATIBILITY',
 };
 
 export function useFeedback(feedbackType: FeedbackType, onSuccess?: () => void) {
@@ -46,9 +41,9 @@ export function useFeedback(feedbackType: FeedbackType, onSuccess?: () => void) 
     feedbackContent?: string,
   ) => {
     const sajuResultIdRaw = useSessionStore.getState().sajuResultId;
-    const sajuResultId = sajuResultIdRaw ? Number(sajuResultIdRaw) : null;
+    const analysisId = sajuResultIdRaw ? Number(sajuResultIdRaw) : null;
 
-    if (!sajuResultId || isNaN(sajuResultId)) {
+    if (!analysisId || isNaN(analysisId)) {
       setError('분석 결과가 없습니다. 먼저 분석을 진행해주세요.');
       return;
     }
@@ -57,11 +52,13 @@ export function useFeedback(feedbackType: FeedbackType, onSuccess?: () => void) 
     setError(null);
 
     const request: FeedbackRequest = {
-      sajuResultId,
+      analysisId,
       feedbackType: FEEDBACK_TYPE_MAP[feedbackType],
-      satisfactionStatus: SATISFACTION_MAP[satisfactionStatus],
+      satisfactionStatus,
       feedbackContent: feedbackContent?.trim() || undefined,
     };
+
+    console.log('[Feedback] 요청 바디:', JSON.stringify(request, null, 2));
 
     try {
       await submitFeedback(request);

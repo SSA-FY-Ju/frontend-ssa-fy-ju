@@ -80,7 +80,7 @@ function ConsultationSummary({ data }: { data: ConsultationData }) {
         <h3 className="text-star-400 text-sm font-medium mb-3">피해야 할 시기</h3>
         <div className="flex flex-wrap gap-2 mb-3">
           {data.careerTimeline.warningMonths.map((m) => (
-            <span key={m} className="bg-night-700 text-rose-400 text-xs px-2 py-1 rounded-full border border-rose-500/20">{m}</span>
+            <span key={m} className="bg-night-700 text-rose-400 text-xs px-2 py-1 rounded-full border border-rose-500/20">{m}월</span>
           ))}
         </div>
         <p className="text-white text-sm leading-relaxed">{data.careerTimeline.warningDescription}</p>

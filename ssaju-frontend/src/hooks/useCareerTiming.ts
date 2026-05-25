@@ -56,9 +56,11 @@ export function useCareerTiming() {
       setResult(data);
       setPhase('result');
 
-      // API 응답에 sajuResultId가 없으므로 입력값 기반 로컬 키 생성 (피드백 연동용)
-      const localResultId = `CAREER_TIMING_${args.birthDate}_${args.birthTime}`;
-      useSessionStore.getState().setSajuResultId(localResultId);
+      // analysisId → 로컬 fallback 순으로 사용
+      const resultId = data.analysisId
+        ? String(data.analysisId)
+        : `CAREER_TIMING_${args.birthDate}_${args.birthTime}`;
+      useSessionStore.getState().setSajuResultId(resultId);
       useSessionStore.getState().setLastAnalysisType('CAREER_TIMING');
 
       // 비로그인 시 analysisStore에 휘발성 저장

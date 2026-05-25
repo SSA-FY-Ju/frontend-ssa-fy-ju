@@ -46,17 +46,15 @@ export function useConsultation() {
       };
 
       const data = await fetchConsultation(request);
+      console.log('[Consultation API response]', JSON.stringify(data, null, 2));
 
       // Zustand 메모리에 전체 캐싱
       consultationStore.setConsultation(data);
       setPhase('result');
 
-      // consultationId(신규) → sajuResultId(구) → 로컬 fallback 순으로 사용
       const resultId = data.consultationId
         ? String(data.consultationId)
-        : data.sajuResultId
-          ? String(data.sajuResultId)
-          : `CONSULTATION_${args.birthDate}_${args.birthTime}`;
+        : `CONSULTATION_${args.birthDate}_${args.birthTime}`;
       useSessionStore.getState().setSajuResultId(resultId);
       useSessionStore.getState().setLastAnalysisType('CONSULTATION');
     } catch (err) {

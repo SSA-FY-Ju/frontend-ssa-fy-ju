@@ -127,7 +127,7 @@ describe('submitFeedback', () => {
     apiFetch.mockResolvedValueOnce({ success: true });
 
     const request = {
-      sajuResultId: 1001,
+      analysisId: 1001,
       feedbackType: 'CAREER_TIMING' as const,
       satisfactionStatus: 'SATISFIED' as const,
       feedbackContent: '매우 도움이 됐습니다.',
@@ -147,7 +147,7 @@ describe('submitFeedback', () => {
 
     await expect(
       submitFeedback({
-        sajuResultId: 1001,
+        analysisId: 1001,
         feedbackType: 'CAREER_TIMING',
         satisfactionStatus: 'DISSATISFIED',
       }),

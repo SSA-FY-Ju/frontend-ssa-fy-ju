@@ -17,7 +17,7 @@ export const mockCareerTimingResult: CareerTimingResult = {
 };
 
 export const mockConsultationData: ConsultationData = {
-  sajuResultId: 123,
+  consultationId: 123,
   favoredPeriod: 'H2',
   confidenceScore: 82,
   reasoning:
@@ -161,37 +161,37 @@ export const mockConsultationData: ConsultationData = {
     },
     pivotPoints: [
       {
-        month: '2025년 3월',
+        month: 3,
         type: 'NORMAL',
         score: 58,
         description: '식신(食神) 운이 활성화되며 자기 표현력이 높아집니다. 포트폴리오 정리와 이력서 보완에 집중하세요.',
       },
       {
-        month: '2025년 6월',
+        month: 6,
         type: 'CAUTION',
         score: 32,
         description: '형충(刑冲)의 기운으로 대인 갈등이 생기기 쉬운 시기입니다. 중요한 협상이나 계약은 7월 이후로 미루세요.',
       },
       {
-        month: '2025년 9월',
+        month: 9,
         type: 'LUCKY',
         score: 91,
         description: '관성(官星)과 인성(印星)이 합을 이루는 최고의 시기입니다. 적극적인 지원 활동과 네트워킹으로 기회를 잡으세요.',
       },
       {
-        month: '2025년 10월',
+        month: 10,
         type: 'LUCKY',
         score: 87,
         description: '금(金) 기운이 절정에 달하며 실질적인 결과물이 나오는 달입니다. 면접이나 협상에서 자신감 있는 태도가 성과로 이어집니다.',
       },
       {
-        month: '2026년 1월',
+        month: 1,
         type: 'NORMAL',
         score: 63,
         description: '새로운 시작의 기운이 있으나 인내가 필요한 시기입니다. 장기적 관점에서 커리어 방향을 재점검할 좋은 시기입니다.',
       },
     ],
-    warningMonths: ['2025년 5월', '2025년 6월', '2025년 8월'],
+    warningMonths: [2, 3, 5, 6, 8, 9],
     warningDescription:
       '5월~6월은 공망(空亡)과 형충(刑冲)이 겹치는 시기로, 충동적인 이직 결정은 후회로 이어질 수 있습니다. ' +
       '8월은 금기(金氣)가 약해져 판단력이 흐려지기 쉬우니 중요한 계약서 서명이나 연봉 협상은 피하는 것이 좋습니다. ' +

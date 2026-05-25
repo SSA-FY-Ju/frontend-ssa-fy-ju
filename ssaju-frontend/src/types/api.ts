@@ -31,6 +31,7 @@ export interface CareerTimingRequest {
  * 관운 분석 결과
  */
 export interface CareerTimingResult {
+  analysisId?: number;      // 피드백 연동용 ID
   favoredPeriod: string;    // 채용 운이 좋은 시기 (예: "2025년 상반기")
   confidenceScore: number;  // 신뢰도 0-100
   reasoning: string;        // 분석 근거
@@ -155,7 +156,7 @@ export interface MonthForecast {
 
 /** 커리어 타임라인 전환점 */
 export interface CareerPivotPoint {
-  month: string;
+  month: number;
   type: string;
   score: number;
   description: string;
@@ -166,7 +167,7 @@ export interface CareerTimeline {
   year: number;
   months: Record<string, MonthForecast>;
   pivotPoints: CareerPivotPoint[];
-  warningMonths: string[];
+  warningMonths: number[];
   warningDescription: string;
 }
 
@@ -174,8 +175,7 @@ export interface CareerTimeline {
  * AI 컨설팅 응답
  */
 export interface ConsultationData {
-  consultationId?: number;      // 백엔드 분석 ID (피드백 연동용)
-  sajuResultId?: number;        // 하위 호환용
+  consultationId?: number;      // 피드백 연동용 ID (= analysisId)
   industries: Industry[];
   interviewTips: string[];
   strengths: string[];
@@ -289,7 +289,8 @@ export interface MonthlyForecast {
  * 기업 호환성 결과 (실제 백엔드 응답 구조)
  */
 export interface CompatibilityResult {
-  compatibilityId?: number;                      // 피드백 연동용 ID
+  analysisId?: number;                           // 피드백 연동용 ID
+  compatibilityId?: number;                      // 하위 호환용
   requestContext?: { companyName: string; targetRole: TargetRole };
   compatibilityScore: number;                    // 종합 궁합 점수 0-100
   summary?: string;                              // 한줄 요약
@@ -306,14 +307,14 @@ export interface CompatibilityResult {
 /**
  * 피드백 요청 — API 스펙 기준 값 사용
  *
- * feedbackType: API 전송 시 실제 enum 값 (CAREER_CONSULTATION, CAREER_TIMING, COMPANY_COMPATIBILITY)
- * satisfactionStatus: API 지원 5단계 중 UI에서 사용하는 2단계 (SATISFIED / DISSATISFIED)
+ * feedbackType: CAREER_TIMING | CONSULTATION | COMPATIBILITY
+ * satisfactionStatus: SATISFIED | DISSATISFIED
  * feedbackContent: 선택 입력, 최대 500자
  */
 export interface FeedbackRequest {
-  sajuResultId: number;
-  feedbackType: 'CAREER_TIMING' | 'CAREER_CONSULTATION' | 'COMPANY_COMPATIBILITY';
-  satisfactionStatus: 'VERY_SATISFIED' | 'SATISFIED' | 'NEUTRAL' | 'DISSATISFIED' | 'VERY_DISSATISFIED';
+  analysisId: number;
+  feedbackType: 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
+  satisfactionStatus: 'SATISFIED' | 'DISSATISFIED';
   feedbackContent?: string;
 }
 

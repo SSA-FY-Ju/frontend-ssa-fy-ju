@@ -650,7 +650,7 @@ function ForecastSection({ timeline, color }: { timeline: ConsultationData['care
                 background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.35)', color: '#f87171',
               }}
             >
-              ⚠ {m}
+              ⚠ {m}월
             </span>
           ))}
         </div>

@@ -69,9 +69,11 @@ export function useCompatibility() {
       isRequestingRef.current = false;
 
       useSessionStore.getState().setLastAnalysisType('COMPATIBILITY');
-      const resultId = data.compatibilityId != null
-        ? String(data.compatibilityId)
-        : `COMPATIBILITY_${args.birthDate}_${args.birthTime}_${args.companyName}`;
+      const resultId = data.analysisId != null
+        ? String(data.analysisId)
+        : data.compatibilityId != null
+          ? String(data.compatibilityId)
+          : `COMPATIBILITY_${args.birthDate}_${args.birthTime}_${args.companyName}`;
       useSessionStore.getState().setSajuResultId(resultId);
 
       // 비로그인 시 analysisStore에 휘발성 저장
