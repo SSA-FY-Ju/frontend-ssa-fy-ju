@@ -59,8 +59,8 @@ export function useCareerTiming() {
       setResult(data);
       setPhase('result');
 
-      // 마이페이지 캐시 무효화 → 분석 기록 즉시 반영
-      queryClient.invalidateQueries({ queryKey: MYPAGE_QUERY_KEY });
+      // 마이페이지 캐시 삭제 → 진입 시 즉시 새 데이터 로드
+      queryClient.removeQueries({ queryKey: MYPAGE_QUERY_KEY });
 
       // analysisId → 로컬 fallback 순으로 사용
       const resultId = data.analysisId
