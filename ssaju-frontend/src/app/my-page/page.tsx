@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useMyPage } from '@/hooks/useMyPage';
@@ -10,47 +10,45 @@ import { HistoryTabs } from '@/components/history/HistoryTabs';
 import { HistoryCard } from '@/components/history/HistoryCard';
 import { EmptyState } from '@/components/history/EmptyState';
 import { DeleteConfirmModal } from '@/components/history/DeleteConfirmModal';
-import { useAuthStore } from '@/stores/authStore';
-import { useState } from 'react';
 
 const STAT_TYPES = [
-  { key: 'TIMING',        label: '관운 분석', icon: '🌟', color: '#a78bfa' },
-  { key: 'CONSULTATION',  label: 'AI 컨설팅', icon: '🤖', color: '#60a5fa' },
+  { key: 'TIMING', label: '관운 분석', icon: '🌟', color: '#a78bfa' },
+  { key: 'CONSULTATION', label: 'AI 컨설팅', icon: '🤖', color: '#60a5fa' },
   { key: 'COMPATIBILITY', label: '기업 궁합', icon: '🏢', color: '#34d399' },
 ] as const;
 
 export default function MyPage() {
   const { isAllowed } = useAuthGuard(true);
   const router = useRouter();
-
-  const isAuthReady = useAuthStore((s) => s.isAuthReady);
-  const accessToken = useAuthStore((s) => s.accessToken);
   const { user } = useAuth();
 
   const {
-    analyses, allAnalyses, totalCount, isLoading,
-    error, activeTab, setActiveTab, currentPage, totalPages, setPage, loadInitial,
+    analyses,
+    allAnalyses,
+    totalCount,
+    isLoading,
+    error,
+    activeTab,
+    setActiveTab,
+    currentPage,
+    totalPages,
+    setPage,
+    refetch,
   } = useMyPage();
 
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const { deleteRecord, isDeleting } = useDeleteHistory({
-    onSuccess: () => {
-      setDeleteTargetId(null);
-      loadInitial(activeTab);
-    },
+    onSuccess: () => setDeleteTargetId(null),
   });
 
-  useEffect(() => {
-    if (isAuthReady && accessToken) {
-      loadInitial('ALL');
-    }
-  }, [isAuthReady, accessToken, loadInitial]);
-
-  const typeCounts = useMemo(() => ({
-    TIMING:        allAnalyses.filter((a) => a.type === 'TIMING').length,
-    CONSULTATION:  allAnalyses.filter((a) => a.type === 'CONSULTATION').length,
-    COMPATIBILITY: allAnalyses.filter((a) => a.type === 'COMPATIBILITY').length,
-  }), [allAnalyses]);
+  const typeCounts = useMemo(
+    () => ({
+      TIMING: allAnalyses.filter((a) => a.type === 'TIMING').length,
+      CONSULTATION: allAnalyses.filter((a) => a.type === 'CONSULTATION').length,
+      COMPATIBILITY: allAnalyses.filter((a) => a.type === 'COMPATIBILITY').length,
+    }),
+    [allAnalyses],
+  );
 
   if (!isAllowed) return null;
 
@@ -59,14 +57,17 @@ export default function MyPage() {
   return (
     <div className="h-screen overflow-hidden text-white pt-16 flex flex-col">
       <div className="max-w-2xl w-full mx-auto px-4 py-5 flex flex-col gap-4">
-
         {/* 뒤로가기 */}
         <button
           onClick={() => router.push('/select')}
           className="flex items-center gap-2 text-sm w-fit transition-colors flex-shrink-0"
           style={{ color: 'rgba(196,181,253,0.5)' }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = '#c4b5fd'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(196,181,253,0.5)'; }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.color = '#c4b5fd';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.color = 'rgba(196,181,253,0.5)';
+          }}
         >
           ← 서비스 선택으로
         </button>
@@ -85,15 +86,33 @@ export default function MyPage() {
             overflow: 'hidden',
           }}
         >
-          <div style={{ position: 'absolute', top: -50, right: -50, width: 200, height: 200, borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div
+            style={{
+              position: 'absolute',
+              top: -50,
+              right: -50,
+              width: 200,
+              height: 200,
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)',
+              pointerEvents: 'none',
+            }}
+          />
 
           <div className="flex items-center gap-4">
             <div
               style={{
-                width: 48, height: 48, borderRadius: '50%', flexShrink: 0,
+                width: 48,
+                height: 48,
+                borderRadius: '50%',
+                flexShrink: 0,
                 background: 'linear-gradient(135deg, #7c3aed, #4f46e5)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 20, fontWeight: 800, color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 20,
+                fontWeight: 800,
+                color: '#fff',
                 boxShadow: '0 0 20px rgba(109,40,217,0.4)',
                 border: '2px solid rgba(167,139,250,0.3)',
               }}
@@ -102,9 +121,13 @@ export default function MyPage() {
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-white font-bold text-base leading-tight truncate">{user?.name ?? '-'}</p>
+              <p className="text-white font-bold text-base leading-tight truncate">
+                {user?.name ?? '-'}
+              </p>
               {user?.email && (
-                <p className="text-xs mt-0.5 truncate" style={{ color: 'rgba(196,181,253,0.45)' }}>{user.email}</p>
+                <p className="text-xs mt-0.5 truncate" style={{ color: 'rgba(196,181,253,0.45)' }}>
+                  {user.email}
+                </p>
               )}
             </div>
           </div>
@@ -112,7 +135,9 @@ export default function MyPage() {
           <div style={{ borderTop: '1px solid rgba(139,92,246,0.15)', margin: '16px 0 12px' }} />
 
           <div>
-            <p className="text-xs mb-2.5 font-medium" style={{ color: 'rgba(167,139,250,0.55)' }}>나의 분석 현황</p>
+            <p className="text-xs mb-2.5 font-medium" style={{ color: 'rgba(167,139,250,0.55)' }}>
+              나의 분석 현황
+            </p>
             <div className="grid grid-cols-4 gap-2">
               <div
                 style={{
@@ -127,7 +152,9 @@ export default function MyPage() {
                 <p className="text-lg font-black mb-0.5" style={{ color: '#a78bfa' }}>
                   {isLoading ? '…' : totalCount}
                 </p>
-                <p className="text-xs" style={{ color: 'rgba(167,139,250,0.6)' }}>전체</p>
+                <p className="text-xs" style={{ color: 'rgba(167,139,250,0.6)' }}>
+                  전체
+                </p>
               </div>
 
               {STAT_TYPES.map((t) => (
@@ -169,12 +196,18 @@ export default function MyPage() {
           <div className="px-5 pt-4 pb-3 flex items-center justify-between flex-shrink-0">
             <div className="flex items-center gap-2">
               <span style={{ color: '#a78bfa', fontSize: 14 }}>✦</span>
-              <span className="text-sm font-bold" style={{ color: 'rgba(196,181,253,0.8)' }}>분석 기록</span>
+              <span className="text-sm font-bold" style={{ color: 'rgba(196,181,253,0.8)' }}>
+                분석 기록
+              </span>
             </div>
             {!isLoading && totalCount > 0 && (
               <span
                 className="text-xs px-2.5 py-1 rounded-full"
-                style={{ background: 'rgba(139,92,246,0.12)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.2)' }}
+                style={{
+                  background: 'rgba(139,92,246,0.12)',
+                  color: '#a78bfa',
+                  border: '1px solid rgba(139,92,246,0.2)',
+                }}
               >
                 총 {totalCount}건
               </span>
@@ -187,9 +220,11 @@ export default function MyPage() {
           <div className="flex flex-col p-3">
             {error && !isLoading && (
               <div className="flex flex-col items-center justify-center flex-1 gap-3">
-                <p className="text-sm" style={{ color: 'rgba(248,113,113,0.8)' }}>{error}</p>
+                <p className="text-sm" style={{ color: 'rgba(248,113,113,0.8)' }}>
+                  {error}
+                </p>
                 <button
-                  onClick={() => loadInitial(activeTab)}
+                  onClick={() => refetch()}
                   className="text-xs px-4 py-1.5 rounded-lg transition-colors"
                   style={{ border: '1px solid rgba(167,139,250,0.4)', color: '#a78bfa' }}
                 >
@@ -201,7 +236,11 @@ export default function MyPage() {
             {isLoading && !error && (
               <div className="flex flex-col gap-2.5">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-20 rounded-xl animate-pulse" style={{ background: 'rgba(255,255,255,0.04)' }} />
+                  <div
+                    key={i}
+                    className="h-20 rounded-xl animate-pulse"
+                    style={{ background: 'rgba(255,255,255,0.04)' }}
+                  />
                 ))}
               </div>
             )}
@@ -236,7 +275,10 @@ export default function MyPage() {
 
           {/* 페이지네이션 */}
           {!isLoading && !error && totalPages > 1 && (
-            <div className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-3" style={{ borderTop: '1px solid rgba(139,92,246,0.1)' }}>
+            <div
+              className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-3"
+              style={{ borderTop: '1px solid rgba(139,92,246,0.1)' }}
+            >
               <button
                 onClick={() => setPage(currentPage - 1)}
                 disabled={currentPage === 0}
@@ -285,7 +327,6 @@ export default function MyPage() {
             </div>
           )}
         </div>
-
       </div>
 
       <DeleteConfirmModal

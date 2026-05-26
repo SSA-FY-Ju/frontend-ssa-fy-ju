@@ -12,11 +12,13 @@
  */
 
 import { useState, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { fetchConsultation } from '@/lib/api/career';
 import { useConsultationStore } from '@/stores/consultationStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
+import { MYPAGE_QUERY_KEY } from './useMyPage';
 import type { ConsultationRequest } from '@/types/api';
 
 type Phase = 'idle' | 'disclaimer' | 'loading' | 'result' | 'error';
@@ -28,6 +30,7 @@ export function useConsultation() {
   const pendingArgsRef = useRef<{ birthDate: string; birthTime: string } | null>(null);
 
   const consultationStore = useConsultationStore();
+  const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
 
   /** disclaimer 완료 후 실제 API 호출 */
@@ -51,6 +54,9 @@ export function useConsultation() {
       // Zustand 메모리에 전체 캐싱
       consultationStore.setConsultation(data);
       setPhase('result');
+
+      // 마이페이지 캐시 무효화 → 분석 기록 즉시 반영
+      queryClient.invalidateQueries({ queryKey: MYPAGE_QUERY_KEY });
 
       const resultId = data.consultationId
         ? String(data.consultationId)

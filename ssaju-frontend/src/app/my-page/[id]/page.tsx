@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { fetchAnalysisRecord } from '@/lib/api/mypage';
+import { useHistoryDetail } from '@/hooks/useHistoryDetail';
 import { CareerTimingResult } from '@/components/results/CareerTimingResult';
 import type {
   AnalysisRecord,
@@ -12,7 +12,6 @@ import type {
   CompatibilityResult,
 } from '@/types/api';
 
-// Swiper 컴포넌트 — SSR 비활성화 (브라우저 전용)
 const FullPageConsultation = dynamic(
   () => import('@/components/consultation/FullPageConsultation').then((m) => ({ default: m.FullPageConsultation })),
   { ssr: false }
@@ -22,12 +21,6 @@ const FullPageCompatibility = dynamic(
   { ssr: false }
 );
 
-/* ──────────────────────────────────────────────
-   실제 API 응답 필드 추출
-   SAJU                  → careerFortuneDetail
-   CAREER_CONSULTATION   → consultationDetail
-   COMPANY_COMPATIBILITY → compatibilityDetail
-────────────────────────────────────────────── */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractData(rec: AnalysisRecord): any {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,11 +28,7 @@ function extractData(rec: AnalysisRecord): any {
   return raw.careerFortuneDetail ?? raw.consultationDetail ?? raw.compatibilityDetail ?? raw.data ?? null;
 }
 
-/* ──────────────────────────────────────────────
-   상단 네비바
-   헤더가 숨겨진 페이지이므로 화면 최상단에 배치
-────────────────────────────────────────────── */
-function DetailNav({ type: _type, onClick }: { type: string; onClick: () => void }) {
+function DetailNav({ onClick }: { onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -78,9 +67,6 @@ function DetailNav({ type: _type, onClick }: { type: string; onClick: () => void
   );
 }
 
-/* ──────────────────────────────────────────────
-   로딩 스켈레톤
-────────────────────────────────────────────── */
 function Skeleton() {
   return (
     <div className="flex flex-col gap-4 max-w-lg mx-auto px-4" style={{ paddingTop: '6rem' }}>
@@ -91,9 +77,6 @@ function Skeleton() {
   );
 }
 
-/* ──────────────────────────────────────────────
-   메인 페이지
-────────────────────────────────────────────── */
 export default function AnalysisDetailPage() {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -102,31 +85,11 @@ export default function AnalysisDetailPage() {
   const id = params.id as string;
   const type = searchParams.get('type') ?? '';
 
-  const [record, setRecord] = useState<AnalysisRecord | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { record, isLoading, error } = useHistoryDetail(id, type);
   const [consultSectionIndex, setConsultSectionIndex] = useState(0);
 
-  const load = useCallback(async () => {
-    if (!id || !type) return;
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await fetchAnalysisRecord(id, type);
-      console.log('[AnalysisDetail] raw record:', JSON.stringify(data, null, 2));
-      setRecord(data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '기록을 불러오지 못했습니다.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [id, type]);
+  const goBack = () => router.push('/my-page');
 
-  useEffect(() => { load(); }, [load]);
-
-  const goBack = useCallback(() => router.push('/my-page'), [router]);
-
-  /* ── 로딩 ── */
   if (isLoading) {
     return (
       <div className="min-h-screen text-white" style={{ background: 'rgba(4,2,18,1)' }}>
@@ -135,11 +98,10 @@ export default function AnalysisDetailPage() {
     );
   }
 
-  /* ── 에러 ── */
   if (error) {
     return (
       <div className="min-h-screen text-white" style={{ background: 'rgba(4,2,18,1)' }}>
-        <DetailNav type={type} onClick={goBack} />
+        <DetailNav onClick={goBack} />
         <div className="flex flex-col items-center justify-center gap-4 py-20 px-4" style={{ paddingTop: '5rem' }}>
           <div
             style={{
@@ -151,17 +113,6 @@ export default function AnalysisDetailPage() {
             }}
           >✕</div>
           <p style={{ fontSize: 14, color: 'rgba(248,113,113,0.8)', textAlign: 'center' }}>{error}</p>
-          <button
-            onClick={load}
-            className="text-sm px-5 py-2 rounded-xl"
-            style={{
-              background: 'rgba(139,92,246,0.12)',
-              border: '1px solid rgba(139,92,246,0.3)',
-              color: '#a78bfa',
-            }}
-          >
-            다시 시도
-          </button>
         </div>
       </div>
     );
@@ -174,7 +125,7 @@ export default function AnalysisDetailPage() {
   if (!analysisData) {
     return (
       <div className="min-h-screen text-white" style={{ background: 'rgba(4,2,18,1)' }}>
-        <DetailNav type={type} onClick={goBack} />
+        <DetailNav onClick={goBack} />
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', textAlign: 'center', paddingTop: 120 }}>
           분석 데이터를 불러올 수 없습니다.
         </p>
@@ -182,11 +133,10 @@ export default function AnalysisDetailPage() {
     );
   }
 
-  /* ── 관운 분석 — career-timing 페이지와 동일 ── */
   if (type === 'TIMING') {
     return (
       <main className="relative z-10 min-h-screen text-white">
-        <DetailNav type={type} onClick={goBack} />
+        <DetailNav onClick={goBack} />
         <div className="flex flex-col items-center justify-center min-h-screen px-4 py-12">
           <div className="w-full max-w-lg">
             <CareerTimingResult result={analysisData as CareerTimingResultType} />
@@ -196,11 +146,10 @@ export default function AnalysisDetailPage() {
     );
   }
 
-  /* ── AI 커리어 컨설팅 — consultation 페이지와 동일 ── */
   if (type === 'CONSULTATION') {
     return (
       <main className="relative z-10 min-h-screen text-white">
-        <DetailNav type={type} onClick={goBack} />
+        <DetailNav onClick={goBack} />
         <FullPageConsultation
           data={analysisData as ConsultationData}
           currentSectionIndex={consultSectionIndex}
@@ -210,12 +159,11 @@ export default function AnalysisDetailPage() {
     );
   }
 
-  /* ── 기업 궁합 — compatibility 페이지와 동일 ── */
   if (type === 'COMPATIBILITY') {
     const companyName = (analysisData as CompatibilityResult).requestContext?.companyName ?? '';
     return (
       <main className="relative z-10 text-white" style={{ height: '100vh', overflow: 'hidden' }}>
-        <DetailNav type={type} onClick={goBack} />
+        <DetailNav onClick={goBack} />
         <FullPageCompatibility
           result={analysisData as CompatibilityResult}
           companyName={companyName}

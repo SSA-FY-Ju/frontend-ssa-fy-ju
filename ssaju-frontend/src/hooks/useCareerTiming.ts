@@ -17,11 +17,13 @@
  */
 
 import { useState, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { fetchCareerTiming } from '@/lib/api/career';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useAuthStore } from '@/stores/authStore';
+import { MYPAGE_QUERY_KEY } from './useMyPage';
 import type { CareerTimingResult, CareerTimingRequest } from '@/types/api';
 
 type Phase = 'idle' | 'disclaimer' | 'loading' | 'result' | 'error';
@@ -37,6 +39,7 @@ export function useCareerTiming() {
   const pendingArgsRef = useRef<{ birthDate: string; birthTime: string } | null>(null);
 
   const user = useAuthStore((s) => s.user);
+  const queryClient = useQueryClient();
 
   /** disclaimer 완료 후 실제 API 호출 */
   const runApiCall = useCallback(async () => {
@@ -55,6 +58,9 @@ export function useCareerTiming() {
       const data = await fetchCareerTiming(request);
       setResult(data);
       setPhase('result');
+
+      // 마이페이지 캐시 무효화 → 분석 기록 즉시 반영
+      queryClient.invalidateQueries({ queryKey: MYPAGE_QUERY_KEY });
 
       // analysisId → 로컬 fallback 순으로 사용
       const resultId = data.analysisId

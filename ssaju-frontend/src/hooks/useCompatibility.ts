@@ -16,12 +16,14 @@
  */
 
 import { useState, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { fetchCompatibility } from '@/lib/api/company';
 import { ApiError } from '@/lib/api/client';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useAuthStore } from '@/stores/authStore';
+import { MYPAGE_QUERY_KEY } from './useMyPage';
 import type { CompatibilityResult, CompatibilityRequest, TargetRole } from '@/types/api';
 
 type Phase = 'idle' | 'disclaimer' | 'loading' | 'result' | 'error' | 'founding-date-needed';
@@ -39,6 +41,8 @@ export function useCompatibility() {
   const [phase, setPhase] = useState<Phase>('idle');
   const [result, setResult] = useState<CompatibilityResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const queryClient = useQueryClient();
 
   // 중복 요청 방지
   const isRequestingRef = useRef(false);
@@ -67,6 +71,9 @@ export function useCompatibility() {
       setPhase('result');
       pendingArgsRef.current = null;
       isRequestingRef.current = false;
+
+      // 마이페이지 캐시 무효화 → 분석 기록 즉시 반영
+      queryClient.invalidateQueries({ queryKey: MYPAGE_QUERY_KEY });
 
       useSessionStore.getState().setLastAnalysisType('COMPATIBILITY');
       const resultId = data.analysisId != null

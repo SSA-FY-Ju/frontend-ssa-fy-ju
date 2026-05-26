@@ -1,12 +1,12 @@
 /**
- * useHistoryDetail 훅 테스트 (T111)
+ * useHistoryDetail 훅 테스트
  *
- * - fetchDetail 호출 후 record 설정 확인
- * - 에러 처리 확인
- * - reset 동작 확인
+ * React Query useQuery 기반으로 recordId, type을 훅 인자로 전달
  */
 
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { createElement } from 'react';
 import { useHistoryDetail } from '@/hooks/useHistoryDetail';
 
 jest.mock('@/lib/api/mypage', () => ({
@@ -24,53 +24,47 @@ const mockRecord = {
   confidenceScore: 82,
 };
 
+function makeWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  const Wrapper = ({ children }: { children: React.ReactNode }) =>
+    createElement(QueryClientProvider, { client: queryClient }, children);
+  Wrapper.displayName = 'QueryWrapper';
+  return Wrapper;
+}
+
 describe('useHistoryDetail', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+  beforeEach(() => jest.clearAllMocks());
 
-  it('초기 상태: record null, isLoading false, error null', () => {
-    const { result } = renderHook(() => useHistoryDetail());
-
-    expect(result.current.record).toBeNull();
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.error).toBeNull();
-  });
-
-  it('fetchDetail 호출 중 isLoading true', async () => {
-    fetchAnalysisRecord.mockReturnValueOnce(new Promise(() => {})); // 무한 대기
-
-    const { result } = renderHook(() => useHistoryDetail());
-
-    act(() => {
-      result.current.fetchDetail('1', 'TIMING');
+  it('초기 상태: record null, isLoading true (fetch 시작)', () => {
+    fetchAnalysisRecord.mockReturnValueOnce(new Promise(() => {}));
+    const { result } = renderHook(() => useHistoryDetail('1', 'TIMING'), {
+      wrapper: makeWrapper(),
     });
-
     expect(result.current.isLoading).toBe(true);
+    expect(result.current.record).toBeNull();
   });
 
-  it('fetchDetail 성공 후 record 설정됨', async () => {
+  it('성공 후 record 설정됨', async () => {
     fetchAnalysisRecord.mockResolvedValueOnce(mockRecord);
 
-    const { result } = renderHook(() => useHistoryDetail());
-
-    await act(async () => {
-      await result.current.fetchDetail('1', 'TIMING');
+    const { result } = renderHook(() => useHistoryDetail('1', 'TIMING'), {
+      wrapper: makeWrapper(),
     });
 
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
     expect(result.current.record).toEqual(mockRecord);
-    expect(result.current.isLoading).toBe(false);
     expect(result.current.error).toBeNull();
     expect(fetchAnalysisRecord).toHaveBeenCalledWith('1', 'TIMING');
   });
 
-  it('fetchDetail 실패 시 error 설정됨', async () => {
+  it('실패 시 error 설정됨', async () => {
     fetchAnalysisRecord.mockRejectedValueOnce(new Error('기록을 찾을 수 없습니다.'));
 
-    const { result } = renderHook(() => useHistoryDetail());
-
-    await act(async () => {
-      await result.current.fetchDetail('invalid-id', 'TIMING');
+    const { result } = renderHook(() => useHistoryDetail('invalid-id', 'TIMING'), {
+      wrapper: makeWrapper(),
     });
 
     await waitFor(() => expect(result.current.isLoading).toBe(false));
@@ -79,23 +73,11 @@ describe('useHistoryDetail', () => {
     expect(result.current.record).toBeNull();
   });
 
-  it('reset 호출 시 상태 초기화', async () => {
-    fetchAnalysisRecord.mockResolvedValueOnce(mockRecord);
-
-    const { result } = renderHook(() => useHistoryDetail());
-
-    await act(async () => {
-      await result.current.fetchDetail('1', 'TIMING');
+  it('recordId 없으면 fetch 실행 안 됨', () => {
+    const { result } = renderHook(() => useHistoryDetail('', 'TIMING'), {
+      wrapper: makeWrapper(),
     });
-
-    expect(result.current.record).not.toBeNull();
-
-    act(() => {
-      result.current.reset();
-    });
-
-    expect(result.current.record).toBeNull();
-    expect(result.current.error).toBeNull();
     expect(result.current.isLoading).toBe(false);
+    expect(fetchAnalysisRecord).not.toHaveBeenCalled();
   });
 });
