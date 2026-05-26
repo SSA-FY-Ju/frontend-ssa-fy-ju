@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = 'https://api.ssaju.net';
+const BACKEND_URL = process.env.BACKEND_URL!;
 
 /** 관운 분석 — 실제 백엔드 프록시 */
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const authorization = req.headers.get('authorization') ?? '';
+  const cookie = req.headers.get('cookie') ?? '';
 
   const res = await fetch(`${BACKEND_URL}/api/career/timing`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       ...(authorization ? { Authorization: authorization } : {}),
+      ...(cookie ? { Cookie: cookie } : {}),
     },
     body: JSON.stringify(body),
   });

@@ -30,7 +30,7 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
   const [draftMinute, setDraftMinute] = useState('00');
   const flowRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { setBirthDate: storeSetBirthDate, setBirthTime: storeSetBirthTime } = useSessionStore();
+  const { setBirthDate: storeSetBirthDate, setBirthTime: storeSetBirthTime, selectedService } = useSessionStore();
 
   useEffect(() => {
     const seq = [
@@ -102,7 +102,7 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
       storeSetBirthTime(time);
       setMessages((prev) => [
         ...prev,
-        { who: 'bot' as const, text: '어떤 별자리부터 보여드릴까요?', input: 'confirm' as const },
+        { who: 'bot' as const, text: '준비됐어요. 바로 분석을 시작할게요!', input: 'confirm' as const },
       ]);
       setStep(3);
     }, 1700);
@@ -347,7 +347,14 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
                   {m.input === 'confirm' && (
                     <div style={{ paddingTop: 14 }}>
                       <button
-                        onClick={() => router.push('/select')}
+                        onClick={() => {
+                          const routes: Record<string, string> = {
+                            CAREER_TIMING: '/career-timing',
+                            CONSULTATION: '/consultation',
+                            COMPATIBILITY: '/compatibility',
+                          };
+                          router.push(selectedService ? (routes[selectedService] ?? '/select') : '/select');
+                        }}
                         style={{
                           width: '100%',
                           padding: '12px 20px',
@@ -371,7 +378,7 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
                           e.currentTarget.style.boxShadow = '0 4px 24px rgba(252,211,77,0.45)';
                         }}
                       >
-                        서비스 선택하러 가기 →
+                        분석 시작하기 →
                       </button>
                     </div>
                   )}

@@ -1,122 +1,123 @@
 'use client';
 
 /**
- * 분석 기록 카드 컴포넌트 (T103)
+ * 분석 기록 카드 컴포넌트
  *
- * Props:
- * - record: 분석 기록
- * - onDelete: 삭제 버튼 클릭 핸들러
- * - onView: 카드 클릭 핸들러 (상세 보기)
- *
- * 분석 타입별 미리보기:
- * - CAREER_TIMING: h1Period + H1 신뢰도
- * - CONSULTATION: 첫 번째 추천 산업명
- * - COMPATIBILITY: companyName + 점수
+ * GET /api/mypage analyses[] 항목 기반
+ * - id, type, birthDate, createdAt, favoredPeriod, confidenceScore
  */
 
-import type { AnalysisRecord, CareerTimingResult, ConsultationData, CompatibilityResult } from '@/types/api';
+import type { MyPageAnalysisSummary } from '@/types/api';
 
 interface HistoryCardProps {
-  record: AnalysisRecord;
-  onDelete: (id: string) => void;
-  onView: (id: string) => void;
+  summary: MyPageAnalysisSummary;
+  onView: (id: string, type: string) => void;
 }
 
-/** 분석 타입 뱃지 레이블 */
-const TYPE_LABEL: Record<AnalysisRecord['analysisType'], string> = {
-  CAREER_TIMING: '관운 분석',
-  CONSULTATION: 'AI 컨설팅',
-  COMPATIBILITY: '기업 궁합',
+const TYPE_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: string }> = {
+  TIMING: {
+    label: '관운 분석',
+    icon: '🌟',
+    color: '#a78bfa',
+    bg: 'rgba(139,92,246,0.12)',
+    border: 'rgba(139,92,246,0.3)',
+  },
+  CONSULTATION: {
+    label: 'AI 컨설팅',
+    icon: '🤖',
+    color: '#60a5fa',
+    bg: 'rgba(96,165,250,0.12)',
+    border: 'rgba(96,165,250,0.3)',
+  },
+  COMPATIBILITY: {
+    label: '기업 궁합',
+    icon: '🏢',
+    color: '#34d399',
+    bg: 'rgba(52,211,153,0.12)',
+    border: 'rgba(52,211,153,0.3)',
+  },
 };
 
-/** 날짜를 한국 형식으로 변환 */
-function formatDate(timestamp: number): string {
-  return new Date(timestamp).toLocaleDateString('ko-KR', {
+function formatDate(isoString: string): string {
+  return new Date(isoString).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
   });
 }
 
-/** 분석 타입별 핵심 결과 미리보기 텍스트 */
-function getPreviewText(record: AnalysisRecord): string {
-  switch (record.analysisType) {
-    case 'CAREER_TIMING': {
-      const data = record.data as CareerTimingResult;
-      return `${data.favoredPeriod} · 신뢰도 ${data.confidenceScore}%`;
-    }
-    case 'CONSULTATION': {
-      const data = record.data as ConsultationData;
-      const first = data.recommendedIndustries[0];
-      return first ? first.industryName : '추천 산업 없음';
-    }
-    case 'COMPATIBILITY': {
-      const data = record.data as CompatibilityResult;
-      return `시너지 ${data.potentialSynergy}점 · 안정성 ${data.longTermStability}점`;
-    }
-    default:
-      return '';
-  }
+function formatBirthDate(dateString: string): string {
+  const [year, month, day] = dateString.split('-');
+  return `${year}년 ${month}월 ${day}일`;
 }
 
-export function HistoryCard({ record, onDelete, onView }: HistoryCardProps) {
-  const previewText = getPreviewText(record);
+function getResultText(summary: MyPageAnalysisSummary): string {
+  const period = summary.favoredPeriod === 'H1' ? '상반기 유리' : summary.favoredPeriod === 'H2' ? '하반기 유리' : '';
+  const score = summary.confidenceScore != null ? `신뢰도 ${summary.confidenceScore}%` : '';
+  return [period, score].filter(Boolean).join(' · ');
+}
+
+export function HistoryCard({ summary, onView }: HistoryCardProps) {
+  const config = TYPE_CONFIG[summary.type] ?? {
+    label: summary.type,
+    icon: '✦',
+    color: '#a78bfa',
+    bg: 'rgba(139,92,246,0.12)',
+    border: 'rgba(139,92,246,0.3)',
+  };
+  const resultText = getResultText(summary);
 
   return (
     <div
       role="button"
       tabIndex={0}
-      onClick={() => onView(record.recordId)}
+      onClick={() => onView(summary.id.toString(), summary.type)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') onView(record.recordId);
+        if (e.key === 'Enter' || e.key === ' ') onView(summary.id.toString(), summary.type);
       }}
       className="relative rounded-xl p-4 cursor-pointer transition-all"
       style={{
-        background: 'rgba(255,255,255,0.03)',
-        border: '1px solid rgba(139,92,246,0.15)',
+        background: 'rgba(255,255,255,0.02)',
+        border: '1px solid rgba(139,92,246,0.12)',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'rgba(139,92,246,0.08)';
-        e.currentTarget.style.borderColor = 'rgba(139,92,246,0.35)';
+        e.currentTarget.style.background = 'rgba(139,92,246,0.06)';
+        e.currentTarget.style.borderColor = 'rgba(139,92,246,0.28)';
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
-        e.currentTarget.style.borderColor = 'rgba(139,92,246,0.15)';
+        e.currentTarget.style.background = 'rgba(255,255,255,0.02)';
+        e.currentTarget.style.borderColor = 'rgba(139,92,246,0.12)';
       }}
     >
-      {/* 우상단 삭제 버튼 */}
-      <button
-        type="button"
-        aria-label="기록 삭제"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(record.recordId);
-        }}
-        className="absolute top-3 right-3 text-base transition-all"
-        style={{ color: 'rgba(148,163,184,0.35)', lineHeight: 1 }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(248,113,113,0.7)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(148,163,184,0.35)'; }}
-      >
-        ✕
-      </button>
+      {/* 헤더 행: 타입 뱃지 + 날짜 */}
+      <div className="flex items-center justify-between mb-3">
+        <span
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full"
+          style={{
+            background: config.bg,
+            border: `1px solid ${config.border}`,
+            color: config.color,
+          }}
+        >
+          <span style={{ fontSize: 11 }}>{config.icon}</span>
+          {config.label}
+        </span>
+        <span className="text-xs" style={{ color: 'rgba(148,163,184,0.4)' }}>
+          {formatDate(summary.createdAt)}
+        </span>
+      </div>
 
-      {/* 날짜 */}
-      <p className="text-xs mb-2" style={{ color: 'rgba(148,163,184,0.4)' }}>{formatDate(record.createdAt)}</p>
+      {/* 생년월일 */}
+      <p className="text-xs mb-2" style={{ color: 'rgba(196,181,253,0.45)' }}>
+        생년월일 {formatBirthDate(summary.birthDate)}
+      </p>
 
-      {/* 분석 타입 뱃지 */}
-      <span
-        className="inline-block px-2 py-0.5 text-xs rounded-full mb-2"
-        style={{
-          background: 'rgba(139,92,246,0.15)',
-          color: '#a78bfa',
-          border: '1px solid rgba(139,92,246,0.25)',
-        }}
-      >
-        {TYPE_LABEL[record.analysisType]}
-      </span>
-
-      {/* 핵심 결과 미리보기 */}
-      <p className="text-white text-sm font-medium">{previewText}</p>
+      {/* 결과 미리보기 */}
+      {resultText && (
+        <p className="text-sm font-medium" style={{ color: 'rgba(255,255,255,0.75)' }}>
+          {resultText}
+        </p>
+      )}
     </div>
   );
 }

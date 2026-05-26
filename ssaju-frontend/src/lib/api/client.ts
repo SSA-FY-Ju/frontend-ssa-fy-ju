@@ -25,17 +25,14 @@ interface FetchOptions {
   headers?: Record<string, string>;
 }
 
-interface ApiErrorResponse {
-  code: string;
-  message: string;
-  requestId: string;
-}
-
 interface ApiResponse<T> {
   success: boolean;
   data: T | null;
-  error: ApiErrorResponse | null;
-  timestamp: number;
+  message?: string;
+  errorCode?: string;
+  error?: { code: string; message: string; requestId?: string };
+  timestamp: string | number;
+  path?: string;
 }
 
 class ApiError extends Error {
@@ -66,34 +63,89 @@ const updateLoadingState = (loading: boolean): void => {
 };
 
 /**
- * 토큰 갱신 시도 (백엔드가 /api/auth/refresh를 지원할 때만 동작)
- * 쿠키 기반 refresh token 전송 → 새 access token 쿠키 수신
+ * 토큰 갱신 잠금 변수 (중복 갱신 방지)
  */
-async function tryRefreshToken(): Promise<boolean> {
-  try {
-    const baseUrl = config.apiBaseUrl;
-    const response = await fetch(`${baseUrl}/api/auth/refresh`, {
-      method: 'POST',
-      credentials: 'include',
-    });
-    return response.ok;
-  } catch {
-    return false;
-  }
-}
+let refreshPromise: Promise<boolean> | null = null;
 
 /**
- * 인증 만료 시 클라이언트 상태 초기화
+ * 토큰 갱신 시도
+ * refreshToken HttpOnly 쿠키 → 백엔드 → 새 accessToken 응답 → authStore 갱신
  */
-function clearAuthAndRedirect(): void {
-  if (typeof window === 'undefined') return;
-  try {
-    const { useAuthStore } = require('@/stores/authStore');
-    useAuthStore.getState().logout?.();
-  } catch {
-    // 스토어를 사용할 수 없으면 무시
+export async function tryRefreshToken(): Promise<boolean> {
+  if (refreshPromise) {
+    return refreshPromise;
   }
+
+  refreshPromise = (async () => {
+    try {
+      const baseUrl = (config.apiBaseUrl || '').replace(/\/$/, '');
+      const response = await fetch(`${baseUrl}/api/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+        credentials: 'include',
+      });
+      if (!response.ok) return false;
+
+      const json = await response.json().catch(() => ({}));
+
+      // 1순위: 응답 헤더 Authorization (대소문자 무관하게 처리)
+      const authHeader = response.headers.get('authorization') ?? response.headers.get('Authorization') ?? '';
+      let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+
+      // 2순위: 응답 바디
+      if (!token) {
+        token = json.data?.accessToken ?? json.accessToken ?? '';
+      }
+
+      if (token) {
+        // 새 accessToken을 authStore에 저장 및 로그인 상태 업데이트
+        if (typeof window !== 'undefined') {
+          const { useAuthStore } = require('@/stores/authStore');
+          const store = useAuthStore.getState();
+          store.setAccessToken(token);
+          store.setIsLoggedIn(true);
+
+          // 유저 정보 동기화 시도 (마이페이지 정보 활용)
+          try {
+            const userRes = await fetch(`${baseUrl}/api/mypage`, {
+              headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              credentials: 'include'
+            });
+            
+            if (userRes.ok) {
+              const userJson = await userRes.json();
+
+              // 실제 로그 데이터 구조에 따른 유저 정보 추출 (data.profile.id, name, email)
+              const profile = userJson.data?.profile;
+              if (profile && (profile.id !== undefined && profile.id !== null)) {
+                store.setUser({
+                  userId: String(profile.id),
+                  name: profile.name || '사용자',
+                  email: profile.email || ''
+                });
+              }
+            }
+          } catch (userErr) {
+            // 동기화 실패 시 무시
+          }
+        }
+        return true;
+      }
+      return false;
+    } catch (err) {
+      return false;
+    } finally {
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 }
+
 
 /**
  * 중앙 API fetch 래퍼
@@ -114,8 +166,10 @@ export async function apiFetch<T>(
     headers = {},
   } = options;
 
-  const baseUrl = config.apiBaseUrl;
-  const url = `${baseUrl}${path}`;
+  const baseUrl = config.apiBaseUrl || '';
+  // 경로가 /로 시작하고 baseUrl이 /로 끝나면 중복 방지
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const url = `${baseUrl.replace(/\/$/, '')}${cleanPath}`;
 
   updateLoadingState(true);
 
@@ -140,12 +194,10 @@ export async function apiFetch<T>(
           // 스토어 접근 실패 시 무시
         }
 
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`[API →] ${method} ${url}`, body ?? '');
-        }
 
         const response = await fetch(url, {
           method,
+          credentials: 'include', // refreshToken HttpOnly 쿠키 자동 전송 (logout 등에서 필요)
           headers: {
             'Content-Type': 'application/json',
             ...authHeader,
@@ -161,9 +213,6 @@ export async function apiFetch<T>(
         if (response.ok) {
           const json = (await response.json()) as ApiResponse<T>;
 
-          if (process.env.NODE_ENV === 'development') {
-            console.log(`[API ←] ${method} ${url} ${response.status}`, json);
-          }
 
           if (json.success) {
             return json.data as T;
@@ -172,8 +221,8 @@ export async function apiFetch<T>(
           // API 비즈니스 에러
           throw new ApiError(
             response.status,
-            json.error?.code || 'UNKNOWN_ERROR',
-            json.error?.message || 'Unknown error',
+            json.error?.code || json.errorCode || 'UNKNOWN_ERROR',
+            json.error?.message || json.message || 'Unknown error',
             json.error?.requestId || 'unknown',
           );
         }
@@ -182,25 +231,31 @@ export async function apiFetch<T>(
         if (response.status === 401 && attempt === 0) {
           const refreshed = await tryRefreshToken();
           if (refreshed) {
-            // 재시도 (attempt 루프는 continue로 돌리지 않고 break 후 재귀 호출)
+            // 재시도
             lastError = new Error('TOKEN_REFRESHED');
             continue;
           }
-          // 갱신 실패 → 로그아웃 처리
-          clearAuthAndRedirect();
+          // 갱신 실패 (리프레시 토큰 만료) → 로그아웃 + 로그인 모달 오픈
+          if (typeof window !== 'undefined') {
+            try {
+              const { useAuthStore } = require('@/stores/authStore');
+              const store = useAuthStore.getState();
+              store.logout();
+              store.openLoginModal();
+            } catch {
+              // 스토어 접근 실패 시 무시
+            }
+          }
           throw new ApiError(401, 'UNAUTHORIZED', '인증이 만료되었습니다. 다시 로그인해주세요.', 'unknown');
         }
 
         // 4xx 에러 (재시도 하지 않음)
         if (response.status >= 400 && response.status < 500) {
           const json = (await response.json()) as ApiResponse<T>;
-          if (process.env.NODE_ENV === 'development') {
-            console.warn(`[API ←] ${method} ${url} ${response.status}`, json);
-          }
           throw new ApiError(
             response.status,
-            json.error?.code || 'CLIENT_ERROR',
-            json.error?.message || response.statusText,
+            json.error?.code || json.errorCode || 'CLIENT_ERROR',
+            json.error?.message || json.message || response.statusText,
             json.error?.requestId || 'unknown',
           );
         }
@@ -219,10 +274,6 @@ export async function apiFetch<T>(
         if (isRetryable && attempt < maxAttempts - 1) {
           // 지수 백오프
           const backoffMs = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
-          console.warn(
-            `[apiFetch] Attempt ${attempt + 1} failed, retrying in ${backoffMs}ms...`,
-            error,
-          );
           await new Promise((resolve) => setTimeout(resolve, backoffMs));
           continue;
         }

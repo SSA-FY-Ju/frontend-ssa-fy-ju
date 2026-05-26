@@ -11,10 +11,15 @@
     "lint": "eslint src --max-warnings=0",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css}\"",
     "test": "jest --coverage --coveragePathIgnorePatterns=node_modules --testPathIgnorePatterns=node_modules",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "fetch-dart-corps": "node scripts/fetchDartCorps.mjs"
   },
   "dependencies": {
+    "@tanstack/react-query": "^5.100.14",
+    "@tanstack/react-query-devtools": "^5.100.14",
+    "@types/adm-zip": "^0.5.8",
     "@types/react-datepicker": "^6.2.0",
+    "adm-zip": "^0.5.17",
     "axios": "^1.6.0",
     "date-fns": "^2.30.0",
     "framer-motion": "^10.16.0",

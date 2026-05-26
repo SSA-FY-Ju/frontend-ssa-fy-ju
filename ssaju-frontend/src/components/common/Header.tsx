@@ -12,7 +12,6 @@ const RESULT_PAGES = ['/career-timing', '/consultation', '/compatibility'];
 export function Header() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
   const requestExit = useSessionStore((s) => s.requestExit);
-  const sajuResultId = useSessionStore((s) => s.sajuResultId);
   const pathname = usePathname();
   const router = useRouter();
 
@@ -31,7 +30,7 @@ export function Header() {
 
         {isResultPage ? (
           <button
-            onClick={() => sajuResultId ? requestExit() : router.push('/select')}
+            onClick={() => { if (isResultPage) { requestExit(); } else { router.push('/select'); } }}
             style={{
               padding: '7px 16px',
               borderRadius: 10,
@@ -85,7 +84,9 @@ export function Header() {
             마이페이지
           </button>
         ) : (
-          isLoggedIn ? <ProfileMenu /> : <LoginButton />
+          <div className="flex items-center gap-4">
+            {isLoggedIn ? <ProfileMenu /> : <LoginButton />}
+          </div>
         )}
       </div>
     </header>

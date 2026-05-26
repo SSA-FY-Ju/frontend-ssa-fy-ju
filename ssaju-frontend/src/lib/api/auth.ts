@@ -8,7 +8,8 @@
  * - POST /api/auth/logout     - 로그아웃
  */
 
-import { apiFetch } from './client';
+import { apiFetch, ApiError } from './client';
+import { config } from '../config/env';
 
 export interface LoginRequest {
   email: string;
@@ -17,7 +18,6 @@ export interface LoginRequest {
 
 export interface LoginResult {
   accessToken: string;
-  accessTokenExpiresIn: number;
 }
 
 export interface SignupRequest {
@@ -28,21 +28,39 @@ export interface SignupRequest {
   privacyAgreed: boolean;
 }
 
-export interface CheckEmailResult {
-  available: boolean;
-}
-
 /**
  * 이메일/패스워드 로그인
- * 성공 시 accessToken 반환
+ * 백엔드가 accessToken을 응답 헤더(Authorization: Bearer ...)로 내려줌
  */
 export async function login(req: LoginRequest): Promise<LoginResult> {
-  return apiFetch<LoginResult>('/api/auth/login', {
+  const res = await fetch(`${config.apiBaseUrl}/api/auth/login`, {
     method: 'POST',
-    body: req,
-    timeout: 10000,
-    retry: { maxAttempts: 1 },
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(req),
   });
+
+  const json = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const msg = json?.error?.message ?? json?.message ?? '로그인에 실패했습니다.';
+    throw new ApiError(res.status, json?.error?.code ?? 'LOGIN_FAILED', msg, 'unknown');
+  }
+
+  // 1순위: 응답 헤더 Authorization (백엔드가 헤더로 내려주는 경우)
+  const authHeader = res.headers.get('authorization') ?? '';
+  let accessToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+
+  // 2순위: 응답 body의 data.accessToken (명세 기준)
+  if (!accessToken) {
+    accessToken = json?.data?.accessToken ?? '';
+  }
+
+  if (!accessToken) {
+    throw new ApiError(500, 'NO_TOKEN', '서버에서 인증 토큰을 받지 못했습니다.', 'unknown');
+  }
+
+  return { accessToken };
 }
 
 /**
@@ -59,9 +77,10 @@ export async function signup(req: SignupRequest): Promise<void> {
 
 /**
  * 이메일 중복 확인
+ * 서버 응답 data: "AVAILABLE" → 사용 가능, 그 외 문자열 → 이미 사용 중
  */
-export async function checkEmail(email: string): Promise<CheckEmailResult> {
-  return apiFetch<CheckEmailResult>('/api/auth/check-email', {
+export async function checkEmail(email: string): Promise<string> {
+  return apiFetch<string>('/api/auth/check-email', {
     method: 'POST',
     body: { email },
     timeout: 5000,
@@ -76,6 +95,19 @@ export async function logout(): Promise<void> {
   await apiFetch<void>('/api/auth/logout', {
     method: 'POST',
     timeout: 5000,
+    retry: { maxAttempts: 1 },
+  });
+}
+
+/**
+ * 회원 탈퇴
+ * 비밀번호 확인 후 계정 삭제, refreshToken 쿠키 제거
+ */
+export async function deleteAccount(password: string): Promise<void> {
+  await apiFetch<void>('/api/users/me', {
+    method: 'DELETE',
+    body: { password },
+    timeout: 10000,
     retry: { maxAttempts: 1 },
   });
 }

@@ -64,14 +64,14 @@ describe('useFeedback', () => {
     const { result } = renderHook(() => useFeedback('CONSULTATION'));
 
     await act(async () => {
-      result.current.submit('UNSATISFIED', '개선 필요');
+      result.current.submit('DISSATISFIED', '개선 필요');
     });
 
     await waitFor(() => expect(result.current.isSubmitting).toBe(false));
     expect(submitFeedback).toHaveBeenCalledWith({
       sajuResultId: 'saju-002',
-      feedbackType: 'CONSULTATION',
-      satisfactionStatus: 'UNSATISFIED',
+      feedbackType: 'CAREER_CONSULTATION',
+      satisfactionStatus: 'DISSATISFIED',
       feedbackContent: '개선 필요',
     });
   });

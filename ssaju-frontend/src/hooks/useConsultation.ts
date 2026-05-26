@@ -5,23 +5,20 @@
  *
  * 흐름:
  * 1. submitConsultation() → disclaimer 1.5초 → API 호출(20초)
- * 2. 19개 필드 전체 수신 → consultationStore에 메모리 캐싱
- * 3. FullPageConsultation에서 Swiper.js 수직 슬라이드로 탐색 (재요청 없음)
+ * 2. 19개 필드 전체 수신 → consultationStore에 저장
+ * 3. FullPageConsultation에서 Swiper.js 수직 슬라이드로 탐색
  *
- * 변경사항 (2026-05-13):
- * - Swiper.js onSlideChange 콜백에서 handleSectionChange 호출
- * - consultationStore.currentSectionIndex 읽기/쓰기
- * - handleSectionChange(index) → consultationStore.setCurrentSectionIndex(index)
- *
- * 타임아웃 정책 (FR-027):
- * - 20초 타임아웃, 최대 2회 재시도 (각 5초 간격)
+ * 캐싱 없음: 같은 사용자도 날짜를 달리해 여러 번 분석 가능하므로 매번 새로 요청
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { fetchConsultation } from '@/lib/api/career';
 import { useConsultationStore } from '@/stores/consultationStore';
 import { useSessionStore } from '@/stores/sessionStore';
+import { useAuthStore } from '@/stores/authStore';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
+import { MYPAGE_QUERY_KEY } from './useMyPage';
 import type { ConsultationRequest } from '@/types/api';
 
 type Phase = 'idle' | 'disclaimer' | 'loading' | 'result' | 'error';
@@ -33,9 +30,11 @@ export function useConsultation() {
   const pendingArgsRef = useRef<{ birthDate: string; birthTime: string } | null>(null);
 
   const consultationStore = useConsultationStore();
+  const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
 
   /** disclaimer 완료 후 실제 API 호출 */
-  const runApiCall = async () => {
+  const runApiCall = useCallback(async () => {
     const args = pendingArgsRef.current;
     if (!args) return;
 
@@ -46,16 +45,24 @@ export function useConsultation() {
       const request: ConsultationRequest = {
         birthDate: args.birthDate,
         birthTime: args.birthTime,
-        solarType: 'SOLAR',
+        targetName: user?.name || '사용자', // 유저 이름 포함
       };
 
       const data = await fetchConsultation(request);
+      console.log('[Consultation API response]', JSON.stringify(data, null, 2));
 
-      // Zustand 메모리에 전체 캐싱 (fullpage.js 즉시 렌더링)
-      consultationStore.setConsultation(data, data.sajuResultId);
-      // sessionStore에 sajuResultId 저장 (페이지 이탈 경고 훅 연동)
-      useSessionStore.getState().setSajuResultId(data.sajuResultId);
+      // Zustand 메모리에 전체 캐싱
+      consultationStore.setConsultation(data);
       setPhase('result');
+
+      // 마이페이지 캐시 삭제 → 진입 시 즉시 새 데이터 로드
+      queryClient.removeQueries({ queryKey: MYPAGE_QUERY_KEY });
+
+      const resultId = data.consultationId
+        ? String(data.consultationId)
+        : `CONSULTATION_${args.birthDate}_${args.birthTime}`;
+      useSessionStore.getState().setSajuResultId(resultId);
+      useSessionStore.getState().setLastAnalysisType('CONSULTATION');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'AI 컨설팅 분석 중 오류가 발생했습니다.';
       setError(message);
@@ -65,7 +72,8 @@ export function useConsultation() {
       isRequestingRef.current = false;
       pendingArgsRef.current = null;
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, consultationStore]);
 
   const {
     isVisible: disclaimerVisible,
@@ -75,16 +83,9 @@ export function useConsultation() {
   } = useDisclaimerTimer({ onComplete: runApiCall });
 
   /**
-   * 컨설팅 분석 시작
-   * 캐시 유효 시 API 재호출 없이 즉시 result 상태로 전환
+   * 컨설팅 분석 시작 — 매번 새로 API 호출 (캐싱 없음)
    */
-  const submitConsultation = (birthDate: string, birthTime: string = '12:00', sajuResultId?: string) => {
-    // 캐시 히트: 즉시 결과 표시
-    if (sajuResultId && consultationStore.isValid(sajuResultId)) {
-      setPhase('result');
-      return;
-    }
-
+  const submitConsultation = useCallback((birthDate: string, birthTime: string = '12:00') => {
     if (isRequestingRef.current) return;
     isRequestingRef.current = true;
 
@@ -92,7 +93,7 @@ export function useConsultation() {
     setError(null);
     setPhase('disclaimer');
     startDisclaimer();
-  };
+  }, [startDisclaimer]);
 
   /**
    * Swiper onSlideChange 콜백에서 호출

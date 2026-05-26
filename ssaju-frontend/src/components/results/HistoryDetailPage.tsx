@@ -35,108 +35,55 @@ function formatDate(timestamp: number): string {
   });
 }
 
-/** CONSULTATION 결과 요약 (8섹션 전체) */
+/** CONSULTATION 결과 요약 */
 function ConsultationSummary({ data }: { data: ConsultationData }) {
+  const period = data.favoredPeriod === 'H1' ? '상반기' : data.favoredPeriod === 'H2' ? '하반기' : data.favoredPeriod;
   return (
     <div className="flex flex-col gap-6">
-      {/* 섹션1: 추천 산업 */}
+      {/* 핵심 분석 */}
+      <div className="bg-night-800 rounded-xl p-5">
+        <h3 className="text-star-400 text-sm font-medium mb-3">핵심 분석</h3>
+        <p className="text-white text-sm font-bold mb-2">유리한 시기: {period} · 신뢰도 {data.confidenceScore}%</p>
+        <p className="text-white/70 text-sm leading-relaxed">{data.reasoning}</p>
+      </div>
+
+      {/* 강점 / 주의 */}
+      <div className="bg-night-800 rounded-xl p-5">
+        <h3 className="text-star-400 text-sm font-medium mb-3">강점 & 주의사항</h3>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {data.strengths.map((s) => (
+            <span key={s} className="bg-emerald-500/10 text-emerald-400 text-xs px-2 py-1 rounded-full border border-emerald-500/20">{s}</span>
+          ))}
+        </div>
+        <div className="flex flex-col gap-1">
+          {data.cautions.map((c) => (
+            <p key={c} className="text-rose-400/80 text-xs">⚠ {c}</p>
+          ))}
+        </div>
+      </div>
+
+      {/* 추천 산업 */}
       <div className="bg-night-800 rounded-xl p-5">
         <h3 className="text-star-400 text-sm font-medium mb-3">추천 산업</h3>
-        <ul className="flex flex-col gap-2">
-          {data.recommendedIndustries.map((industry) => (
-            <li key={industry.industryName} className="flex items-start gap-2">
-              <span className="text-star-500 mt-0.5">✦</span>
-              <div>
-                <p className="text-white text-sm font-medium">{industry.industryName}</p>
-                <p className="text-night-600 text-xs mt-0.5">{industry.reason}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {/* 섹션2: 면접 팁 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">면접 팁</h3>
-        <ul className="flex flex-col gap-1.5">
-          {data.interviewTips.map((tip, i) => (
-            <li key={i} className="text-white text-sm leading-relaxed">• {tip}</li>
-          ))}
-        </ul>
-      </div>
-
-      {/* 섹션3: 강점 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">나의 강점</h3>
-        <ul className="flex flex-col gap-1.5">
-          {data.strengths.map((strength) => (
-            <li key={strength} className="text-white text-sm leading-relaxed">• {strength}</li>
-          ))}
-        </ul>
-      </div>
-
-      {/* 섹션4: 사주 프로필 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">사주 프로필</h3>
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div><span className="text-night-600">일간</span><p className="text-white mt-0.5">{data.sajuProfile.dayMaster}</p></div>
-          <div><span className="text-night-600">성격</span><p className="text-white mt-0.5">{data.sajuProfile.personality}</p></div>
-        </div>
-      </div>
-
-      {/* 섹션5: 부의 운 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">부의 운</h3>
-        <div className="flex flex-col gap-2 text-sm">
-          <p className="text-night-600 text-xs">수입원</p>
-          <p className="text-white leading-relaxed">{data.wealthStyle.incomeSource}</p>
-          <p className="text-night-600 text-xs mt-1">재테크 스타일</p>
-          <p className="text-white leading-relaxed">{data.wealthStyle.investmentStyle}</p>
-          <p className="text-night-600 text-xs mt-1">재무 조언</p>
-          <p className="text-white leading-relaxed">{data.wealthStyle.financialAdvice}</p>
-        </div>
-      </div>
-
-      {/* 섹션6: 경력 로드맵 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">경력 로드맵</h3>
-        <div className="flex flex-col gap-2 text-sm">
-          <p className="text-night-600 text-xs">단기 (0–3개월)</p>
-          <p className="text-white leading-relaxed">{data.careerRoadmap.shortTerm}</p>
-          <p className="text-night-600 text-xs mt-1">중기 (3–12개월)</p>
-          <p className="text-white leading-relaxed">{data.careerRoadmap.midTerm}</p>
-          <p className="text-night-600 text-xs mt-1">장기 (1–3년)</p>
-          <p className="text-white leading-relaxed">{data.careerRoadmap.longTerm}</p>
-        </div>
-      </div>
-
-      {/* 섹션7: 브랜딩 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">퍼스널 브랜딩</h3>
-        <div className="flex flex-col gap-2 text-sm">
-          <p className="text-night-600 text-xs">정장 색상</p>
-          <p className="text-white">{data.branding.suitColor}</p>
-          <p className="text-night-600 text-xs mt-1">이미지 스타일</p>
-          <p className="text-white">{data.branding.imageStyle}</p>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {data.branding.powerKeywords.map((kw) => (
-              <span key={kw} className="bg-night-700 text-star-300 text-xs px-2 py-1 rounded-full">{kw}</span>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 섹션8: 월별 운세 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">월별 운세</h3>
         <div className="flex flex-col gap-3">
-          {data.monthlyForecasts.map((forecast) => (
-            <div key={forecast.month} className="flex gap-3 text-sm">
-              <span className="text-star-400 font-medium w-8 shrink-0">{forecast.month}월</span>
-              <p className="text-white leading-relaxed">{forecast.advice}</p>
+          {data.industries.map((ind, i) => (
+            <div key={i} className="text-sm">
+              <p className="text-white font-semibold">{ind.name}</p>
+              <p className="text-white/50 text-xs mt-0.5">{ind.reason}</p>
             </div>
           ))}
         </div>
+      </div>
+
+      {/* 커리어 타임라인 주의 시기 */}
+      <div className="bg-night-800 rounded-xl p-5">
+        <h3 className="text-star-400 text-sm font-medium mb-3">피해야 할 시기</h3>
+        <div className="flex flex-wrap gap-2 mb-3">
+          {data.careerTimeline.warningMonths.map((m) => (
+            <span key={m} className="bg-night-700 text-rose-400 text-xs px-2 py-1 rounded-full border border-rose-500/20">{m}월</span>
+          ))}
+        </div>
+        <p className="text-white text-sm leading-relaxed">{data.careerTimeline.warningDescription}</p>
       </div>
     </div>
   );
@@ -144,46 +91,47 @@ function ConsultationSummary({ data }: { data: ConsultationData }) {
 
 /** COMPATIBILITY 결과 요약 */
 function CompatibilitySummary({ data }: { data: CompatibilityResult }) {
+  const scoreColor = data.compatibilityScore >= 80 ? '#f59e0b' : data.compatibilityScore >= 60 ? '#22c55e' : '#06b6d4';
+  const roleColor = data.targetRoleAnalysis.matchScore >= 80 ? '#22c55e' : data.targetRoleAnalysis.matchScore >= 60 ? '#f59e0b' : '#ef4444';
   return (
     <div className="flex flex-col gap-6">
-      {/* 점수 카드 */}
+      {/* 점수 카드 2개 */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-night-800 rounded-xl p-5 text-center">
-          <p className="text-night-600 text-xs mb-2">시너지 점수</p>
-          <p className="text-4xl font-bold text-star-400">{data.potentialSynergy}</p>
+          <p className="text-night-600 text-xs mb-2">종합 궁합 점수</p>
+          <p className="text-4xl font-bold" style={{ color: scoreColor }}>{data.compatibilityScore}</p>
           <p className="text-night-600 text-xs mt-1">/ 100</p>
         </div>
         <div className="bg-night-800 rounded-xl p-5 text-center">
-          <p className="text-night-600 text-xs mb-2">장기 안정성</p>
-          <p className="text-4xl font-bold text-green-400">{data.longTermStability}</p>
+          <p className="text-night-600 text-xs mb-2">직군 매칭 점수</p>
+          <p className="text-4xl font-bold" style={{ color: roleColor }}>{data.targetRoleAnalysis.matchScore}</p>
           <p className="text-night-600 text-xs mt-1">/ 100</p>
         </div>
       </div>
 
-      {/* 면접 키워드 */}
+      {/* 직군 분석 */}
       <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">면접 키워드</h3>
-        <div className="flex flex-wrap gap-2">
-          {data.actionableStrategy.interviewKeywords.map((kw, i) => (
-            <span key={i} className="px-3 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">{kw}</span>
+        <h3 className="text-star-400 text-sm font-medium mb-3">직군 분석</h3>
+        <p className="text-white/80 text-sm leading-relaxed mb-2">{data.targetRoleAnalysis.synergy}</p>
+        <p className="text-rose-400/75 text-xs">⚠ {data.targetRoleAnalysis.warning}</p>
+      </div>
+
+      {/* 예상 면접 질문 */}
+      <div className="bg-night-800 rounded-xl p-5">
+        <h3 className="text-star-400 text-sm font-medium mb-3">예상 면접 질문</h3>
+        <div className="flex flex-col gap-2">
+          {data.expectedInterviewQuestions.map((q, i) => (
+            <p key={i} className="text-white/75 text-sm leading-relaxed">Q{i + 1}. {q.question}</p>
           ))}
         </div>
       </div>
 
-      {/* 약점 방어 */}
+      {/* 주의사항 */}
       <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-2">약점 방어 전략</h3>
-        <p className="text-white text-sm leading-relaxed italic">{data.actionableStrategy.weaknessDefense}</p>
-      </div>
-
-      {/* 면접 최적 시기 */}
-      <div className="bg-night-800 rounded-xl p-5">
-        <h3 className="text-star-400 text-sm font-medium mb-3">면접 최적 시기</h3>
-        <div className="flex flex-col gap-2">
-          {data.actionableStrategy.bestTiming.luckyDays.map((day, i) => (
-            <div key={i} className="flex items-center gap-2 text-sm text-white/80">
-              <span>🌙</span><span>{day}</span>
-            </div>
+        <h3 className="text-star-400 text-sm font-medium mb-3">주의사항</h3>
+        <div className="flex flex-col gap-1">
+          {data.cautions.map((c, i) => (
+            <p key={i} className="text-rose-400/75 text-xs">⚠ {c}</p>
           ))}
         </div>
       </div>

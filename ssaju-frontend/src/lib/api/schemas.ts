@@ -38,56 +38,18 @@ export const CareerTimingResponseSchema = ApiResponseSchema(CareerTimingResultSc
 
 // ─── AI 컨설팅 ────────────────────────────────────────────────────────────────
 
-export const IndustryRecommendationSchema = z.object({
-  industryName: z.string(),
-  reason: z.string(),
-  recommendedRoles: z.array(z.string()),
-});
-
-export const SajuProfileSchema = z.object({
-  dayMaster: z.string(),
-  personality: z.string(),
-  oHangDistribution: z.record(z.string(), z.number()),
-  sipShinDistribution: z.record(z.string(), z.number()),
-});
-
-export const WealthStyleSchema = z.object({
-  incomeSource: z.string(),
-  financialAdvice: z.string(),
-  investmentStyle: z.string(),
-  additionalIncome: z.string(),
-});
-
-export const CareerRoadmapSchema = z.object({
-  shortTerm: z.string(),
-  midTerm: z.string(),
-  longTerm: z.string(),
-});
-
-export const BrandingInfoSchema = z.object({
-  suitColor: z.string(),
-  imageStyle: z.string(),
-  hairMakeup: z.string(),
-  powerKeywords: z.array(z.string()),
-});
-
-export const MonthlyForecastSchema = z.object({
-  month: z.number().min(1).max(12),
+export const PivotPointSchema = z.object({
+  month: z.string(),
+  type: z.string(),
   score: z.number().min(0).max(100),
-  type: z.enum(['LUCKY', 'CAUTION', 'NORMAL']),
-  advice: z.string(),
+  description: z.string(),
 });
 
 export const ConsultationDataSchema = z.object({
-  sajuResultId: z.string(),
-  recommendedIndustries: z.array(IndustryRecommendationSchema),
-  interviewTips: z.array(z.string()),
-  strengths: z.array(z.string()),
-  sajuProfile: SajuProfileSchema,
-  wealthStyle: WealthStyleSchema,
-  careerRoadmap: CareerRoadmapSchema,
-  branding: BrandingInfoSchema,
-  monthlyForecasts: z.array(MonthlyForecastSchema),
+  pivotPoints: z.array(PivotPointSchema),
+  warningMonths: z.array(z.string()),
+  warningDescription: z.string(),
+  analysisSummary: z.string(),
 });
 
 export const ConsultationResponseSchema = ApiResponseSchema(ConsultationDataSchema);

@@ -30,7 +30,7 @@ export async function fetchCareerTiming(
 
 /**
  * AI 기반 커리어 컨설팅
- * 타임아웃: 15초 (AI 분석)
+ * 타임아웃: 60초 (AI 분석은 시간이 오래 걸림)
  */
 export async function fetchConsultation(
   request: ConsultationRequest,
@@ -38,6 +38,6 @@ export async function fetchConsultation(
   return apiFetch<ConsultationData>('/api/career/consultation', {
     method: 'POST',
     body: request,
-    timeout: 15000,
+    timeout: 60000,
   });
 }

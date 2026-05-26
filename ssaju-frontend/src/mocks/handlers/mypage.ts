@@ -1,103 +1,131 @@
 /**
- * MSW 마이페이지 API 핸들러 (T109)
- *
- * 엔드포인트:
- * - POST /api/my-page/history       — 분석 기록 목록
- * - GET  /api/my-page/history/:id   — 분석 기록 상세
- * - DELETE /api/my-page/history/:id — 분석 기록 삭제
+ * MSW 마이페이지 API 핸들러
+ * API 명세(GET /api/mypage)에 맞춰 업데이트
  */
 
 import { http, HttpResponse, delay } from 'msw';
-import type { AnalysisRecord, AnalysisHistoryResponse } from '@/types/api';
+import type { MyPageData } from '@/types/api';
 
-/** 목 분석 기록 데이터 (CAREER_TIMING 3개) */
-export const mockAnalysisRecords: AnalysisRecord[] = [
-  {
-    recordId: 'record-001',
-    userId: 'user-001',
-    analysisType: 'CAREER_TIMING',
-    data: {
-      favoredPeriod: '2025년 상반기',
+/** 목 마이페이지 데이터 */
+export const mockMyPageData: MyPageData = {
+  profile: {
+    id: 1,
+    name: '김사주',
+    email: 'test@example.com',
+    createdAt: '2026-01-01T00:00:00',
+    lastLoginAt: '2026-05-24T00:00:00',
+  },
+  analyses: [
+    {
+      id: 101,
+      type: 'TIMING',
+      birthDate: '1995-06-15',
+      createdAt: '2026-05-20T14:30:00',
+      favoredPeriod: 'H1',
       confidenceScore: 82,
-      reasoning: '2025년 상반기가 취업 활동에 가장 유리한 시기입니다.',
     },
-    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 3, // 3일 전
-  },
-  {
-    recordId: 'record-002',
-    userId: 'user-001',
-    analysisType: 'CAREER_TIMING',
-    data: {
-      favoredPeriod: '2026년 상반기',
-      confidenceScore: 88,
-      reasoning: '2026년 상반기에 더 큰 기회가 열립니다.',
-    },
-    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 10, // 10일 전
-  },
-  {
-    recordId: 'record-003',
-    userId: 'user-001',
-    analysisType: 'CAREER_TIMING',
-    data: {
-      favoredPeriod: '2025년 하반기',
+    {
+      id: 102,
+      type: 'CONSULTATION',
+      birthDate: '1995-06-15',
+      createdAt: '2026-05-19T10:00:00',
+      favoredPeriod: 'H2',
       confidenceScore: 75,
-      reasoning: '2025년 하반기를 목표로 준비하세요.',
     },
-    createdAt: Date.now() - 1000 * 60 * 60 * 24 * 30, // 30일 전
+    {
+      id: 103,
+      type: 'COMPATIBILITY',
+      birthDate: '1995-06-15',
+      createdAt: '2026-05-18T16:20:00',
+    },
+    {
+      id: 104,
+      type: 'TIMING',
+      birthDate: '1995-06-15',
+      createdAt: '2026-05-10T09:00:00',
+      favoredPeriod: 'H2',
+      confidenceScore: 68,
+    },
+    {
+      id: 105,
+      type: 'CONSULTATION',
+      birthDate: '1995-06-15',
+      createdAt: '2026-04-28T13:45:00',
+      favoredPeriod: 'H1',
+      confidenceScore: 91,
+    },
+    {
+      id: 106,
+      type: 'COMPATIBILITY',
+      birthDate: '1995-06-15',
+      createdAt: '2026-04-15T11:30:00',
+    },
+  ],
+  pagination: {
+    page: 0,
+    size: 10,
+    total: 6,
+    totalPages: 1,
   },
-];
+};
 
 export const mypageHandlers = [
-  /** 분석 기록 목록 */
-  http.post('/api/my-page/history', async () => {
-    await delay(300);
-    const response: AnalysisHistoryResponse = {
-      records: mockAnalysisRecords,
-      hasMore: false,
-      total: mockAnalysisRecords.length,
-    };
-    return HttpResponse.json({
-      success: true,
-      data: response,
-      error: null,
-      timestamp: Date.now(),
-    });
-  }),
+  /** 마이페이지 조회 */
+  http.get('/api/mypage', async ({ request }) => {
+    await delay(400);
+    const url = new URL(request.url);
+    const type = url.searchParams.get('type');
 
-  /** 분석 기록 상세 */
-  http.get('/api/my-page/history/:id', async ({ params }) => {
-    await delay(200);
-    const { id } = params;
-    const record = mockAnalysisRecords.find((r) => r.recordId === id);
-
-    if (!record) {
-      return HttpResponse.json(
-        {
-          success: false,
-          data: null,
-          error: { code: 'NOT_FOUND', message: '기록을 찾을 수 없습니다.', requestId: 'req-001' },
-          timestamp: Date.now(),
-        },
-        { status: 404 },
-      );
+    let filteredAnalyses = mockMyPageData.analyses;
+    if (type) {
+      filteredAnalyses = mockMyPageData.analyses.filter((a) => a.type === type);
     }
 
     return HttpResponse.json({
       success: true,
-      data: record,
-      error: null,
-      timestamp: Date.now(),
+      data: {
+        ...mockMyPageData,
+        analyses: filteredAnalyses,
+        totalCount: filteredAnalyses.length,
+        totalPages: 1,
+      },
+      message: '마이페이지 조회 성공',
+      timestamp: new Date().toISOString(),
     });
   }),
 
-  /** 분석 기록 삭제 */
+  /** 분석 결과 상세 조회 */
+  http.get('/api/mypage/analyses/:id', async ({ params, request }) => {
+    await delay(300);
+    const { id } = params;
+    const url = new URL(request.url);
+    const type = url.searchParams.get('type');
+
+    const found = mockMyPageData.analyses.find((a) => a.id === Number(id));
+
+    return HttpResponse.json({
+      success: true,
+      data: {
+        id: Number(id),
+        type: type ?? found?.type,
+        birthDate: found?.birthDate ?? '1995-06-15',
+        createdAt: found?.createdAt ?? new Date().toISOString(),
+        favoredPeriod: found?.favoredPeriod,
+        confidenceScore: found?.confidenceScore,
+      },
+      message: '분석 결과 조회 성공',
+      timestamp: new Date().toISOString(),
+    });
+  }),
+
+  /** 기록 삭제 */
   http.delete('/api/my-page/history/:id', async () => {
     await delay(200);
     return HttpResponse.json({
       success: true,
       data: null,
-      error: null,
-      timestamp: Date.now(),
+      message: '삭제 성공',
+      timestamp: new Date().toISOString(),
     });
   }),
 ];

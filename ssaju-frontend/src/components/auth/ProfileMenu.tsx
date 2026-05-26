@@ -2,13 +2,16 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
+import { WithdrawalModal } from '@/components/auth/WithdrawalModal';
 
 /**
  * 로그인 후 프로필 메뉴
  */
 export function ProfileMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isWithdrawalOpen, setIsWithdrawalOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { user, logout } = useAuth();
 
@@ -23,14 +26,16 @@ export function ProfileMenu() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const router = useRouter();
   const [imgError, setImgError] = useState(false);
   const handleImgError = useCallback(() => setImgError(true), []);
 
-  if (!user) return null;
+  if (!user || !user.name) return null;
 
   const handleLogout = async () => {
     setIsOpen(false);
     await logout();
+    router.push('/');
   };
 
   // next/image는 remotePatterns에 없는 도메인을 렌더 시점에 throw함
@@ -56,12 +61,12 @@ export function ProfileMenu() {
       >
         {showAvatar ? (
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-star-500 text-sm font-bold text-night-900">
-            {user.name.charAt(0)}
+            {user.name?.charAt(0) || '?'}
           </div>
         ) : (
           <Image
             src={user.profileImage!}
-            alt={user.name}
+            alt={user.name || '사용자'}
             width={32}
             height={32}
             className="rounded-full object-cover"
@@ -73,18 +78,32 @@ export function ProfileMenu() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-night-700 bg-night-800 py-1 shadow-xl">
-          <div className="border-b border-night-700 px-4 py-2">
+        <div className="absolute right-0 top-full mt-1 w-48 rounded-xl border border-night-700 bg-night-800 p-1 shadow-xl">
+          <div className="px-3 py-2">
             <p className="text-sm font-medium text-white">{user.name}</p>
-            {user.email && <p className="text-xs text-gray-400">{user.email}</p>}
+            {user.email && <p className="text-xs text-gray-400 truncate">{user.email}</p>}
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-night-700 transition-colors"
-          >
-            로그아웃
-          </button>
+          <div className="border-t border-night-700 mt-1 pt-1">
+            <button
+              onClick={handleLogout}
+              className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-night-700 rounded-lg transition-colors"
+            >
+              로그아웃
+            </button>
+          </div>
+          <div className="border-t border-night-700 mt-1 pt-1">
+            <button
+              onClick={() => { setIsOpen(false); setIsWithdrawalOpen(true); }}
+              className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-night-700 rounded-lg transition-colors"
+            >
+              회원 탈퇴
+            </button>
+          </div>
         </div>
+      )}
+
+      {isWithdrawalOpen && (
+        <WithdrawalModal onClose={() => setIsWithdrawalOpen(false)} />
       )}
     </div>
   );

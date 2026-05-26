@@ -282,25 +282,25 @@ html, body {
   gap: 24px;
 }
 .page-dot {
-  width: auto;
-  height: auto;
+  width: 36px;
+  height: 36px;
   border: none;
   background: none;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: transform 0.3s ease, opacity 0.3s ease, filter 0.3s ease;
   padding: 0;
-  font-size: 24px;
-  opacity: 0.4;
+  font-size: 26px;
+  opacity: 0.55;
+  filter: grayscale(1) brightness(0.9);
   display: flex;
   align-items: center;
   justify-content: center;
-  line-height: 1;
-  color: var(--moon-glow);
+  transform: scale(1);
 }
 .page-dot.active {
-  font-size: 28px;
   opacity: 1;
-  filter: drop-shadow(0 0 10px var(--moon-glow));
+  filter: grayscale(0) drop-shadow(0 0 10px var(--moon-glow));
+  transform: scale(1.25);
 }
 
 /* ===== Scroll hint ===== */

@@ -33,24 +33,18 @@ describe('mockCareerTimingResult', () => {
 
 describe('mockConsultationData', () => {
   it('필수 필드 존재', () => {
-    expect(mockConsultationData.sajuResultId).toBeTruthy();
-    expect(mockConsultationData.recommendedIndustries).toBeTruthy();
-    expect(mockConsultationData.monthlyForecasts).toHaveLength(12);
-  });
-
-  it('sajuResultId 존재', () => {
-    expect(mockConsultationData.sajuResultId).toBeTruthy();
-  });
-
-  it('8개 탭 데이터 모두 존재', () => {
-    expect(Array.isArray(mockConsultationData.recommendedIndustries)).toBe(true);
-    expect(Array.isArray(mockConsultationData.interviewTips)).toBe(true);
+    expect(mockConsultationData.reasoning).toBeTruthy();
+    expect(Array.isArray(mockConsultationData.industries)).toBe(true);
     expect(Array.isArray(mockConsultationData.strengths)).toBe(true);
-    expect(mockConsultationData.sajuProfile).toBeDefined();
-    expect(mockConsultationData.wealthStyle).toBeDefined();
-    expect(mockConsultationData.careerRoadmap).toBeDefined();
-    expect(mockConsultationData.branding).toBeDefined();
-    expect(Array.isArray(mockConsultationData.monthlyForecasts)).toBe(true);
+    expect(mockConsultationData.careerTimeline.warningDescription).toBeTruthy();
+  });
+
+  it('careerTimeline.pivotPoints 각 항목에 필수 필드 존재', () => {
+    mockConsultationData.careerTimeline.pivotPoints.forEach((pt) => {
+      expect(pt.month).toBeTruthy();
+      expect(typeof pt.score).toBe('number');
+      expect(pt.description).toBeTruthy();
+    });
   });
 });
 
@@ -68,17 +62,22 @@ describe('mockUser', () => {
 
 
 describe('mockCompatibilityResult', () => {
-  it('시너지/안정성 점수 0-100 범위', () => {
-    expect(mockCompatibilityResult.potentialSynergy).toBeGreaterThanOrEqual(0);
-    expect(mockCompatibilityResult.potentialSynergy).toBeLessThanOrEqual(100);
-    expect(mockCompatibilityResult.longTermStability).toBeGreaterThanOrEqual(0);
-    expect(mockCompatibilityResult.longTermStability).toBeLessThanOrEqual(100);
+  it('종합 궁합 점수 0-100 범위', () => {
+    expect(mockCompatibilityResult.compatibilityScore).toBeGreaterThanOrEqual(0);
+    expect(mockCompatibilityResult.compatibilityScore).toBeLessThanOrEqual(100);
   });
 
-  it('actionableStrategy 필드 존재', () => {
-    expect(Array.isArray(mockCompatibilityResult.actionableStrategy.interviewKeywords)).toBe(true);
-    expect(mockCompatibilityResult.actionableStrategy.weaknessDefense).toBeTruthy();
-    expect(Array.isArray(mockCompatibilityResult.actionableStrategy.bestTiming.luckyDays)).toBe(true);
+  it('targetRoleAnalysis 필드 존재', () => {
+    expect(typeof mockCompatibilityResult.targetRoleAnalysis.matchScore).toBe('number');
+    expect(mockCompatibilityResult.targetRoleAnalysis.synergy).toBeTruthy();
+    expect(mockCompatibilityResult.targetRoleAnalysis.warning).toBeTruthy();
+  });
+
+  it('analysisBreakdown 4개 항목 존재', () => {
+    expect(Array.isArray(mockCompatibilityResult.expectedInterviewQuestions)).toBe(true);
+    expect(Array.isArray(mockCompatibilityResult.roleCompatibility)).toBe(true);
+    expect(Array.isArray(mockCompatibilityResult.monthlyForecast)).toBe(true);
+    expect(Array.isArray(mockCompatibilityResult.cautions)).toBe(true);
   });
 });
 

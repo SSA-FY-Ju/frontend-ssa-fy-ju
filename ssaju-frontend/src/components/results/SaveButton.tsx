@@ -24,7 +24,7 @@ export function SaveButton({ analysisType }: SaveButtonProps) {
   if (isLoggedIn) {
     return (
       <button
-        onClick={save}
+        onClick={() => save()}
         disabled={isSaving}
         aria-busy={isSaving}
         className="rounded-xl bg-star-500 px-6 py-3 font-medium text-night-900 transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"

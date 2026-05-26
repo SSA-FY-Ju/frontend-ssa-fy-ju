@@ -8,6 +8,7 @@ interface CompanyConfirmModalProps {
   onConfirm: (companyName: string) => void;
   onManualInput: () => void;
   onClose: () => void;
+  confirmLabel?: string;
 }
 
 export function CompanyConfirmModal({
@@ -16,6 +17,7 @@ export function CompanyConfirmModal({
   onConfirm,
   onManualInput: _onManualInput,
   onClose,
+  confirmLabel = '이 기업으로 분석하기',
 }: CompanyConfirmModalProps) {
   const [selected, setSelected] = useState(suggestions[0] ?? originalInput);
   const [showManual, setShowManual] = useState(suggestions.length === 0);
@@ -195,7 +197,7 @@ export function CompanyConfirmModal({
                   letterSpacing: '0.01em',
                 }}
               >
-                이 기업으로 분석하기
+                {confirmLabel}
               </button>
 
               {suggestions.length > 0 && (
@@ -304,7 +306,7 @@ export function CompanyConfirmModal({
                     e.currentTarget.style.background = 'linear-gradient(135deg, #7c3aed, #4f46e5)';
                   }}
                 >
-                  이 기업으로 분석하기
+                  {confirmLabel}
                 </button>
 
                 <button

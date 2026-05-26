@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const BACKEND_URL = 'https://api.ssaju.net';
+const BACKEND_URL = process.env.BACKEND_URL!;
 
 /** 이메일 중복 확인 — 실제 백엔드 프록시 */
 export async function POST(req: NextRequest) {

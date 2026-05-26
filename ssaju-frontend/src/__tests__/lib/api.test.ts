@@ -52,7 +52,7 @@ describe('fetchCareerTiming', () => {
     apiFetch.mockRejectedValueOnce(new Error('타임아웃'));
 
     await expect(
-      fetchCareerTiming({ birthDate: '1990-10-10', birthTime: '14:30', solarType: 'SOLAR' }),
+      fetchCareerTiming({ birthDate: '1990-10-10', birthTime: '14:30' }),
     ).rejects.toThrow('타임아웃');
   });
 });
@@ -66,7 +66,7 @@ describe('fetchConsultation', () => {
     const mockData = { sajuResultId: 'saju-001', recommendedIndustries: [] };
     apiFetch.mockResolvedValueOnce(mockData);
 
-    const request = { birthDate: '1990-10-10', birthTime: '14:30', solarType: 'SOLAR' as const };
+    const request = { birthDate: '1990-10-10', birthTime: '14:30' };
     const result = await fetchConsultation(request);
 
     expect(apiFetch).toHaveBeenCalledWith('/api/career/consultation', {
@@ -81,7 +81,7 @@ describe('fetchConsultation', () => {
     apiFetch.mockRejectedValueOnce(new Error('AI 타임아웃'));
 
     await expect(
-      fetchConsultation({ birthDate: '1990-10-10', solarType: 'SOLAR' }),
+      fetchConsultation({ birthDate: '1990-10-10' }),
     ).rejects.toThrow('AI 타임아웃');
   });
 });
@@ -127,7 +127,7 @@ describe('submitFeedback', () => {
     apiFetch.mockResolvedValueOnce({ success: true });
 
     const request = {
-      sajuResultId: 'saju-001',
+      analysisId: 1001,
       feedbackType: 'CAREER_TIMING' as const,
       satisfactionStatus: 'SATISFIED' as const,
       feedbackContent: '매우 도움이 됐습니다.',
@@ -147,9 +147,9 @@ describe('submitFeedback', () => {
 
     await expect(
       submitFeedback({
-        sajuResultId: 'saju-001',
+        analysisId: 1001,
         feedbackType: 'CAREER_TIMING',
-        satisfactionStatus: 'UNSATISFIED',
+        satisfactionStatus: 'DISSATISFIED',
       }),
     ).rejects.toThrow('피드백 제출 실패');
   });

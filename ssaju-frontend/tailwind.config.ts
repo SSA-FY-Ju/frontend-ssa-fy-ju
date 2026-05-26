@@ -64,7 +64,9 @@ const config: Config = {
       },
       animation: {
         'fade-in': 'fadeIn 0.5s ease-in',
+        'fade-out': 'fadeOut 0.2s ease-out forwards',
         'slide-up': 'slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'slide-down': 'slideDown 0.2s ease-in forwards',
         'slide-up-subtle': 'slideUpSubtle 0.3s ease-out',
         'pulse-star': 'pulseStar 2s ease-in-out infinite',
       },
@@ -73,9 +75,17 @@ const config: Config = {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
+        fadeOut: {
+          '0%': { opacity: '1' },
+          '100%': { opacity: '0' },
+        },
         slideUp: {
           '0%': { transform: 'translateY(100%)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
+        },
+        slideDown: {
+          '0%': { transform: 'translateY(0)', opacity: '1' },
+          '100%': { transform: 'translateY(20px)', opacity: '0' },
         },
         slideUpSubtle: {
           '0%': { transform: 'translateY(10px)', opacity: '0' },

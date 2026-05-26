@@ -10,7 +10,9 @@
  */
 
 import { useState } from 'react';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { CompanyAutocomplete } from './CompanyAutocomplete';
+import type { DartCompany } from '@/hooks/useCompanyAutocomplete';
 
 interface CompanyFormProps {
   /** 기업 선택 완료 콜백 */
@@ -20,31 +22,25 @@ interface CompanyFormProps {
 }
 
 export function CompanyForm({ onCompanySelect, isLoading = false }: CompanyFormProps) {
-  const [companyName, setCompanyName] = useState('');
+  const [selectedCompany, setSelectedCompany] = useState<DartCompany | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  /** 기업명 입력 핸들러 */
-  const handleChange = (value: string) => {
-    setCompanyName(value);
-    if (error) setError(null);
-  };
-
-  /** 자동완성 항목 선택 핸들러 */
-  const handleAutocompleteSelect = (selected: string) => {
-    setCompanyName(selected);
+  const handleSelect = (company: DartCompany) => {
+    setSelectedCompany(company);
     setError(null);
-    onCompanySelect(selected);
   };
 
-  /** 폼 제출 핸들러 */
+  const handleClear = () => {
+    setSelectedCompany(null);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const trimmed = companyName.trim();
-    if (!trimmed) {
-      setError('기업명을 입력해주세요.');
+    if (!selectedCompany) {
+      setError('기업을 목록에서 선택해주세요.');
       return;
     }
-    onCompanySelect(trimmed);
+    onCompanySelect(selectedCompany.corpName);
   };
 
   return (
@@ -54,9 +50,9 @@ export function CompanyForm({ onCompanySelect, isLoading = false }: CompanyFormP
           기업명
         </label>
         <CompanyAutocomplete
-          value={companyName}
-          onChange={handleChange}
-          onSelect={handleAutocompleteSelect}
+          selectedName={selectedCompany?.corpName}
+          onSelect={handleSelect}
+          onClear={handleClear}
           disabled={isLoading}
         />
         {error && (
@@ -68,7 +64,7 @@ export function CompanyForm({ onCompanySelect, isLoading = false }: CompanyFormP
 
       <button
         type="submit"
-        disabled={!companyName.trim() || isLoading}
+        disabled={!selectedCompany || isLoading}
         className="w-full bg-star-500 hover:bg-star-400 disabled:bg-night-700 disabled:cursor-not-allowed text-night-900 font-bold py-3 px-6 rounded transition-colors"
       >
         {isLoading ? '분석 중...' : '궁합 분석하기'}

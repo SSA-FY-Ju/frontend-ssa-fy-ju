@@ -1,16 +1,13 @@
 'use client';
 
-/**\n * 파일 역할: 사용자가 분석 서비스를 선택하고 해당 서비스 페이지로 이동하도록 처리합니다.\n */
+/**
+ * 파일 역할: 사용자가 분석 서비스를 선택하고 chat 입력 페이지로 이동합니다.
+ */
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ServiceCard from './ServiceCard';
 import { useSessionStore } from '@/stores/sessionStore';
-
-interface ServiceSelectProps {
-  birthDate: string;
-  birthTime: string;
-}
 
 const services = [
   {
@@ -22,48 +19,34 @@ const services = [
     icon: '⭐',
   },
   {
-    id: 'COMPATIBILITY',
-    number: '02',
-    title: '기업 궁합 분석',
-    description: '기업과의 궁합도 측정',
-    duration: '5-8초',
-    icon: '🏢',
-  },
-  {
     id: 'CONSULTATION',
-    number: '03',
+    number: '02',
     title: 'AI 커리어 컨설팅',
     description: '개인화된 커리어 조언',
     duration: '15-20초',
     icon: '💬',
   },
+  {
+    id: 'COMPATIBILITY',
+    number: '03',
+    title: '기업 궁합 분석',
+    description: '기업과의 궁합도 측정',
+    duration: '5-8초',
+    icon: '🏢',
+  },
 ];
 
-export default function ServiceSelect({ birthDate, birthTime }: ServiceSelectProps) {
+export default function ServiceSelect() {
   const router = useRouter();
-  const { setSajuData } = useSessionStore();
-  const [selectedService, setSelectedService] = useState<string | null>(null);
+  const { setSelectedService } = useSessionStore();
+  const [selectedService, setLocalSelected] = useState<string | null>(null);
 
   const handleServiceClick = (serviceId: string) => {
+    setLocalSelected(serviceId);
     setSelectedService(serviceId);
 
-    // Store saju data in session
-    setSajuData({
-      birthDate,
-      birthTime,
-      selectedService: serviceId,
-    });
-
-    // Navigate based on service
-    const routes: Record<string, string> = {
-      CAREER_TIMING: '/career-timing',
-      CONSULTATION: '/consultation',
-      COMPATIBILITY: '/compatibility',
-      FEEDBACK: '/feedback',
-    };
-
     setTimeout(() => {
-      router.push(routes[serviceId] || '/');
+      router.push('/chat');
     }, 300);
   };
 

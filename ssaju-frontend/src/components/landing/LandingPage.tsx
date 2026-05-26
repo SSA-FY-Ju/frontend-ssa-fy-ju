@@ -15,6 +15,8 @@ import { useAuthStore } from '@/stores/authStore';
 
 type PageState = 'landing' | 'chat';
 
+
+
 const PAGES = [
   {
     kicker: 'SSAju · 별이 빛나는 밤, 당신의 길을 묻다',
@@ -54,7 +56,7 @@ export default function LandingPage() {
 
   const handleStart = () => {
     if (isLoggedIn) {
-      router.push('/chat');
+      router.push('/select');
     } else {
       openLoginModal();
     }
@@ -133,7 +135,7 @@ export default function LandingPage() {
             onClick={() => setPageIndex(i)}
             aria-label={`페이지 ${i + 1}`}
           >
-            {pageIndex === i ? '🌕' : '🌙'}
+            🌕
           </button>
         ))}
       </div>

@@ -1,10 +1,12 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useConsultationStore } from '@/stores/consultationStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import { login as loginApi, signup as signupApi, logout as logoutApi } from '@/lib/api/auth';
+import { fetchMyPageData } from '@/lib/api/mypage';
 import type { LoginRequest, SignupRequest } from '@/lib/api/auth';
 
 /**
@@ -17,15 +19,39 @@ import type { LoginRequest, SignupRequest } from '@/lib/api/auth';
  */
 export function useAuth() {
   const authStore = useAuthStore();
+  const queryClient = useQueryClient();
 
   const login = async (req: LoginRequest) => {
     authStore.setIsLoading(true);
     authStore.setLoginError(null);
     try {
       const result = await loginApi(req);
-      authStore.setAccessToken(result.accessToken);
-      // TODO: 로그인 후 /api/auth/me 또는 별도 유저 정보 API 연결 시 setUser 호출
+      const token = result.accessToken;
+      authStore.setAccessToken(token);
       authStore.setIsLoggedIn(true);
+
+      // [핵심 추가] 로그인 직후 즉시 마이페이지 정보를 가져와 유저 정보 동기화
+      try {
+        const myPageData = await fetchMyPageData(
+          { page: 0, size: 1 },
+          { Authorization: `Bearer ${token}` }
+        );
+
+        if (myPageData?.profile) {
+          authStore.setUser({
+            userId: String(myPageData.profile.id),
+            name: myPageData.profile.name,
+            email: myPageData.profile.email,
+          });
+        }
+      } catch (userErr) {
+        // 실패하더라도 토큰이 있으므로 기본 정보는 세팅
+        authStore.setUser({
+          userId: 'unknown',
+          name: req.email.split('@')[0],
+          email: req.email,
+        });
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : '로그인 중 오류가 발생했습니다.';
       authStore.setLoginError(message);
@@ -60,6 +86,8 @@ export function useAuth() {
       useAnalysisStore.getState().reset();
       useConsultationStore.getState().clearData();
       useSessionStore.getState().reset();
+      // React Query 캐시 전체 삭제 → 다음 계정 로그인 시 이전 데이터 노출 방지
+      queryClient.clear();
     }
   };
 

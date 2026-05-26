@@ -21,7 +21,7 @@ const FullPageConsultation = dynamic(
 );
 
 export default function ConsultationPage() {
-  useRouteGuard(true);
+  const { isAllowed } = useRouteGuard(true);
 
   const {
     phase,
@@ -45,11 +45,10 @@ export default function ConsultationPage() {
   const hasFeedback = !!sajuResultId && feedbackGivenIds.includes(`${sajuResultId}_CONSULTATION`);
 
   useEffect(() => {
-    if (hasHydrated && birthDate && phase === 'idle') {
+    if (isAllowed && hasHydrated && birthDate && phase === 'idle') {
       submitConsultation(birthDate, birthTime ?? '12:00');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasHydrated]);
+  }, [isAllowed, hasHydrated, birthDate, birthTime, phase, submitConsultation]);
 
   const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
   const [feedbackIsExitMode, setFeedbackIsExitMode] = useState(false);
@@ -65,11 +64,11 @@ export default function ConsultationPage() {
     },
   });
 
-  // 피드백 넛지 — 마지막 섹션(인덱스 7) 도달 시 표시
+  // 피드백 넛지 — 마지막 섹션(인덱스 2) 도달 시 표시
   const [showFeedbackNudge, setShowFeedbackNudge] = useState(false);
   const [nudgeVisible, setNudgeVisible] = useState(false);
   const nudgeShownRef = useRef(false);
-  const LAST_SECTION = 7;
+  const LAST_SECTION = 10;
 
   useEffect(() => {
     if (phase !== 'result') {
@@ -115,6 +114,8 @@ export default function ConsultationPage() {
       confirmExit();
     }
   }, [exitRequestPending, hasFeedback, clearExitRequest, confirmExit]);
+
+  if (!isAllowed) return null;
 
   return (
     <main className="relative z-10 min-h-screen text-white">

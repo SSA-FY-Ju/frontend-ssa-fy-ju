@@ -16,12 +16,14 @@
  * - useRef로 중복 요청 방지 (T055b)
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { fetchCareerTiming } from '@/lib/api/career';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useAuthStore } from '@/stores/authStore';
+import { MYPAGE_QUERY_KEY } from './useMyPage';
 import type { CareerTimingResult, CareerTimingRequest } from '@/types/api';
 
 type Phase = 'idle' | 'disclaimer' | 'loading' | 'result' | 'error';
@@ -36,8 +38,11 @@ export function useCareerTiming() {
   // API 호출 인자 보존 (disclaimer 완료 후 사용)
   const pendingArgsRef = useRef<{ birthDate: string; birthTime: string } | null>(null);
 
+  const user = useAuthStore((s) => s.user);
+  const queryClient = useQueryClient();
+
   /** disclaimer 완료 후 실제 API 호출 */
-  const runApiCall = async () => {
+  const runApiCall = useCallback(async () => {
     const args = pendingArgsRef.current;
     if (!args) return;
 
@@ -47,17 +52,21 @@ export function useCareerTiming() {
       const request: CareerTimingRequest = {
         birthDate: args.birthDate,
         birthTime: args.birthTime,
-        solarType: 'SOLAR',
+        targetName: user?.name || '사용자',
       };
 
       const data = await fetchCareerTiming(request);
-      console.log('[관운 분석] API 응답:', data);
       setResult(data);
       setPhase('result');
 
-      // API 응답에 sajuResultId가 없으므로 입력값 기반 로컬 키 생성 (피드백 연동용)
-      const localResultId = `CAREER_TIMING_${args.birthDate}_${args.birthTime}`;
-      useSessionStore.getState().setSajuResultId(localResultId);
+      // 마이페이지 캐시 삭제 → 진입 시 즉시 새 데이터 로드
+      queryClient.removeQueries({ queryKey: MYPAGE_QUERY_KEY });
+
+      // analysisId → 로컬 fallback 순으로 사용
+      const resultId = data.analysisId
+        ? String(data.analysisId)
+        : `CAREER_TIMING_${args.birthDate}_${args.birthTime}`;
+      useSessionStore.getState().setSajuResultId(resultId);
       useSessionStore.getState().setLastAnalysisType('CAREER_TIMING');
 
       // 비로그인 시 analysisStore에 휘발성 저장
@@ -77,7 +86,8 @@ export function useCareerTiming() {
       isRequestingRef.current = false;
       pendingArgsRef.current = null;
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const { isVisible: disclaimerVisible, isFading: disclaimerFading, start: startDisclaimer, reset: resetDisclaimer } =
     useDisclaimerTimer({ onComplete: runApiCall });
@@ -87,7 +97,7 @@ export function useCareerTiming() {
    * @param birthDate - 생년월일 (YYYY-MM-DD)
    * @param birthTime - 태어난 시간 (HH:mm, 기본값 12:00)
    */
-  const submitAnalysis = (birthDate: string, birthTime: string = '12:00') => {
+  const submitAnalysis = useCallback((birthDate: string, birthTime: string = '12:00') => {
     // 이미 진행 중이면 무시 (T055b)
     if (isRequestingRef.current) return;
     isRequestingRef.current = true;
@@ -96,20 +106,18 @@ export function useCareerTiming() {
     pendingArgsRef.current = { birthDate, birthTime };
     setError(null);
     setPhase('disclaimer');
-
-    // 고지 문구 1.5초 표시 시작
     startDisclaimer();
-  };
+  }, [startDisclaimer]);
 
   /** 상태 초기화 */
-  const reset = () => {
+  const reset = useCallback(() => {
     resetDisclaimer();
     setResult(null);
     setError(null);
     setPhase('idle');
     isRequestingRef.current = false;
     pendingArgsRef.current = null;
-  };
+  }, [resetDisclaimer]);
 
   return {
     phase,

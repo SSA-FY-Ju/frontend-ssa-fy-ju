@@ -4,11 +4,7 @@
  * 섹션 네비게이터 (T065c)
  *
  * - 데스크톱(≥1024px): 화면 우측 고정 플로팅 인디케이터
- *   - 8개 섹션 레이블 항상 표시
- *   - 활성 섹션: 왼쪽 달(☽) 표시 + 금색 레이블 + 금색 도트
- *   - 비활성 섹션: 연한 레이블 + 회색 도트
- * - 모바일/태블릿(<1024px): 상단 고정 섹션 점프 바
- *   - 8개 섹션명 가로 스크롤, 활성 섹션 금색 언더라인
+ * - 모바일: 표시 안 함 (스와이프로 섹션 이동)
  */
 
 interface SectionNavigatorProps {
@@ -59,34 +55,6 @@ export function SectionNavigator({ sections, currentIndex, onNavigate }: Section
         })}
       </nav>
 
-      {/* 모바일/태블릿: 상단 고정 점프 바 */}
-      <nav
-        aria-label="섹션 빠른 이동"
-        className="lg:hidden sticky top-0 z-40 bg-night-900/95 backdrop-blur-sm border-b border-night-800 overflow-x-auto scrollbar-hide"
-      >
-        <div className="flex min-w-max px-3 py-0.5">
-          {sections.map((label, index) => {
-            const isActive = currentIndex === index;
-            return (
-              <button
-                key={label}
-                onClick={() => onNavigate(index)}
-                aria-current={isActive ? 'true' : undefined}
-                className={[
-                  'relative px-3 py-3 text-xs font-medium whitespace-nowrap transition-colors duration-200',
-                  'min-h-[44px] flex items-center',
-                  isActive ? 'text-star-400' : 'text-gray-300/45 hover:text-star-300',
-                ].join(' ')}
-              >
-                {label}
-                {isActive && (
-                  <span className="absolute bottom-0 left-3 right-3 h-0.5 bg-star-500 rounded-full" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </nav>
     </>
   );
 }

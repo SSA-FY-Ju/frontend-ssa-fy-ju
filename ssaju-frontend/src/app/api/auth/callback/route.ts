@@ -44,14 +44,34 @@ export async function GET(request: NextRequest) {
     }
 
     // 로그인 성공: 홈으로 리다이렉트
-    // 팝업의 경우 부모 창에서 감지하여 처리
     const redirectResponse = NextResponse.redirect(new URL('/', request.url));
 
-    // 백엔드가 Set-Cookie 헤더를 보냈다면 그대로 전달
-    const setCookie = response.headers.get('set-cookie');
-    if (setCookie) {
-      redirectResponse.headers.set('Set-Cookie', setCookie);
+    // 1. 백엔드 명세: Refresh-Token 헤더를 읽어 쿠키로 설정
+    const backendRefreshToken = response.headers.get('refresh-token') ?? response.headers.get('Refresh-Token') ?? '';
+    if (backendRefreshToken) {
+      const cookieValue = `refreshToken=${backendRefreshToken}; HttpOnly; Path=/; SameSite=Lax`;
+      redirectResponse.headers.append('set-cookie', cookieValue);
     }
+
+    // 2. 백엔드가 설정하는 다른 쿠키들도 전달
+    const setCookies = typeof response.headers.getSetCookie === 'function'
+      ? response.headers.getSetCookie()
+      : (response.headers.get('set-cookie') ? [response.headers.get('set-cookie')!] : []);
+
+    setCookies.forEach((cookie) => {
+      if (cookie.startsWith('refreshToken=')) return; // 중복 방지
+
+      let processed = cookie
+        .replace(/Domain=[^;]+(; )?/gi, '')
+        .replace(/Secure(; )?/gi, '')
+        .replace(/Path=[^;]+/gi, 'Path=/');
+
+      if (processed.includes('SameSite=None')) {
+        processed = processed.replace('SameSite=None', 'SameSite=Lax');
+      }
+      if (processed.endsWith(';')) processed = processed.slice(0, -1);
+      redirectResponse.headers.append('set-cookie', processed);
+    });
 
     return redirectResponse;
   } catch {
