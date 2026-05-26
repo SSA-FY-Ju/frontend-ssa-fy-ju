@@ -27,7 +27,6 @@ export function SessionRehydrationWrapper({
   const closeLoginModal = useAuthStore((s) => s.closeLoginModal);
   const accessToken = useAuthStore((s) => s.accessToken);
   const _hasHydrated = useAuthStore((s) => s._hasHydrated);
-  const isAuthReady = useAuthStore((s) => s.isAuthReady);
   const setIsAuthReady = useAuthStore((s) => s.setIsAuthReady);
 
   const triedRef = useRef(false);
@@ -63,14 +62,10 @@ export function SessionRehydrationWrapper({
     })();
   }, [_hasHydrated, accessToken, setIsAuthReady]);
 
-  // Hydration 전에는 아무것도 렌더링하지 않음
+  // Zustand localStorage 하이드레이션 전까지만 차단 (수 ms 수준)
+  // isAuthReady(네트워크 요청)는 기다리지 않고 백그라운드에서 처리
   if (!_hasHydrated) {
     return null;
-  }
-
-  // 인증 확인 절차가 끝날 때까지 렌더링을 차단하여 가드 오동작 방지
-  if (!isAuthReady) {
-    return null; 
   }
 
   return (
