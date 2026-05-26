@@ -235,8 +235,17 @@ export async function apiFetch<T>(
             lastError = new Error('TOKEN_REFRESHED');
             continue;
           }
-          // [수정] 갱신 실패 시 자동으로 모달을 띄우지 않음
-          // 대신 ApiError(401)를 던져서 컴포넌트가 처리하게 함
+          // 갱신 실패 (리프레시 토큰 만료) → 로그아웃 + 로그인 모달 오픈
+          if (typeof window !== 'undefined') {
+            try {
+              const { useAuthStore } = require('@/stores/authStore');
+              const store = useAuthStore.getState();
+              store.logout();
+              store.openLoginModal();
+            } catch {
+              // 스토어 접근 실패 시 무시
+            }
+          }
           throw new ApiError(401, 'UNAUTHORIZED', '인증이 만료되었습니다. 다시 로그인해주세요.', 'unknown');
         }
 
