@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/stores/authStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useConsultationStore } from '@/stores/consultationStore';
@@ -18,6 +19,7 @@ import type { LoginRequest, SignupRequest } from '@/lib/api/auth';
  */
 export function useAuth() {
   const authStore = useAuthStore();
+  const queryClient = useQueryClient();
 
   const login = async (req: LoginRequest) => {
     authStore.setIsLoading(true);
@@ -84,6 +86,8 @@ export function useAuth() {
       useAnalysisStore.getState().reset();
       useConsultationStore.getState().clearData();
       useSessionStore.getState().reset();
+      // React Query 캐시 전체 삭제 → 다음 계정 로그인 시 이전 데이터 노출 방지
+      queryClient.clear();
     }
   };
 
