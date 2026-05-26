@@ -10,6 +10,7 @@
 
 import { useState, useCallback } from 'react';
 import { deleteAnalysisRecord } from '@/lib/api/mypage';
+import { useMyPageStore } from '@/stores/myPageStore';
 import { toastUtils } from '@/lib/toast';
 
 interface UseDeleteHistoryOptions {
@@ -25,6 +26,7 @@ interface UseDeleteHistoryReturn {
 export function useDeleteHistory(options?: UseDeleteHistoryOptions): UseDeleteHistoryReturn {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const invalidateCache = useMyPageStore((s) => s.invalidate);
 
   /** 분석 기록 삭제 */
   const deleteRecord = useCallback(
@@ -36,6 +38,7 @@ export function useDeleteHistory(options?: UseDeleteHistoryOptions): UseDeleteHi
 
       try {
         await deleteAnalysisRecord(recordId);
+        invalidateCache(); // 삭제 후 캐시 무효화 → 재방문 시 최신 목록 재호출
         toastUtils.success('기록이 삭제되었습니다');
         options?.onSuccess?.();
       } catch (err) {

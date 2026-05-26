@@ -11,6 +11,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { fetchMyPageData } from '@/lib/api/mypage';
 import { useAuthStore } from '@/stores/authStore';
+import { useMyPageStore } from '@/stores/myPageStore';
 import type { MyPageAnalysisSummary } from '@/types/api';
 
 export type AnalysisTab = 'ALL' | 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY';
@@ -67,6 +68,7 @@ export function useMyPage(): UseMyPageReturn {
   }>({ items: [], currentPage: 0, totalPages: 1 });
 
   const setUser = useAuthStore((s) => s.setUser);
+  const myPageStore = useMyPageStore();
 
   function applyPage(filtered: MyPageAnalysisSummary[], page: number) {
     const start = page * PAGE_SIZE;
@@ -77,8 +79,24 @@ export function useMyPage(): UseMyPageReturn {
     });
   }
 
+  function applyData(mapped: MyPageAnalysisSummary[], tab: AnalysisTab) {
+    allAnalysesRef.current = mapped;
+    setAllAnalyses(mapped);
+    setTotalCount(mapped.length);
+    const filtered = filterByTab(mapped, tab);
+    filteredRef.current = filtered;
+    setActiveTabState(tab);
+    applyPage(filtered, 0);
+  }
+
   const loadInitial = useCallback(
     async (tab: AnalysisTab) => {
+      // 캐시가 유효하면 API 호출 없이 즉시 렌더
+      if (!myPageStore.isStale() && myPageStore.allAnalyses.length > 0) {
+        applyData(myPageStore.allAnalyses, tab);
+        return;
+      }
+
       setIsLoading(true);
       setError(null);
       setPageView({ items: [], currentPage: 0, totalPages: 1 });
@@ -105,14 +123,8 @@ export function useMyPage(): UseMyPageReturn {
           type: mapType((item as Record<string, any>).type as string),
         }));
 
-        allAnalysesRef.current = mapped;
-        setAllAnalyses(mapped);
-        setTotalCount(mapped.length);
-
-        const filtered = filterByTab(mapped, tab);
-        filteredRef.current = filtered;
-        setActiveTabState(tab);
-        applyPage(filtered, 0);
+        myPageStore.setData(mapped);
+        applyData(mapped, tab);
       } catch (err) {
         const message = err instanceof Error ? err.message : '기록을 불러오는 데 실패했습니다.';
         setError(message);
@@ -120,7 +132,8 @@ export function useMyPage(): UseMyPageReturn {
         setIsLoading(false);
       }
     },
-    [setUser],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [setUser, myPageStore.isStale, myPageStore.allAnalyses, myPageStore.setData],
   );
 
   const setActiveTab = useCallback((tab: AnalysisTab) => {
