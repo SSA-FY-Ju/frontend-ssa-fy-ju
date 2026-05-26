@@ -11,7 +11,6 @@ import type { MyPageAnalysisSummary } from '@/types/api';
 
 interface HistoryCardProps {
   summary: MyPageAnalysisSummary;
-  onDelete: (id: string) => void;
   onView: (id: string, type: string) => void;
 }
 
@@ -58,7 +57,7 @@ function getResultText(summary: MyPageAnalysisSummary): string {
   return [period, score].filter(Boolean).join(' · ');
 }
 
-export function HistoryCard({ summary, onDelete, onView }: HistoryCardProps) {
+export function HistoryCard({ summary, onView }: HistoryCardProps) {
   const config = TYPE_CONFIG[summary.type] ?? {
     label: summary.type,
     icon: '✦',
@@ -90,24 +89,8 @@ export function HistoryCard({ summary, onDelete, onView }: HistoryCardProps) {
         e.currentTarget.style.borderColor = 'rgba(139,92,246,0.12)';
       }}
     >
-      {/* 삭제 버튼 */}
-      <button
-        type="button"
-        aria-label="기록 삭제"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete(summary.id.toString());
-        }}
-        className="absolute top-3 right-3 text-sm transition-all"
-        style={{ color: 'rgba(148,163,184,0.25)', lineHeight: 1, padding: '2px 4px' }}
-        onMouseEnter={(e) => { e.currentTarget.style.color = 'rgba(248,113,113,0.65)'; }}
-        onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(148,163,184,0.25)'; }}
-      >
-        ✕
-      </button>
-
       {/* 헤더 행: 타입 뱃지 + 날짜 */}
-      <div className="flex items-center justify-between mb-3 pr-5">
+      <div className="flex items-center justify-between mb-3">
         <span
           className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full"
           style={{

@@ -255,7 +255,6 @@ export default function MyPage() {
                   <HistoryCard
                     key={`${summary.type}_${summary.id}`}
                     summary={summary}
-                    onDelete={(id) => setDeleteTargetId(id)}
                     onView={(id, type) => router.push(`/my-page/${id}?type=${type}`)}
                   />
                 ))}
