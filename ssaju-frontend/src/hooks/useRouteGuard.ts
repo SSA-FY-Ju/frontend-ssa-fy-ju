@@ -36,19 +36,22 @@ export function useRouteGuard(required: boolean = true): { isAllowed: boolean } 
   const pathname = usePathname();
 
   useEffect(() => {
-    // 허용 완료 또는 birthDate 리다이렉트 후에는 재실행하지 않음
-    if (settledRef.current === 'allowed' || settledRef.current === 'birth-redirect') return;
-
     if (!required) {
       settledRef.current = 'allowed';
       setIsAllowed(true);
       return;
     }
 
-    if (!_hasHydrated || !authHydrated || !isAuthReady) return;
+    console.log('[useRouteGuard] Evaluating conditions', { pathname, isLoggedIn, birthDate, _hasHydrated, authHydrated, isAuthReady, settled: settledRef.current });
+
+    if (!_hasHydrated || !authHydrated || !isAuthReady) {
+      console.log('[useRouteGuard] Waiting for hydration or auth ready');
+      return;
+    }
 
     // [핵심 수정] isAuthReady가 완료된 시점에서 실제 isLoggedIn 상태를 엄격하게 체크
     if (!isLoggedIn) {
+      console.log('[useRouteGuard] User not logged in, redirecting to home');
       if (settledRef.current !== 'login-redirect') {
         settledRef.current = 'login-redirect';
         
@@ -63,17 +66,22 @@ export function useRouteGuard(required: boolean = true): { isAllowed: boolean } 
     }
 
     if (!birthDate) {
+      console.log('[useRouteGuard] birthDate missing, redirecting to chat');
       // birthDate 리다이렉트는 한 번만 실행
-      settledRef.current = 'birth-redirect';
-      toast.info('생년월일을 먼저 입력해주세요');
-      router.push('/chat?fromGuard=1');
+      if (settledRef.current !== 'birth-redirect') {
+        settledRef.current = 'birth-redirect';
+        toast.info('생년월일을 먼저 입력해주세요');
+        router.push('/chat?fromGuard=1');
+      }
+      setIsAllowed(false);
       return;
     }
 
+    console.log('[useRouteGuard] All conditions met, allowing access');
     settledRef.current = 'allowed';
     setIsAllowed(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [required, _hasHydrated, authHydrated, isAuthReady, isLoggedIn, birthDate, openLoginModal]);
+  }, [required, _hasHydrated, authHydrated, isAuthReady, isLoggedIn, birthDate, openLoginModal, pathname]);
 
   return { isAllowed };
 }

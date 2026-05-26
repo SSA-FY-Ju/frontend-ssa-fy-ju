@@ -81,7 +81,7 @@ export function useCareerTiming() {
       pendingArgsRef.current = null;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   const { isVisible: disclaimerVisible, isFading: disclaimerFading, start: startDisclaimer, reset: resetDisclaimer } =
     useDisclaimerTimer({ onComplete: runApiCall });
@@ -92,8 +92,12 @@ export function useCareerTiming() {
    * @param birthTime - 태어난 시간 (HH:mm, 기본값 12:00)
    */
   const submitAnalysis = useCallback((birthDate: string, birthTime: string = '12:00') => {
+    console.log('[useCareerTiming] submitAnalysis called', { birthDate, birthTime, phase, isRequesting: isRequestingRef.current });
     // 이미 진행 중이면 무시 (T055b)
-    if (isRequestingRef.current) return;
+    if (isRequestingRef.current) {
+      console.warn('[useCareerTiming] Already requesting, ignoring call');
+      return;
+    }
     isRequestingRef.current = true;
 
     // API 호출 인자 보관
@@ -102,8 +106,9 @@ export function useCareerTiming() {
     setPhase('disclaimer');
 
     // 고지 문구 1.5초 표시 시작
+    console.log('[useCareerTiming] starting disclaimer');
     startDisclaimer();
-  }, [startDisclaimer]);
+  }, [startDisclaimer, phase]);
 
   /** 상태 초기화 */
   const reset = useCallback(() => {

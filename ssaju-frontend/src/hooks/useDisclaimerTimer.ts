@@ -59,5 +59,14 @@ export function useDisclaimerTimer({ onComplete }: UseDisclaimerTimerOptions) {
     setIsFading(false);
   }, []);
 
+  // 컴포넌트 언마운트 시 타이머 정리 (T054-leak)
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
+    };
+  }, []);
+
   return { isVisible, isFading, start, reset };
 }

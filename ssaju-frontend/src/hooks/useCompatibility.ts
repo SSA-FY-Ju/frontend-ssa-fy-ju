@@ -15,7 +15,7 @@
  * - useRef로 중복 요청 방지 (T055b 패턴)
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { fetchCompatibility } from '@/lib/api/company';
 import { ApiError } from '@/lib/api/client';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
@@ -46,7 +46,7 @@ export function useCompatibility() {
   const pendingArgsRef = useRef<CompatibilityArgs | null>(null);
 
   /** disclaimer 완료 후 실제 API 호출 */
-  const runApiCall = async () => {
+  const runApiCall = useCallback(async () => {
     const args = pendingArgsRef.current;
     if (!args) return;
 
@@ -99,7 +99,8 @@ export function useCompatibility() {
       setPhase('error');
       useAnalysisStore.getState().setCompatibilityError(message);
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     isVisible: disclaimerVisible,
@@ -111,7 +112,7 @@ export function useCompatibility() {
   /**
    * 궁합 분석 시작 (고지 문구 → 로딩 → 결과)
    */
-  const submitCompatibility = (
+  const submitCompatibility = useCallback((
     birthDate: string,
     birthTime: string = '12:00',
     targetRole: TargetRole,
@@ -126,13 +127,13 @@ export function useCompatibility() {
     setError(null);
     setPhase('disclaimer');
     startDisclaimer();
-  };
+  }, [startDisclaimer]);
 
   /**
-   * 설립일자 직접 입력 후 재제출 (disclaimer 건너뜀)
+   * 설립일자 직접 입력 후 재제출 (disclaimer 건너뜜)
    * companyFoundingTime은 09:00으로 고정
    */
-  const submitWithFoundingDate = (foundingDate: string) => {
+  const submitWithFoundingDate = useCallback((foundingDate: string) => {
     const args = pendingArgsRef.current;
     if (!args || isRequestingRef.current) return;
 
@@ -143,7 +144,7 @@ export function useCompatibility() {
       companyFoundingTime: '09:00',
     };
     runApiCall();
-  };
+  }, [runApiCall]);
 
   /** 상태 초기화 */
   const reset = () => {

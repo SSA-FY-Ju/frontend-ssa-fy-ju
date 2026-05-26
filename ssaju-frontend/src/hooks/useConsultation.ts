@@ -11,7 +11,7 @@
  * 캐싱 없음: 같은 사용자도 날짜를 달리해 여러 번 분석 가능하므로 매번 새로 요청
  */
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { fetchConsultation } from '@/lib/api/career';
 import { useConsultationStore } from '@/stores/consultationStore';
 import { useSessionStore } from '@/stores/sessionStore';
@@ -31,7 +31,7 @@ export function useConsultation() {
   const user = useAuthStore((s) => s.user);
 
   /** disclaimer 완료 후 실제 API 호출 */
-  const runApiCall = async () => {
+  const runApiCall = useCallback(async () => {
     const args = pendingArgsRef.current;
     if (!args) return;
 
@@ -66,7 +66,8 @@ export function useConsultation() {
       isRequestingRef.current = false;
       pendingArgsRef.current = null;
     }
-  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, consultationStore]);
 
   const {
     isVisible: disclaimerVisible,
@@ -78,7 +79,7 @@ export function useConsultation() {
   /**
    * 컨설팅 분석 시작 — 매번 새로 API 호출 (캐싱 없음)
    */
-  const submitConsultation = (birthDate: string, birthTime: string = '12:00') => {
+  const submitConsultation = useCallback((birthDate: string, birthTime: string = '12:00') => {
     if (isRequestingRef.current) return;
     isRequestingRef.current = true;
 
@@ -86,7 +87,7 @@ export function useConsultation() {
     setError(null);
     setPhase('disclaimer');
     startDisclaimer();
-  };
+  }, [startDisclaimer]);
 
   /**
    * Swiper onSlideChange 콜백에서 호출
