@@ -251,12 +251,13 @@ export async function apiFetch<T>(
 
         // 4xx 에러 (재시도 하지 않음)
         if (response.status >= 400 && response.status < 500) {
-          const json = (await response.json()) as ApiResponse<T>;
+          let json: ApiResponse<T> | null = null;
+          try { json = (await response.json()) as ApiResponse<T>; } catch { /* non-JSON body */ }
           throw new ApiError(
             response.status,
-            json.error?.code || json.errorCode || 'CLIENT_ERROR',
-            json.error?.message || json.message || response.statusText,
-            json.error?.requestId || 'unknown',
+            json?.error?.code || json?.errorCode || 'CLIENT_ERROR',
+            json?.error?.message || json?.message || response.statusText,
+            json?.error?.requestId || 'unknown',
           );
         }
 

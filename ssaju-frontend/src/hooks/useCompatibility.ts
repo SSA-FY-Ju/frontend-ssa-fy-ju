@@ -101,8 +101,11 @@ export function useCompatibility() {
     } catch (err) {
       isRequestingRef.current = false;
 
-      // 404: 설립일자 조회 실패 → 직접 입력 단계 (pendingArgs 보존)
-      if (err instanceof ApiError && err.statusCode === 404) {
+      // 404 or COMPANY_NOT_FOUND: 설립일자 조회 실패 → 직접 입력 단계 (pendingArgs 보존)
+      const isCompanyNotFound =
+        err instanceof ApiError &&
+        (err.statusCode === 404 || err.errorCode === 'COMPANY_NOT_FOUND');
+      if (isCompanyNotFound) {
         setPhase('founding-date-needed');
         return;
       }

@@ -20,9 +20,9 @@ export const MYPAGE_QUERY_KEY = ['mypage'] as const;
 const PAGE_SIZE = 3;
 
 function mapType(rawType: string): 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY' {
-  if (rawType === 'SAJU') return 'TIMING';
-  if (rawType === 'CAREER_CONSULTATION') return 'CONSULTATION';
-  if (rawType === 'COMPANY_COMPATIBILITY') return 'COMPATIBILITY';
+  if (rawType === 'SAJU' || rawType === 'CAREER_TIMING') return 'TIMING';
+  if (rawType === 'CAREER_CONSULTATION' || rawType === 'CONSULTATION') return 'CONSULTATION';
+  if (rawType === 'COMPANY_COMPATIBILITY' || rawType === 'COMPATIBILITY') return 'COMPATIBILITY';
   return rawType as 'CONSULTATION' | 'TIMING' | 'COMPATIBILITY';
 }
 
@@ -57,7 +57,10 @@ export function useMyPage() {
     enabled: !!accessToken,
   });
 
-  const allAnalyses = useMemo(() => data ?? [], [data]);
+  const allAnalyses = useMemo(
+    () => (data ?? []).slice().sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+    [data],
+  );
 
   const filtered = useMemo(() => {
     if (activeTab === 'ALL') return allAnalyses;

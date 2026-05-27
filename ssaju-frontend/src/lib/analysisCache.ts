@@ -14,18 +14,24 @@
 const REFRESH_FLAG = 'ssaju_is_refresh';
 
 // 모듈 로드 시 beforeunload 리스너 1회 등록 (클라이언트 한정)
+// 새로고침된 경로를 함께 저장해, 다른 페이지에서 온 경우를 구분
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
-    sessionStorage.setItem(REFRESH_FLAG, '1');
+    sessionStorage.setItem(REFRESH_FLAG, window.location.pathname);
   });
 }
 
-/** 새로고침 여부 확인 후 플래그 제거 (1회성) */
+/**
+ * 현재 페이지가 새로고침되었는지 확인 후 플래그 제거 (1회성)
+ *
+ * 저장된 경로가 현재 경로와 일치할 때만 true 반환.
+ * 다른 페이지에서 새로고침 후 이 페이지로 네비게이션한 경우 false.
+ */
 export function isPageRefresh(): boolean {
   if (typeof window === 'undefined') return false;
-  const flag = sessionStorage.getItem(REFRESH_FLAG) === '1';
+  const flaggedPath = sessionStorage.getItem(REFRESH_FLAG);
   sessionStorage.removeItem(REFRESH_FLAG);
-  return flag;
+  return flaggedPath === window.location.pathname;
 }
 
 const KEYS = {
