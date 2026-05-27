@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080';
+    const apiBaseUrl = process.env.BACKEND_URL || 'http://localhost:8080';
 
     // 백엔드로 authorization code 전달
     // 백엔드가 HttpOnly 쿠키를 설정하고 응답함
