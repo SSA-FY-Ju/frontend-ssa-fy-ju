@@ -23,6 +23,7 @@ import { useDisclaimerTimer } from './useDisclaimerTimer';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useAuthStore } from '@/stores/authStore';
+import { analysisCache, isPageRefresh } from '@/lib/analysisCache';
 import { MYPAGE_QUERY_KEY } from './useMyPage';
 import type { CareerTimingResult, CareerTimingRequest } from '@/types/api';
 
@@ -59,6 +60,8 @@ export function useCareerTiming() {
       setResult(data);
       setPhase('result');
 
+      // 새로고침 시 재호출 방지용 캐싱
+      analysisCache.set('careerTiming', data);
       // 마이페이지 캐시 삭제 → 진입 시 즉시 새 데이터 로드
       queryClient.removeQueries({ queryKey: MYPAGE_QUERY_KEY });
 
@@ -98,18 +101,28 @@ export function useCareerTiming() {
    * @param birthTime - 태어난 시간 (HH:mm, 기본값 12:00)
    */
   const submitAnalysis = useCallback((birthDate: string, birthTime: string = '12:00') => {
-    // 이미 진행 중이면 무시 (T055b)
+    if (isPageRefresh()) {
+      // 새로고침: 캐시 있으면 API 재호출 없이 복원
+      const cached = analysisCache.get<CareerTimingResult>('careerTiming');
+      if (cached) {
+        setResult(cached);
+        setPhase('result');
+        return;
+      }
+    } else {
+      // 일반 네비게이션: 이전 캐시 삭제 후 새 분석
+      analysisCache.remove('careerTiming');
+    }
+
     if (isRequestingRef.current) return;
     isRequestingRef.current = true;
 
-    // API 호출 인자 보관
     pendingArgsRef.current = { birthDate, birthTime };
     setError(null);
     setPhase('disclaimer');
     startDisclaimer();
   }, [startDisclaimer]);
 
-  /** 상태 초기화 */
   const reset = useCallback(() => {
     resetDisclaimer();
     setResult(null);

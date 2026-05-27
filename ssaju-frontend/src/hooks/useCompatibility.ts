@@ -23,6 +23,7 @@ import { useDisclaimerTimer } from './useDisclaimerTimer';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
 import { useAuthStore } from '@/stores/authStore';
+import { analysisCache, isPageRefresh } from '@/lib/analysisCache';
 import { MYPAGE_QUERY_KEY } from './useMyPage';
 import type { CompatibilityResult, CompatibilityRequest, TargetRole } from '@/types/api';
 
@@ -72,6 +73,8 @@ export function useCompatibility() {
       pendingArgsRef.current = null;
       isRequestingRef.current = false;
 
+      // 새로고침 시 재호출 방지용 캐싱
+      analysisCache.set('compatibility', data);
       // 마이페이지 캐시 삭제 → 진입 시 즉시 새 데이터 로드
       queryClient.removeQueries({ queryKey: MYPAGE_QUERY_KEY });
 
@@ -127,6 +130,17 @@ export function useCompatibility() {
     companyFoundingDate?: string,
     companyFoundingTime?: string,
   ) => {
+    if (isPageRefresh()) {
+      const cached = analysisCache.get<CompatibilityResult>('compatibility');
+      if (cached) {
+        setResult(cached);
+        setPhase('result');
+        return;
+      }
+    } else {
+      analysisCache.remove('compatibility');
+    }
+
     if (isRequestingRef.current) return;
     isRequestingRef.current = true;
 
@@ -153,7 +167,6 @@ export function useCompatibility() {
     runApiCall();
   }, [runApiCall]);
 
-  /** 상태 초기화 */
   const reset = () => {
     resetDisclaimer();
     setResult(null);
