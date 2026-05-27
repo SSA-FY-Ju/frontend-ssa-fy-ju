@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useCareerTiming } from '@/hooks/useCareerTiming';
 import { usePageExitGuard } from '@/hooks/usePageExitGuard';
 import { useRouteGuard } from '@/hooks/useRouteGuard';
@@ -22,11 +22,30 @@ export default function CareerTimingPage() {
   const exitRequestPending = useSessionStore((s) => s.exitRequestPending);
   const clearExitRequest = useSessionStore((s) => s.clearExitRequest);
 
+  // 자동 분석 시작
   useEffect(() => {
     if (isAllowed && hasHydrated && birthDate && phase === 'idle') {
       submitAnalysis(birthDate, birthTime ?? '12:00');
     }
   }, [isAllowed, hasHydrated, birthDate, birthTime, phase, submitAnalysis]);
+
+  // idle이 3초 이상 지속되면 수동 재시도 버튼 표시
+  const [showRetry, setShowRetry] = useState(false);
+  useEffect(() => {
+    if (phase !== 'idle' || !isAllowed) {
+      setShowRetry(false);
+      return;
+    }
+    const t = setTimeout(() => setShowRetry(true), 3000);
+    return () => clearTimeout(t);
+  }, [phase, isAllowed]);
+
+  const handleManualStart = () => {
+    if (!birthDate) return;
+    reset();
+    setShowRetry(false);
+    submitAnalysis(birthDate, birthTime ?? '12:00');
+  };
 
   const { confirmExit } = usePageExitGuard({
     onExitAttempt: () => {
@@ -53,7 +72,45 @@ export default function CareerTimingPage() {
         style={{ visibility: disclaimerVisible ? 'hidden' : 'visible' }}
       >
         <div className="w-full max-w-lg">
-          {(phase === 'idle' || phase === 'loading') && (
+          {phase === 'idle' && (
+            <div className="flex flex-col items-center gap-8">
+              <LoadingProgress message="사주를 분석하고 있습니다..." />
+              {showRetry && (
+                <div className="flex flex-col items-center gap-3">
+                  <p style={{ fontSize: 13, color: 'rgba(196,181,253,0.45)', textAlign: 'center' }}>
+                    분석이 시작되지 않았나요?
+                  </p>
+                  <button
+                    onClick={handleManualStart}
+                    style={{
+                      padding: '10px 28px',
+                      borderRadius: 12,
+                      border: '1px solid rgba(139,92,246,0.4)',
+                      background: 'rgba(139,92,246,0.12)',
+                      color: '#c4b5fd',
+                      fontSize: 13,
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      letterSpacing: '0.04em',
+                      transition: 'all 0.18s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(139,92,246,0.24)';
+                      e.currentTarget.style.borderColor = 'rgba(139,92,246,0.65)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(139,92,246,0.12)';
+                      e.currentTarget.style.borderColor = 'rgba(139,92,246,0.4)';
+                    }}
+                  >
+                    ✦ 분석 시작하기
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {phase === 'loading' && (
             <LoadingProgress message="사주를 분석하고 있습니다..." />
           )}
 
