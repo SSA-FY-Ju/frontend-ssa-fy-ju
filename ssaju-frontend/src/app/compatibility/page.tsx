@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
 import { useCompatibility } from '@/hooks/useCompatibility';
-import { usePageExitGuard } from '@/hooks/usePageExitGuard';
 import type { DartCompany } from '@/hooks/useCompanyAutocomplete';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useRouteGuard } from '@/hooks/useRouteGuard';
@@ -12,14 +11,7 @@ import { FoundingDatePicker } from '@/components/forms/FoundingDatePicker';
 import type { RoleCategory, TargetRole } from '@/types/api';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { LoadingProgress } from '@/components/results/LoadingProgress';
-import { FeedbackModal } from '@/components/modals/FeedbackModal';
 import { useErrorHandler } from '@/hooks/useErrorHandler';
-
-// Swiper는 브라우저 전용 — SSR 비활성화
-const FullPageCompatibility = dynamic(
-  () => import('@/components/compatibility/FullPageCompatibility').then((m) => ({ default: m.FullPageCompatibility })),
-  { ssr: false }
-);
 
 const ROLE_CATEGORIES: { value: RoleCategory; label: string }[] = [
   { value: 'TECH_BACKEND',   label: '백엔드 개발' },
@@ -39,18 +31,15 @@ const ROLE_CATEGORIES: { value: RoleCategory; label: string }[] = [
 ];
 
 export default function CompatibilityPage() {
+  const router = useRouter();
   const { isAllowed } = useRouteGuard(true);
-  const { phase, result, error, disclaimerVisible, disclaimerFading, submitCompatibility, submitWithFoundingDate, reset } =
+  const { phase, error, disclaimerVisible, disclaimerFading, submitCompatibility, submitWithFoundingDate, reset } =
     useCompatibility();
 
   const sessionBirthDate = useSessionStore((s) => s.birthDate);
   const sessionBirthTime = useSessionStore((s) => s.birthTime);
-  const sajuResultId = useSessionStore((s) => s.sajuResultId);
-  const feedbackGivenIds = useSessionStore((s) => s.feedbackGivenIds);
-  const setFeedbackGiven = useSessionStore((s) => s.setFeedbackGiven);
   const exitRequestPending = useSessionStore((s) => s.exitRequestPending);
   const clearExitRequest = useSessionStore((s) => s.clearExitRequest);
-  const hasFeedback = !!sajuResultId && feedbackGivenIds.includes(`${sajuResultId}_COMPATIBILITY`);
 
   const [selectedCompany, setSelectedCompany] = useState<DartCompany | null>(null);
   const [directMode, setDirectMode] = useState(false);
@@ -61,42 +50,21 @@ export default function CompatibilityPage() {
   // 최종 기업명 (직접 입력 or 드롭다운 선택)
   const finalCompanyName = selectedCompany?.corpName ?? (directMode ? directInput : '');
 
-  const [feedbackModalOpen, setFeedbackModalOpen] = useState(false);
-  const [feedbackIsExitMode, setFeedbackIsExitMode] = useState(false);
-
-  const { confirmExit } = usePageExitGuard({
-    onExitAttempt: () => {
-      if (phase === 'result' && !hasFeedback) {
-        setFeedbackIsExitMode(true);
-        setFeedbackModalOpen(true);
-      } else {
-        confirmExit();
-      }
-    },
-  });
-
   const { getDisplayMessage } = useErrorHandler();
 
-  const handleFeedbackSubmitted = () => {
-    if (sajuResultId) setFeedbackGiven(sajuResultId, 'COMPATIBILITY');
-    if (feedbackIsExitMode) confirmExit();
-  };
+  // 분석 완료 → 결과 페이지로 이동
+  useEffect(() => {
+    if (phase === 'result') {
+      router.push('/compatibility/result');
+    }
+  }, [phase, router]);
 
-  const handleFeedbackClose = () => {
-    setFeedbackModalOpen(false);
-    setFeedbackIsExitMode(false);
-  };
-
+  // 헤더 "처음으로" 버튼 처리
   useEffect(() => {
     if (!exitRequestPending) return;
     clearExitRequest();
-    if (phase === 'result' && !hasFeedback) {
-      setFeedbackIsExitMode(true);
-      setFeedbackModalOpen(true);
-    } else {
-      confirmExit();
-    }
-  }, [exitRequestPending, phase, hasFeedback, clearExitRequest, confirmExit]);
+    router.push('/select');
+  }, [exitRequestPending, clearExitRequest, router]);
 
   // 드롭다운에서 기업 선택 → 바로 확정 (모달 없음)
   const handleCompanySelect = (company: DartCompany) => {
@@ -129,29 +97,6 @@ export default function CompatibilityPage() {
   };
 
   if (!isAllowed) return null;
-
-  // 결과 단계에서는 FullPageCompatibility가 전체 화면을 제어
-  if (phase === 'result' && result) {
-    return (
-      <main className="relative z-10 text-white" style={{ height: '100vh', overflow: 'hidden' }}>
-        <FullPageCompatibility
-          result={result}
-          companyName={finalCompanyName}
-          hasFeedback={hasFeedback}
-          onFeedbackOpen={() => { setFeedbackIsExitMode(false); setFeedbackModalOpen(true); }}
-        />
-
-        {feedbackModalOpen && (
-          <FeedbackModal
-            feedbackType="COMPATIBILITY"
-            onClose={handleFeedbackClose}
-            onSubmitted={handleFeedbackSubmitted}
-            exitAction={feedbackIsExitMode ? { onExit: confirmExit } : undefined}
-          />
-        )}
-      </main>
-    );
-  }
 
   return (
     <main
@@ -462,8 +407,8 @@ export default function CompatibilityPage() {
           </div>
         )}
 
-        {/* ── 로딩 ── */}
-        {phase === 'loading' && (
+        {/* ── 로딩 (result 포함 — 결과 페이지로 이동 중) ── */}
+        {(phase === 'loading' || phase === 'result') && (
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             minHeight: 'calc(100vh - 4rem)', padding: '0 16px',

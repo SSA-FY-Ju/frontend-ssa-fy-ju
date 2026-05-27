@@ -75,6 +75,10 @@ export function useCompatibility() {
 
       // 새로고침 시 재호출 방지용 캐싱
       analysisCache.set('compatibility', data);
+      // 결과 페이지에서 기업명 복원용
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('ssaju_compat_company', args.companyName);
+      }
       // 마이페이지 캐시 삭제 → 진입 시 즉시 새 데이터 로드
       queryClient.removeQueries({ queryKey: MYPAGE_QUERY_KEY });
 

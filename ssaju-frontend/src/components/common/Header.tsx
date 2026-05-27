@@ -7,7 +7,7 @@ import { ProfileMenu } from '@/components/auth/ProfileMenu';
 import { useAuthStore } from '@/stores/authStore';
 import { useSessionStore } from '@/stores/sessionStore';
 
-const RESULT_PAGES = ['/career-timing', '/consultation', '/compatibility'];
+const RESULT_PAGES = ['/career-timing', '/consultation', '/compatibility', '/compatibility/result'];
 
 export function Header() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
