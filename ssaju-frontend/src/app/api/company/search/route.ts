@@ -51,7 +51,6 @@ export async function GET(req: NextRequest) {
     // 에러 응답 확인
     const resultCode = xml.match(/<resultCode>([^<]*)<\/resultCode>/)?.[1];
     if (resultCode && resultCode !== '00') {
-      console.error('[FSC search] API error code:', resultCode);
       return NextResponse.json({ list: [] });
     }
 
@@ -64,8 +63,7 @@ export async function GET(req: NextRequest) {
     serverCache.set(cacheKey, { list, at: Date.now() });
 
     return NextResponse.json({ list });
-  } catch (e) {
-    console.error('[FSC company search]', e);
+  } catch {
     return NextResponse.json({ list: [] }, { status: 500 });
   }
 }

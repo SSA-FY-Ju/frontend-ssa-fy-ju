@@ -63,8 +63,7 @@ export async function POST(req: NextRequest) {
     });
 
     return nextResponse;
-  } catch (err) {
-    console.error('[API Refresh Proxy] Error:', err);
+  } catch {
     return NextResponse.json({ success: false, message: 'Internal Server Error' }, { status: 500 });
   }
 }
