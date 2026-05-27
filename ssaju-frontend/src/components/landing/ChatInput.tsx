@@ -340,28 +340,38 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
                           ))}
                         </select>
                         <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 16, fontWeight: 300 }}>:</span>
-                        <select
-                          value={draftMinute}
-                          onChange={(e) => setDraftMinute(e.target.value)}
-                          style={{
-                            flex: 1,
-                            appearance: 'none',
-                            background: 'rgba(255,255,255,0.06)',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            color: '#f4ecd8',
-                            padding: '9px 12px',
-                            borderRadius: 12,
-                            fontSize: 13,
-                            outline: 'none',
-                            cursor: 'pointer',
-                            textAlign: 'center',
-                            colorScheme: 'dark',
-                          }}
-                        >
-                          {Array.from({ length: 12 }, (_, i) => (
-                            <option key={i} value={String(i * 5).padStart(2, '0')}>{i * 5}분</option>
-                          ))}
-                        </select>
+                        <div style={{ flex: 1, position: 'relative', display: 'flex', alignItems: 'center' }}>
+                          <input
+                            type="number"
+                            min={0}
+                            max={59}
+                            value={parseInt(draftMinute)}
+                            onChange={(e) => {
+                              const v = Math.max(0, Math.min(59, parseInt(e.target.value) || 0));
+                              setDraftMinute(String(v).padStart(2, '0'));
+                            }}
+                            className="no-spinner"
+                            style={{
+                              width: '100%',
+                              background: 'rgba(255,255,255,0.06)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              color: '#f4ecd8',
+                              padding: '9px 28px 9px 12px',
+                              borderRadius: 12,
+                              fontSize: 13,
+                              outline: 'none',
+                              textAlign: 'center',
+                              colorScheme: 'dark',
+                            }}
+                          />
+                          <span style={{
+                            position: 'absolute',
+                            right: 10,
+                            fontSize: 12,
+                            color: 'rgba(244,236,216,0.45)',
+                            pointerEvents: 'none',
+                          }}>분</span>
+                        </div>
                         <button
                           onClick={submitTime}
                           style={{
