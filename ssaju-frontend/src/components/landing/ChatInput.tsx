@@ -119,9 +119,7 @@ function PickerSelect({
                   display: 'block',
                   width: '100%',
                   padding: '8px 12px',
-                  background: isSelected
-                    ? 'rgba(139,92,246,0.35)'
-                    : 'rgba(255,255,255,0.02)',
+                  background: isSelected ? 'rgba(139,92,246,0.35)' : 'rgba(255,255,255,0.02)',
                   border: 'none',
                   borderBottom: '1px solid rgba(139,92,246,0.08)',
                   color: isSelected ? '#e9d5ff' : 'rgba(244,236,216,0.65)',
