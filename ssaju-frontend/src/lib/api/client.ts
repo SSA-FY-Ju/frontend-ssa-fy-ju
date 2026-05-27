@@ -296,5 +296,12 @@ export async function apiFetch<T>(
   }
 }
 
+/** 공통 타임아웃 상수 (ms) */
+export const TIMEOUTS = {
+  SHORT: 5_000,    // 간단한 조회 (이메일 확인, 로그아웃 등)
+  DEFAULT: 10_000, // 일반 API 호출
+  LONG: 60_000,    // AI 분석 (컨설팅)
+} as const;
+
 export type { ApiResponse };
 export { ApiError };
