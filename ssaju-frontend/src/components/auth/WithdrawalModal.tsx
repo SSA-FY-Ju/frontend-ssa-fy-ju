@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useDeleteAccount } from '@/hooks/useDeleteAccount';
+import { BaseModal } from '@/components/common/BaseModal';
 
 interface WithdrawalModalProps {
   onClose: () => void;
@@ -29,46 +30,30 @@ export function WithdrawalModal({ onClose }: WithdrawalModalProps) {
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="회원 탈퇴"
-      style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}
-      onKeyDown={handleKeyDown}
+    <BaseModal
+      onClose={handleClose}
+      maxWidth={320}
+      zIndex={9999}
+      accentBar={false}
+      backdropStyle={{
+        background: 'rgba(4,2,18,0.7)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        transition: 'opacity 0.3s ease',
+        opacity: visible ? 1 : 0,
+      }}
+      containerStyle={{
+        background: 'linear-gradient(135deg, rgba(30,20,60,0.9) 0%, rgba(15,10,35,0.95) 100%)',
+        border: '1px solid rgba(239,68,68,0.25)',
+        borderRadius: 20,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
+        padding: '28px',
+        transition: 'opacity 0.3s ease, transform 0.35s cubic-bezier(0.22,1,0.36,1)',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.96)',
+      }}
     >
-      {/* backdrop */}
-      <div
-        onClick={handleClose}
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'rgba(4,2,18,0.7)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          transition: 'opacity 0.3s ease',
-          opacity: visible ? 1 : 0,
-        }}
-      />
-
-      {/* 모달 본체 */}
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: 320,
-          background: 'linear-gradient(135deg, rgba(30,20,60,0.9) 0%, rgba(15,10,35,0.95) 100%)',
-          border: '1px solid rgba(239,68,68,0.25)',
-          borderRadius: 20,
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
-          padding: '28px',
-          transition: 'opacity 0.3s ease, transform 0.35s cubic-bezier(0.22,1,0.36,1)',
-          opacity: visible ? 1 : 0,
-          transform: visible ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.96)',
-        }}
-      >
+      <div onKeyDown={handleKeyDown}>
         {/* 경고 아이콘 */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
           <div style={{
@@ -157,6 +142,6 @@ export function WithdrawalModal({ onClose }: WithdrawalModalProps) {
           </button>
         </div>
       </div>
-    </div>
+    </BaseModal>
   );
 }

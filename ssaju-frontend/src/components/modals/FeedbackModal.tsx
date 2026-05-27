@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useFeedback } from '@/hooks/useFeedback';
+import { BaseModal } from '@/components/common/BaseModal';
 
 type FeedbackType = 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
 
@@ -92,35 +93,28 @@ export function FeedbackModal({ feedbackType, onClose, onSubmitted, exitAction }
   if (!mounted) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="feedback-modal-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-      style={{
+    <BaseModal
+      onClose={handleClose}
+      maxWidth={448}
+      outerClassName="flex items-end sm:items-center justify-center"
+      backdropStyle={{
         background: 'rgba(4,2,18,0.4)',
         backdropFilter: 'blur(16px)',
         WebkitBackdropFilter: 'blur(16px)',
         transition: 'opacity 0.28s ease',
         opacity: visible ? 1 : 0,
       }}
+      containerStyle={{
+        background: 'radial-gradient(ellipse at top, rgba(30,15,60,0.92) 0%, rgba(5,8,20,0.95) 70%)',
+        border: '1px solid rgba(139,92,246,0.2)',
+        boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(109,40,217,0.12)',
+        transition: 'transform 0.32s cubic-bezier(0.22,1,0.36,1), opacity 0.28s ease',
+        transform: visible ? 'translateY(0) scale(1)' : 'translateY(32px) scale(0.97)',
+        opacity: visible ? 1 : 0,
+      }}
+      containerClassName="mx-4 mb-4 sm:mb-0"
+      accentBar={false}
     >
-      {/* 닫기 배경 */}
-      <div className="absolute inset-0" onClick={handleClose} aria-hidden="true" />
-
-      <div
-        className="relative w-full max-w-md mx-4 mb-4 sm:mb-0 rounded-3xl overflow-hidden"
-        style={{
-          background: 'radial-gradient(ellipse at top, rgba(30,15,60,0.92) 0%, rgba(5,8,20,0.95) 70%)',
-          border: '1px solid rgba(139,92,246,0.2)',
-          boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(109,40,217,0.12)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          transition: 'transform 0.32s cubic-bezier(0.22,1,0.36,1), opacity 0.28s ease',
-          transform: visible ? 'translateY(0) scale(1)' : 'translateY(32px) scale(0.97)',
-          opacity: visible ? 1 : 0,
-        }}
-      >
         {/* 배경 별빛 장식 */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-6 left-8 text-violet-400/20 text-xs">✦</div>
@@ -276,7 +270,6 @@ export function FeedbackModal({ feedbackType, onClose, onSubmitted, exitAction }
             )}
           </form>
         </div>
-      </div>
-    </div>
+    </BaseModal>
   );
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { BaseModal } from '@/components/common/BaseModal';
 
 interface CompanyConfirmModalProps {
   suggestions: string[];
@@ -40,51 +41,21 @@ export function CompanyConfirmModal({
   };
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="company-confirm-title"
-      style={{
-        position: 'fixed', inset: 0, zIndex: 50,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '0 16px',
+    <BaseModal
+      onClose={onClose}
+      backdropStyle={{
+        background: 'rgba(4,2,18,0.5)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+      }}
+      containerStyle={{
+        border: '1px solid rgba(139,92,246,0.3)',
+        boxShadow: '0 32px 80px rgba(0,0,0,0.4), 0 0 60px rgba(109,40,217,0.1)',
+        transition: 'opacity 0.28s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1)',
+        opacity: mounted ? 1 : 0,
+        transform: mounted ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.97)',
       }}
     >
-      {/* 오버레이 */}
-      <div
-        onClick={onClose}
-        aria-hidden="true"
-        style={{
-          position: 'absolute', inset: 0,
-          background: 'rgba(4,2,18,0.5)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-        }}
-      />
-
-      {/* 모달 컨테이너 */}
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: 420,
-          background: 'linear-gradient(150deg, rgba(30,20,60,0.75) 0%, rgba(15,10,35,0.8) 100%)',
-          border: '1px solid rgba(139,92,246,0.3)',
-          borderRadius: 24,
-          overflow: 'hidden',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          boxShadow: '0 32px 80px rgba(0,0,0,0.4), 0 0 60px rgba(109,40,217,0.1)',
-          transition: 'opacity 0.28s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1)',
-          opacity: mounted ? 1 : 0,
-          transform: mounted ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.97)',
-        }}
-      >
-        {/* 상단 보라색 그라디언트 선 */}
-        <div style={{
-          height: 2,
-          background: 'linear-gradient(90deg, transparent, rgba(139,92,246,0.6), rgba(99,102,241,0.6), transparent)',
-        }} />
 
         {/* 헤더 */}
         <div style={{ padding: '24px 24px 0' }}>
@@ -327,7 +298,6 @@ export function CompanyConfirmModal({
             </div>
           )}
         </div>
-      </div>
-    </div>
+    </BaseModal>
   );
 }

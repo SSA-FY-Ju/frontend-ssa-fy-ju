@@ -25,7 +25,9 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
   const [messages, setMessages] = useState<Message[]>([]);
   const [step, setStep] = useState(0);
   const [birthDate, setBirthDate] = useState('');
-  const [draftDate, setDraftDate] = useState('');
+  const [draftYear, setDraftYear] = useState('2000');
+  const [draftMonth, setDraftMonth] = useState('01');
+  const [draftDay, setDraftDay] = useState('01');
   const [draftHour, setDraftHour] = useState('12');
   const [draftMinute, setDraftMinute] = useState('00');
   const flowRef = useRef<HTMLDivElement>(null);
@@ -71,10 +73,9 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
   }, [messages]);
 
   const submitDate = () => {
-    if (!draftDate) return;
-    const d = new Date(draftDate);
-    const display = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일`;
-    setBirthDate(draftDate);
+    const dateStr = `${draftYear}-${draftMonth}-${draftDay}`;
+    const display = `${draftYear}년 ${parseInt(draftMonth)}월 ${parseInt(draftDay)}일`;
+    setBirthDate(dateStr);
     setMessages((prev) => [...prev, { who: 'user' as const, text: display }]);
     setStep(0);
     setTimeout(() => {
@@ -108,6 +109,26 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
     }, 1700);
   };
 
+  const CURRENT_YEAR = new Date().getFullYear();
+  const yearOptions = Array.from({ length: CURRENT_YEAR - 1924 + 1 }, (_, i) =>
+    String(CURRENT_YEAR - i),
+  );
+
+  const getDaysInMonth = (year: string, month: string) =>
+    new Date(parseInt(year), parseInt(month), 0).getDate();
+
+  const handleYearChange = (y: string) => {
+    setDraftYear(y);
+    const maxDay = getDaysInMonth(y, draftMonth);
+    if (parseInt(draftDay) > maxDay) setDraftDay(String(maxDay).padStart(2, '0'));
+  };
+
+  const handleMonthChange = (m: string) => {
+    setDraftMonth(m);
+    const maxDay = getDaysInMonth(draftYear, m);
+    if (parseInt(draftDay) > maxDay) setDraftDay(String(maxDay).padStart(2, '0'));
+  };
+
   const quickTimes = [
     { label: '자정 0시', h: '00', m: '00' },
     { label: '새벽 6시', h: '06', m: '00' },
@@ -139,7 +160,7 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
                 className="animate-bubble-in"
                 style={{
                   alignSelf: m.who === 'bot' ? 'flex-start' : 'flex-end',
-                  maxWidth: '82%',
+                  maxWidth: '92%',
                 }}
               >
                 {/* 봇 이름 레이블 (첫 번째 봇 메시지 또는 이전이 유저인 경우) */}
@@ -190,54 +211,104 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
 
                   {/* 날짜 입력 */}
                   {m.input === 'date' && (
-                    <div style={{ display: 'flex', gap: 8, paddingTop: 12, alignItems: 'center' }}>
-                      <input
-                        type="date"
-                        style={{
-                          flex: 1,
-                          background: 'rgba(255,255,255,0.06)',
-                          border: '1px solid rgba(255,255,255,0.15)',
-                          color: '#f4ecd8',
-                          padding: '10px 14px',
-                          borderRadius: 12,
-                          fontSize: 13,
-                          outline: 'none',
-                          colorScheme: 'dark',
-                          cursor: 'pointer',
-                          transition: 'border-color 0.2s',
-                        }}
-                        value={draftDate}
-                        onChange={(e) => setDraftDate(e.target.value)}
-                        max={new Date().toISOString().split('T')[0]}
-                        min="1900-01-01"
-                        onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.6)')}
-                        onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)')}
-                      />
-                      <button
-                        onClick={submitDate}
-                        disabled={!draftDate}
-                        style={{
-                          width: 38,
-                          height: 38,
-                          borderRadius: '50%',
-                          background: draftDate
-                            ? 'linear-gradient(135deg, #fcd34d, #f9c846)'
-                            : 'rgba(255,255,255,0.08)',
-                          border: 'none',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          color: draftDate ? '#0a1230' : 'rgba(255,255,255,0.3)',
-                          cursor: draftDate ? 'pointer' : 'not-allowed',
-                          flexShrink: 0,
-                          boxShadow: draftDate ? '0 4px 16px rgba(252,211,77,0.4)' : 'none',
-                          transition: 'all 0.2s',
-                        }}
-                        onMouseEnter={(e) => draftDate && (e.currentTarget.style.transform = 'scale(1.08)')}
-                        onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                      >
-                        <ArrowIcon />
-                      </button>
+                    <div style={{ paddingTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        {/* 년 */}
+                        <select
+                          value={draftYear}
+                          onChange={(e) => handleYearChange(e.target.value)}
+                          style={{
+                            flex: 2.5,
+                            appearance: 'none',
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            color: '#f4ecd8',
+                            padding: '9px 14px',
+                            borderRadius: 12,
+                            fontSize: 13,
+                            outline: 'none',
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            colorScheme: 'dark',
+                          }}
+                        >
+                          {yearOptions.map((y) => (
+                            <option key={y} value={y}>{y}년</option>
+                          ))}
+                        </select>
+                        {/* 월 */}
+                        <select
+                          value={draftMonth}
+                          onChange={(e) => handleMonthChange(e.target.value)}
+                          style={{
+                            flex: 1.5,
+                            appearance: 'none',
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            color: '#f4ecd8',
+                            padding: '9px 14px',
+                            borderRadius: 12,
+                            fontSize: 13,
+                            outline: 'none',
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            colorScheme: 'dark',
+                          }}
+                        >
+                          {Array.from({ length: 12 }, (_, idx) => {
+                            const val = String(idx + 1).padStart(2, '0');
+                            return <option key={val} value={val}>{idx + 1}월</option>;
+                          })}
+                        </select>
+                        {/* 일 */}
+                        <select
+                          value={draftDay}
+                          onChange={(e) => setDraftDay(e.target.value)}
+                          style={{
+                            flex: 1.5,
+                            appearance: 'none',
+                            background: 'rgba(255,255,255,0.06)',
+                            border: '1px solid rgba(255,255,255,0.15)',
+                            color: '#f4ecd8',
+                            padding: '9px 14px',
+                            borderRadius: 12,
+                            fontSize: 13,
+                            outline: 'none',
+                            cursor: 'pointer',
+                            textAlign: 'center',
+                            colorScheme: 'dark',
+                          }}
+                        >
+                          {Array.from({ length: getDaysInMonth(draftYear, draftMonth) }, (_, idx) => {
+                            const val = String(idx + 1).padStart(2, '0');
+                            return <option key={val} value={val}>{idx + 1}일</option>;
+                          })}
+                        </select>
+                        {/* 제출 */}
+                        <button
+                          onClick={submitDate}
+                          style={{
+                            width: 38,
+                            height: 38,
+                            borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #fcd34d, #f9c846)',
+                            border: 'none',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#0a1230',
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                            boxShadow: '0 4px 16px rgba(252,211,77,0.4)',
+                            transition: 'transform 0.2s',
+                          }}
+                          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.08)')}
+                          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+                        >
+                          <ArrowIcon />
+                        </button>
+                      </div>
+
                     </div>
                   )}
 
