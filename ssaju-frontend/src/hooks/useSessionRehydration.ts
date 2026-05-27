@@ -44,11 +44,6 @@ export function useSessionRehydration() {
       initSession(sessionData);
     } catch (error) {
       // 검증 실패: sessionStorage 데이터 오염 또는 형식 오류
-      console.error(
-        '[useSessionRehydration] Session validation failed:',
-        error instanceof Error ? error.message : 'Unknown error'
-      );
-
       // 1. sessionStorage 초기화
       sessionStorage.removeItem('sessionData');
 

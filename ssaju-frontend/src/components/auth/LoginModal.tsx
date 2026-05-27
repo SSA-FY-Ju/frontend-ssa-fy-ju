@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { BaseModal } from '@/components/common/BaseModal';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -60,53 +61,30 @@ export function LoginModal({
   if (!mounted) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="login-modal-title"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 9999,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '0 16px',
+    <BaseModal
+      onClose={onClose}
+      maxWidth={460}
+      zIndex={9999}
+      accentBar={false}
+      backdropStyle={{
+        background: 'rgba(4,2,18,0.2)',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        transition: 'opacity 0.3s ease',
+        opacity: visible ? 1 : 0,
+      }}
+      containerStyle={{
+        background: 'linear-gradient(160deg, rgba(30,20,60,0.45) 0%, rgba(12,8,30,0.52) 100%)',
+        border: '1px solid rgba(139,92,246,0.3)',
+        borderRadius: 28,
+        backdropFilter: 'blur(32px)',
+        WebkitBackdropFilter: 'blur(32px)',
+        boxShadow: '0 0 0 1px rgba(255,255,255,0.05) inset, 0 32px 80px rgba(0,0,0,0.35), 0 0 80px rgba(109,40,217,0.15)',
+        transition: 'opacity 0.3s ease, transform 0.35s cubic-bezier(0.22,1,0.36,1)',
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.96)',
       }}
     >
-      {/* 오버레이 — 배경이 비치도록 낮은 불투명도 */}
-      <div
-        onClick={onClose}
-        aria-hidden="true"
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'rgba(4,2,18,0.2)',
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          transition: 'opacity 0.3s ease',
-          opacity: visible ? 1 : 0,
-        }}
-      />
-
-      {/* 카드 */}
-      <div
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: 460,
-          background: 'linear-gradient(160deg, rgba(30,20,60,0.45) 0%, rgba(12,8,30,0.52) 100%)',
-          border: '1px solid rgba(139,92,246,0.3)',
-          borderRadius: 28,
-          overflow: 'hidden',
-          backdropFilter: 'blur(32px)',
-          WebkitBackdropFilter: 'blur(32px)',
-          boxShadow: '0 0 0 1px rgba(255,255,255,0.05) inset, 0 32px 80px rgba(0,0,0,0.35), 0 0 80px rgba(109,40,217,0.15)',
-          transition: 'opacity 0.3s ease, transform 0.35s cubic-bezier(0.22,1,0.36,1)',
-          opacity: visible ? 1 : 0,
-          transform: visible ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.96)',
-        }}
-      >
         {/* 상단 그라디언트 선 */}
         <div style={{
           height: 1,
@@ -288,7 +266,6 @@ export function LoginModal({
             로그인 시 <span style={{ color: 'rgba(167,139,250,0.5)' }}>이용약관</span> 및 <span style={{ color: 'rgba(167,139,250,0.5)' }}>개인정보처리방침</span>에 동의한 것으로 간주합니다.
           </p>
         </div>
-      </div>
-    </div>
+    </BaseModal>
   );
 }

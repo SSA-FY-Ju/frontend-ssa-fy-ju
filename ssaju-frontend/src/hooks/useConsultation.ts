@@ -18,8 +18,9 @@ import { useConsultationStore } from '@/stores/consultationStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useDisclaimerTimer } from './useDisclaimerTimer';
+import { analysisCache, isPageRefresh } from '@/lib/analysisCache';
 import { MYPAGE_QUERY_KEY } from './useMyPage';
-import type { ConsultationRequest } from '@/types/api';
+import type { ConsultationRequest, ConsultationData } from '@/types/api';
 
 type Phase = 'idle' | 'disclaimer' | 'loading' | 'result' | 'error';
 
@@ -49,12 +50,13 @@ export function useConsultation() {
       };
 
       const data = await fetchConsultation(request);
-      console.log('[Consultation API response]', JSON.stringify(data, null, 2));
 
       // Zustand 메모리에 전체 캐싱
       consultationStore.setConsultation(data);
       setPhase('result');
 
+      // 새로고침 시 재호출 방지용 캐싱
+      analysisCache.set('consultation', data);
       // 마이페이지 캐시 삭제 → 진입 시 즉시 새 데이터 로드
       queryClient.removeQueries({ queryKey: MYPAGE_QUERY_KEY });
 
@@ -86,6 +88,17 @@ export function useConsultation() {
    * 컨설팅 분석 시작 — 매번 새로 API 호출 (캐싱 없음)
    */
   const submitConsultation = useCallback((birthDate: string, birthTime: string = '12:00') => {
+    if (isPageRefresh()) {
+      const cached = analysisCache.get<ConsultationData>('consultation');
+      if (cached) {
+        consultationStore.setConsultation(cached);
+        setPhase('result');
+        return;
+      }
+    } else {
+      analysisCache.remove('consultation');
+    }
+
     if (isRequestingRef.current) return;
     isRequestingRef.current = true;
 
@@ -93,7 +106,7 @@ export function useConsultation() {
     setError(null);
     setPhase('disclaimer');
     startDisclaimer();
-  }, [startDisclaimer]);
+  }, [startDisclaimer, consultationStore]);
 
   /**
    * Swiper onSlideChange 콜백에서 호출
@@ -103,7 +116,6 @@ export function useConsultation() {
     consultationStore.setCurrentSectionIndex(index);
   };
 
-  /** 상태 초기화 */
   const reset = () => {
     resetDisclaimer();
     consultationStore.clearData();

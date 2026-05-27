@@ -100,38 +100,12 @@ export async function tryRefreshToken(): Promise<boolean> {
 
       if (token) {
         // 새 accessToken을 authStore에 저장 및 로그인 상태 업데이트
+        // user 정보(name, email)는 authStore localStorage에 영속되므로 별도 API 호출 불필요
         if (typeof window !== 'undefined') {
           const { useAuthStore } = require('@/stores/authStore');
           const store = useAuthStore.getState();
           store.setAccessToken(token);
           store.setIsLoggedIn(true);
-
-          // 유저 정보 동기화 시도 (마이페이지 정보 활용)
-          try {
-            const userRes = await fetch(`${baseUrl}/api/mypage`, {
-              headers: { 
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              credentials: 'include'
-            });
-            
-            if (userRes.ok) {
-              const userJson = await userRes.json();
-
-              // 실제 로그 데이터 구조에 따른 유저 정보 추출 (data.profile.id, name, email)
-              const profile = userJson.data?.profile;
-              if (profile && (profile.id !== undefined && profile.id !== null)) {
-                store.setUser({
-                  userId: String(profile.id),
-                  name: profile.name || '사용자',
-                  email: profile.email || ''
-                });
-              }
-            }
-          } catch (userErr) {
-            // 동기화 실패 시 무시
-          }
         }
         return true;
       }
@@ -251,12 +225,13 @@ export async function apiFetch<T>(
 
         // 4xx 에러 (재시도 하지 않음)
         if (response.status >= 400 && response.status < 500) {
-          const json = (await response.json()) as ApiResponse<T>;
+          let json: ApiResponse<T> | null = null;
+          try { json = (await response.json()) as ApiResponse<T>; } catch { /* non-JSON body */ }
           throw new ApiError(
             response.status,
-            json.error?.code || json.errorCode || 'CLIENT_ERROR',
-            json.error?.message || json.message || response.statusText,
-            json.error?.requestId || 'unknown',
+            json?.error?.code || json?.errorCode || 'CLIENT_ERROR',
+            json?.error?.message || json?.message || response.statusText,
+            json?.error?.requestId || 'unknown',
           );
         }
 
@@ -295,6 +270,13 @@ export async function apiFetch<T>(
     updateLoadingState(false);
   }
 }
+
+/** 공통 타임아웃 상수 (ms) */
+export const TIMEOUTS = {
+  SHORT: 5_000,    // 간단한 조회 (이메일 확인, 로그아웃 등)
+  DEFAULT: 10_000, // 일반 API 호출
+  LONG: 60_000,    // AI 분석 (컨설팅)
+} as const;
 
 export type { ApiResponse };
 export { ApiError };

@@ -1,5 +1,7 @@
 'use client';
 
+import { BaseModal } from '@/components/common/BaseModal';
+
 /**
  * 삭제 확인 모달 컴포넌트 (T106)
  *
@@ -27,30 +29,19 @@ export function DeleteConfirmModal({
   if (!recordId) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="삭제 확인"
-      className="fixed inset-0 z-50 flex items-center justify-center"
+    <BaseModal
+      onClose={onClose}
+      maxWidth={320}
+      accentBar={false}
+      backdropStyle={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+      containerStyle={{
+        background: 'linear-gradient(135deg, rgba(30,20,60,0.85) 0%, rgba(15,10,35,0.9) 100%)',
+        borderRadius: 16,
+        boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+        padding: '28px',
+      }}
+      containerClassName="mx-4"
     >
-      {/* backdrop */}
-      <div
-        className="absolute inset-0"
-        style={{ background: 'rgba(4,2,18,0.6)', backdropFilter: 'blur(8px)' }}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* 모달 본체 */}
-      <div
-        className="relative rounded-2xl p-7 max-w-xs w-full mx-4"
-        style={{
-          background: 'linear-gradient(135deg, rgba(30,20,60,0.85) 0%, rgba(15,10,35,0.9) 100%)',
-          border: '1px solid rgba(139,92,246,0.25)',
-          backdropFilter: 'blur(24px)',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
-        }}
-      >
         <h2 className="text-white text-base font-bold mb-2 text-center">기록 삭제</h2>
         <p className="text-sm text-center mb-6 leading-relaxed" style={{ color: 'rgba(148,163,184,0.6)' }}>
           정말 삭제하시겠습니까?
@@ -93,7 +84,6 @@ export function DeleteConfirmModal({
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>
         </div>
-      </div>
-    </div>
+    </BaseModal>
   );
 }

@@ -39,8 +39,7 @@ export async function DELETE(req: NextRequest) {
     });
 
     return nextResponse;
-  } catch (err) {
-    console.error('[API Users/Me DELETE Proxy] Error:', err);
+  } catch {
     return NextResponse.json({ success: false }, { status: 500 });
   }
 }

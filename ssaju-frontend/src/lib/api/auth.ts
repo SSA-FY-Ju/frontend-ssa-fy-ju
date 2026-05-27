@@ -8,7 +8,7 @@
  * - POST /api/auth/logout     - 로그아웃
  */
 
-import { apiFetch, ApiError } from './client';
+import { apiFetch, ApiError, TIMEOUTS } from './client';
 import { config } from '../config/env';
 
 export interface LoginRequest {
@@ -30,37 +30,48 @@ export interface SignupRequest {
 
 /**
  * 이메일/패스워드 로그인
- * 백엔드가 accessToken을 응답 헤더(Authorization: Bearer ...)로 내려줌
+ *
+ * apiFetch 미사용 이유: 백엔드가 accessToken을 응답 헤더(Authorization: Bearer ...)로
+ * 내려주므로 헤더 파싱이 필요함. apiFetch는 ApiResponse<T>.data만 반환하기 때문에
+ * 헤더 접근이 불가능하여 raw fetch를 사용.
  */
 export async function login(req: LoginRequest): Promise<LoginResult> {
-  const res = await fetch(`${config.apiBaseUrl}/api/auth/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify(req),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), TIMEOUTS.DEFAULT);
 
-  const json = await res.json().catch(() => ({}));
+  try {
+    const res = await fetch(`${config.apiBaseUrl}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(req),
+      signal: controller.signal,
+    });
 
-  if (!res.ok) {
-    const msg = json?.error?.message ?? json?.message ?? '로그인에 실패했습니다.';
-    throw new ApiError(res.status, json?.error?.code ?? 'LOGIN_FAILED', msg, 'unknown');
+    const json = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      const msg = json?.error?.message ?? json?.message ?? '로그인에 실패했습니다.';
+      throw new ApiError(res.status, json?.error?.code ?? 'LOGIN_FAILED', msg, 'unknown');
+    }
+
+    // 1순위: 응답 헤더 Authorization (백엔드가 헤더로 내려주는 경우)
+    const authHeader = res.headers.get('authorization') ?? '';
+    let accessToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+
+    // 2순위: 응답 body의 data.accessToken (명세 기준)
+    if (!accessToken) {
+      accessToken = json?.data?.accessToken ?? '';
+    }
+
+    if (!accessToken) {
+      throw new ApiError(500, 'NO_TOKEN', '서버에서 인증 토큰을 받지 못했습니다.', 'unknown');
+    }
+
+    return { accessToken };
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  // 1순위: 응답 헤더 Authorization (백엔드가 헤더로 내려주는 경우)
-  const authHeader = res.headers.get('authorization') ?? '';
-  let accessToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
-
-  // 2순위: 응답 body의 data.accessToken (명세 기준)
-  if (!accessToken) {
-    accessToken = json?.data?.accessToken ?? '';
-  }
-
-  if (!accessToken) {
-    throw new ApiError(500, 'NO_TOKEN', '서버에서 인증 토큰을 받지 못했습니다.', 'unknown');
-  }
-
-  return { accessToken };
 }
 
 /**
@@ -70,7 +81,7 @@ export async function signup(req: SignupRequest): Promise<void> {
   await apiFetch<unknown>('/api/auth/signup', {
     method: 'POST',
     body: req,
-    timeout: 10000,
+    timeout: TIMEOUTS.DEFAULT,
     retry: { maxAttempts: 1 },
   });
 }
@@ -83,7 +94,7 @@ export async function checkEmail(email: string): Promise<string> {
   return apiFetch<string>('/api/auth/check-email', {
     method: 'POST',
     body: { email },
-    timeout: 5000,
+    timeout: TIMEOUTS.SHORT,
     retry: { maxAttempts: 1 },
   });
 }
@@ -94,7 +105,7 @@ export async function checkEmail(email: string): Promise<string> {
 export async function logout(): Promise<void> {
   await apiFetch<void>('/api/auth/logout', {
     method: 'POST',
-    timeout: 5000,
+    timeout: TIMEOUTS.SHORT,
     retry: { maxAttempts: 1 },
   });
 }
@@ -107,7 +118,7 @@ export async function deleteAccount(password: string): Promise<void> {
   await apiFetch<void>('/api/users/me', {
     method: 'DELETE',
     body: { password },
-    timeout: 10000,
+    timeout: TIMEOUTS.DEFAULT,
     retry: { maxAttempts: 1 },
   });
 }

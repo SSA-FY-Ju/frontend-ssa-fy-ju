@@ -33,17 +33,16 @@ export function useDisclaimerTimer({ onComplete }: UseDisclaimerTimerOptions) {
    * - 2000ms: 페이드 완료 → onComplete 호출
    */
   const start = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
     setIsVisible(true);
     setIsFading(false);
 
-    // 1.5초 후 페이드 아웃 시작
     timerRef.current = setTimeout(() => {
       setIsFading(true);
-
-      // 500ms 페이드 아웃 완료 후 onComplete 호출
       timerRef.current = setTimeout(() => {
         setIsVisible(false);
         setIsFading(false);
+        timerRef.current = null;
         onCompleteRef.current();
       }, 500);
     }, 1500);
@@ -59,11 +58,33 @@ export function useDisclaimerTimer({ onComplete }: UseDisclaimerTimerOptions) {
     setIsFading(false);
   }, []);
 
-  // 컴포넌트 언마운트 시 타이머 정리 (T054-leak)
+  // React Strict Mode: cleanup이 타이머를 지워도 isVisible=true 상태가 남을 수 있음
+  // → isVisible=true인데 타이머가 없으면 시퀀스를 재시작
+  useEffect(() => {
+    if (!isVisible || timerRef.current !== null) return;
+    timerRef.current = setTimeout(() => {
+      setIsFading(true);
+      timerRef.current = setTimeout(() => {
+        setIsVisible(false);
+        setIsFading(false);
+        timerRef.current = null;
+        onCompleteRef.current();
+      }, 500);
+    }, 1500);
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [isVisible]);
+
+  // 언마운트 시 타이머 정리
   useEffect(() => {
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current);
+        timerRef.current = null;
       }
     };
   }, []);

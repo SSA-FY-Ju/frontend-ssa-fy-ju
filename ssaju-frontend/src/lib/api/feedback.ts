@@ -5,12 +5,11 @@
  * - POST /api/feedback/satisfaction - 만족도 피드백 제출
  */
 
-import { apiFetch } from './client';
+import { apiFetch, TIMEOUTS } from './client';
 import type { FeedbackRequest, FeedbackResponse } from '@/types/api';
 
 /**
  * 만족도 피드백 제출
- * 타임아웃: 10초
  */
 export async function submitFeedback(
   request: FeedbackRequest,
@@ -18,6 +17,6 @@ export async function submitFeedback(
   return apiFetch<FeedbackResponse>('/api/feedback/satisfaction', {
     method: 'POST',
     body: request,
-    timeout: 10000,
+    timeout: TIMEOUTS.DEFAULT,
   });
 }

@@ -42,16 +42,12 @@ export function useRouteGuard(required: boolean = true): { isAllowed: boolean } 
       return;
     }
 
-    console.log('[useRouteGuard] Evaluating conditions', { pathname, isLoggedIn, birthDate, _hasHydrated, authHydrated, isAuthReady, settled: settledRef.current });
-
     if (!_hasHydrated || !authHydrated || !isAuthReady) {
-      console.log('[useRouteGuard] Waiting for hydration or auth ready');
       return;
     }
 
     // [핵심 수정] isAuthReady가 완료된 시점에서 실제 isLoggedIn 상태를 엄격하게 체크
     if (!isLoggedIn) {
-      console.log('[useRouteGuard] User not logged in, redirecting to home');
       if (settledRef.current !== 'login-redirect') {
         settledRef.current = 'login-redirect';
         
@@ -66,7 +62,6 @@ export function useRouteGuard(required: boolean = true): { isAllowed: boolean } 
     }
 
     if (!birthDate) {
-      console.log('[useRouteGuard] birthDate missing, redirecting to chat');
       // birthDate 리다이렉트는 한 번만 실행
       if (settledRef.current !== 'birth-redirect') {
         settledRef.current = 'birth-redirect';
@@ -77,7 +72,6 @@ export function useRouteGuard(required: boolean = true): { isAllowed: boolean } 
       return;
     }
 
-    console.log('[useRouteGuard] All conditions met, allowing access');
     settledRef.current = 'allowed';
     setIsAllowed(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps

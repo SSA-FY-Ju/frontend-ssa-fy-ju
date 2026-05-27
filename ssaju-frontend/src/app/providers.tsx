@@ -34,7 +34,7 @@ export function Providers({ children }: { children: ReactNode }): React.ReactEle
     // NEXT_PUBLIC_USE_MOCK=true 일 때만 MSW 활성화 (기본값: false)
     if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_USE_MOCK === 'true') {
       import('@/mocks/browser').then(({ worker }) => {
-        worker.start({ onUnhandledRequest: 'bypass' }).catch(console.error);
+        worker.start({ onUnhandledRequest: 'bypass' }).catch(() => {});
       });
     } else {
       // MSW가 비활성화된 경우, 브라우저에 남아있을 수 있는 Service Worker를 강제로 해제

@@ -26,9 +26,7 @@ export class ErrorBoundary extends React.Component<
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error('[ErrorBoundary] Uncaught error:', error, info);
-  }
+  componentDidCatch(_error: Error, _info: React.ErrorInfo) {}
 
   render() {
     if (this.state.hasError) {

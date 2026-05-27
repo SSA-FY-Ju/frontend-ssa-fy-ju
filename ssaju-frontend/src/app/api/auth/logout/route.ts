@@ -47,8 +47,7 @@ export async function POST(req: NextRequest) {
     });
 
     return nextResponse;
-  } catch (err) {
-    console.error('[API Logout Proxy] Error:', err);
+  } catch {
     return NextResponse.json({ success: false }, { status: 500 });
   }
 }
