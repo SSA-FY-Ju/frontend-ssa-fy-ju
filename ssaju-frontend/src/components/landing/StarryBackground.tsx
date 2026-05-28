@@ -1,159 +1,83 @@
 'use client';
 
 /**
- * 파일 역할: 랜딩 배경의 별/유성 애니메이션을 Canvas로 렌더합니다.
- * DOM 노드 200개 → canvas 1개, React 리렌더 없음.
+ * 파일 역할: 랜딩 배경의 별을 Canvas에 한 번만 그리고, 별똥별은 CSS 애니메이션으로 렌더합니다.
+ * - 별: 정적 canvas, rAF 루프 없음
+ * - 별똥별: DOM 직접 조작 + CSS animation (React 리렌더 없음)
  */
 
 import { useEffect, useRef } from 'react';
 
-interface Star {
-  x: number;
-  y: number;
-  size: number;
-  offset: number;
-  period: number;
-  r: number;
-  g: number;
-  b: number;
-}
-
-interface ShootingStar {
-  startX: number;
-  startY: number;
-  t: number;
-}
-
 const STAR_COUNT = 200;
-
-// 유성 이동 벡터 (CSS: translate(-280px, 120px) 와 동일)
-const SHOOT_DX = -280;
-const SHOOT_DY = 120;
-const SHOOT_MAG = Math.sqrt(SHOOT_DX * SHOOT_DX + SHOOT_DY * SHOOT_DY);
-// 꼬리는 이동 반대 방향
-const TAIL_DIR_X = -SHOOT_DX / SHOOT_MAG;
-const TAIL_DIR_Y = -SHOOT_DY / SHOOT_MAG;
-const TAIL_LEN = 120;
 
 export default function StarryBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const shootContainerRef = useRef<HTMLDivElement>(null);
 
+  // 별 — 한 번만 그리고 종료
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let w = 0, h = 0;
-
-    const resize = () => {
-      w = window.innerWidth;
-      h = window.innerHeight;
-      canvas.width = w;
-      canvas.height = h;
-    };
-    resize();
-    window.addEventListener('resize', resize);
-
-    // 별 데이터 생성 (한 번만)
-    const stars: Star[] = Array.from({ length: STAR_COUNT }, () => {
+    const stars = Array.from({ length: STAR_COUNT }, () => {
       const rand = Math.random();
       let r = 255, g = 255, b = 255;
-      if (rand > 0.85)      { r = 224; g = 230; b = 255; } // gold  (#e0e6ff)
-      else if (rand > 0.65) { r = 168; g = 216; b = 255; } // blue  (#a8d8ff)
-      else if (rand > 0.45) { r = 216; g = 184; b = 255; } // purple(#d8b8ff)
+      if (rand > 0.85)      { r = 224; g = 230; b = 255; }
+      else if (rand > 0.65) { r = 168; g = 216; b = 255; }
+      else if (rand > 0.45) { r = 216; g = 184; b = 255; }
       return {
         x: Math.random(),
         y: Math.random(),
         size: Math.random() * 2 + 0.5,
-        offset: Math.random() * Math.PI * 2,
-        period: 2.5 + Math.random() * 2,
+        opacity: 0.3 + Math.random() * 0.65,
         r, g, b,
       };
     });
 
-    const shoots: ShootingStar[] = [];
-    let lastShoot = 0;
-    let nextDelay = 3000 + Math.random() * 2000;
-    let animId: number;
-    let prevTime = 0;
-
-    const frame = (now: number) => {
-      const dt = prevTime ? Math.min((now - prevTime) / 1000, 0.05) : 0;
-      prevTime = now;
-
+    const draw = () => {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      canvas.width = w;
+      canvas.height = h;
       ctx.clearRect(0, 0, w, h);
-
-      // 별 그리기
       for (const s of stars) {
-        const cycle = (Math.sin(now / (s.period * 1000) * Math.PI * 2 + s.offset) + 1) / 2;
-        ctx.globalAlpha = 0.4 + cycle * 0.6;
+        ctx.globalAlpha = s.opacity;
         ctx.fillStyle = `rgb(${s.r},${s.g},${s.b})`;
         ctx.beginPath();
-        ctx.arc(s.x * w, s.y * h, s.size * (0.8 + cycle * 0.35), 0, Math.PI * 2);
+        ctx.arc(s.x * w, s.y * h, s.size, 0, Math.PI * 2);
         ctx.fill();
       }
-
       ctx.globalAlpha = 1;
-
-      // 유성 생성
-      if (now - lastShoot > nextDelay) {
-        lastShoot = now;
-        nextDelay = 3000 + Math.random() * 2000;
-        shoots.push({
-          startX: (0.6 + Math.random() * 0.35) * w,
-          startY: Math.random() * 0.4 * h,
-          t: 0,
-        });
-      }
-
-      // 유성 그리기
-      for (let i = shoots.length - 1; i >= 0; i--) {
-        const s = shoots[i];
-        s.t += dt / 1.8;
-        if (s.t >= 1) { shoots.splice(i, 1); continue; }
-
-        const opacity = s.t < 0.08
-          ? s.t / 0.08
-          : s.t > 0.7
-          ? (1 - s.t) / 0.3
-          : 1;
-
-        const x = s.startX + SHOOT_DX * s.t;
-        const y = s.startY + SHOOT_DY * s.t;
-        const tx = x + TAIL_DIR_X * TAIL_LEN;
-        const ty = y + TAIL_DIR_Y * TAIL_LEN;
-
-        // 꼬리
-        const grad = ctx.createLinearGradient(x, y, tx, ty);
-        grad.addColorStop(0, `rgba(224,230,255,${(opacity * 0.8).toFixed(2)})`);
-        grad.addColorStop(1, 'rgba(224,230,255,0)');
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = 1.5;
-        ctx.globalAlpha = 1;
-        ctx.beginPath();
-        ctx.moveTo(x, y);
-        ctx.lineTo(tx, ty);
-        ctx.stroke();
-
-        // 헤드
-        ctx.globalAlpha = opacity;
-        ctx.fillStyle = '#e0e6ff';
-        ctx.beginPath();
-        ctx.arc(x, y, 1.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.globalAlpha = 1;
-      animId = requestAnimationFrame(frame);
     };
 
-    animId = requestAnimationFrame(frame);
+    draw();
+    window.addEventListener('resize', draw);
+    return () => window.removeEventListener('resize', draw);
+  }, []);
 
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener('resize', resize);
+  // 별똥별 — DOM 직접 조작, React 상태 없음
+  useEffect(() => {
+    const container = shootContainerRef.current;
+    if (!container) return;
+
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const spawn = () => {
+      const el = document.createElement('div');
+      el.className = 'shooting-star';
+      el.style.left = `${60 + Math.random() * 35}%`;
+      el.style.top = `${Math.random() * 40}%`;
+      el.style.animation = 'shoot 1.8s ease-out forwards';
+      container.appendChild(el);
+      setTimeout(() => el.remove(), 2000);
+
+      timeoutId = setTimeout(spawn, 3000 + Math.random() * 2000);
     };
+
+    spawn();
+    return () => clearTimeout(timeoutId);
   }, []);
 
   return (
@@ -194,10 +118,8 @@ export default function StarryBackground() {
         </g>
       </svg>
 
-      <canvas
-        ref={canvasRef}
-        className="stars-layer"
-      />
+      <canvas ref={canvasRef} className="stars-layer" />
+      <div ref={shootContainerRef} className="stars-layer" />
     </>
   );
 }

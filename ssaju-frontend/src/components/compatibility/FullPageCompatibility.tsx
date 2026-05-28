@@ -12,7 +12,7 @@
  *   6. 주의사항    — cautions
  */
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel, Keyboard, A11y } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
@@ -68,6 +68,62 @@ export function FullPageCompatibility({ result, companyName, hasFeedback, onFeed
 
   const navigateTo = (index: number) => swiperRef.current?.slideTo(index);
 
+  // result/companyName이 바뀔 때만 재생성 — activeIndex 변경 시 리렌더 없음
+  const slides = useMemo(() => (
+    <>
+      <SwiperSlide style={{ height: '100vh' }}>
+        <SlideShell section={SECTIONS[0]}>
+          <ScoreSection
+            score={result.compatibilityScore}
+            companyName={companyName}
+            breakdown={result.analysisBreakdown}
+            summary={result.summary}
+            color={SECTIONS[0].color}
+          />
+        </SlideShell>
+      </SwiperSlide>
+
+      <SwiperSlide style={{ height: '100vh' }}>
+        <SlideShell section={SECTIONS[1]}>
+          <RoleSection analysis={result.targetRoleAnalysis} color={SECTIONS[1].color} />
+        </SlideShell>
+      </SwiperSlide>
+
+      <SwiperSlide style={{ height: '100vh' }}>
+        <SlideShell section={SECTIONS[2]}>
+          <OhangSection data={result.fiveElements} color={SECTIONS[2].color} />
+        </SlideShell>
+      </SwiperSlide>
+
+      <SwiperSlide style={{ height: '100vh' }}>
+        <SlideShell section={SECTIONS[3]} scrollable>
+          <InterviewSection
+            questions={result.expectedInterviewQuestions}
+            roles={result.roleCompatibility}
+            strategy={result.actionableStrategy}
+            color={SECTIONS[3].color}
+          />
+        </SlideShell>
+      </SwiperSlide>
+
+      <SwiperSlide style={{ height: '100vh' }}>
+        <SlideShell section={SECTIONS[4]} scrollable>
+          <MonthlySection
+            forecasts={result.monthlyForecast}
+            bestTiming={result.actionableStrategy?.bestTiming}
+            color={SECTIONS[4].color}
+          />
+        </SlideShell>
+      </SwiperSlide>
+
+      <SwiperSlide style={{ height: '100vh' }}>
+        <SlideShell section={SECTIONS[5]}>
+          <CautionSection cautions={result.cautions} color={SECTIONS[5].color} />
+        </SlideShell>
+      </SwiperSlide>
+    </>
+  ), [result, companyName]);
+
   return (
     <div
       style={{
@@ -95,58 +151,7 @@ export function FullPageCompatibility({ result, companyName, hasFeedback, onFeed
         onSlideChange={handleSlideChange}
         style={{ height: '100vh', willChange: 'transform' }}
       >
-        {/* 1. 종합 점수 */}
-        <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[0]}>
-            <ScoreSection
-              score={result.compatibilityScore}
-              companyName={companyName}
-              breakdown={result.analysisBreakdown}
-              summary={result.summary}
-              color={SECTIONS[0].color}
-            />
-          </SlideShell>
-        </SwiperSlide>
-
-        {/* 2. 직군 분석 */}
-        <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[1]}>
-            <RoleSection analysis={result.targetRoleAnalysis} color={SECTIONS[1].color} />
-          </SlideShell>
-        </SwiperSlide>
-
-        {/* 3. 오행 분석 */}
-        <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[2]}>
-            <OhangSection data={result.fiveElements} color={SECTIONS[2].color} />
-          </SlideShell>
-        </SwiperSlide>
-
-        {/* 4. 면접 준비 */}
-        <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[3]} scrollable>
-            <InterviewSection
-              questions={result.expectedInterviewQuestions}
-              roles={result.roleCompatibility}
-              strategy={result.actionableStrategy}
-              color={SECTIONS[3].color}
-            />
-          </SlideShell>
-        </SwiperSlide>
-
-        {/* 5. 월별 운세 */}
-        <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[4]} scrollable>
-            <MonthlySection forecasts={result.monthlyForecast} bestTiming={result.actionableStrategy?.bestTiming} color={SECTIONS[4].color} />
-          </SlideShell>
-        </SwiperSlide>
-
-        {/* 6. 주의사항 */}
-        <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[5]}>
-            <CautionSection cautions={result.cautions} color={SECTIONS[5].color} />
-          </SlideShell>
-        </SwiperSlide>
+        {slides}
       </Swiper>
 
       {/* 피드백 floating 카드 — 마지막 섹션 도달 시 우측 하단에 표시 */}

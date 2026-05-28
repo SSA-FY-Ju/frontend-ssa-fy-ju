@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Swiper 래퍼를 GPU 레이어로 승격 — 슬라이드 전환 compositor-only */
+.swiper-wrapper {
+  will-change: transform;
+}
+
 /* Global Styles */
 html {
   scroll-behavior: smooth;
