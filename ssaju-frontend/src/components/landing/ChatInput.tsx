@@ -380,7 +380,7 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
                 style={
                   m.who === 'bot'
                     ? {
-                        background: 'rgba(20,12,45,0.85)',
+                        background: 'transparent',
                         border: '1px solid rgba(255,255,255,0.1)',
                         borderLeft: '2px solid rgba(139,92,246,0.5)',
                         borderRadius: '18px 18px 18px 18px',

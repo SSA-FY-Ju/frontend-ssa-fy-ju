@@ -75,6 +75,7 @@ export function FullPageCompatibility({ result, companyName, hasFeedback, onFeed
         opacity: mounted ? 1 : 0,
         transform: mounted ? 'translateY(0)' : 'translateY(14px)',
         transition: 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.22,1,0.36,1)',
+        willChange: 'opacity, transform',
       }}
     >
       <RightNavigator sections={SECTIONS} activeIndex={activeIndex} onNavigate={navigateTo} />
@@ -284,7 +285,7 @@ function ScoreSection({
               strokeDasharray={circumference}
               strokeDashoffset={offset}
               strokeLinecap="round"
-              style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.22,1,0.36,1)', filter: `drop-shadow(0 0 8px ${gradeColor}88)` }}
+              style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.22,1,0.36,1)' }}
             />
           </svg>
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
