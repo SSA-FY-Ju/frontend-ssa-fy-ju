@@ -44,9 +44,7 @@ export function CompanyConfirmModal({
     <BaseModal
       onClose={onClose}
       backdropStyle={{
-        background: 'rgba(4,2,18,0.5)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        background: 'rgba(4,2,18,0.78)',
       }}
       containerStyle={{
         border: '1px solid rgba(139,92,246,0.3)',

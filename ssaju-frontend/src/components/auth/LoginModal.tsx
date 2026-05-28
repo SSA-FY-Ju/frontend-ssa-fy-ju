@@ -67,18 +67,14 @@ export function LoginModal({
       zIndex={9999}
       accentBar={false}
       backdropStyle={{
-        background: 'rgba(4,2,18,0.2)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
+        background: 'rgba(4,2,18,0.78)',
         transition: 'opacity 0.3s ease',
         opacity: visible ? 1 : 0,
       }}
       containerStyle={{
-        background: 'linear-gradient(160deg, rgba(30,20,60,0.45) 0%, rgba(12,8,30,0.52) 100%)',
+        background: 'linear-gradient(160deg, rgba(30,20,60,0.97) 0%, rgba(12,8,30,0.98) 100%)',
         border: '1px solid rgba(139,92,246,0.3)',
         borderRadius: 28,
-        backdropFilter: 'blur(32px)',
-        WebkitBackdropFilter: 'blur(32px)',
         boxShadow: '0 0 0 1px rgba(255,255,255,0.05) inset, 0 32px 80px rgba(0,0,0,0.35), 0 0 80px rgba(109,40,217,0.15)',
         transition: 'opacity 0.3s ease, transform 0.35s cubic-bezier(0.22,1,0.36,1)',
         opacity: visible ? 1 : 0,

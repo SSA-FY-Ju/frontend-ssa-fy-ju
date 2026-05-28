@@ -98,9 +98,7 @@ export function FeedbackModal({ feedbackType, onClose, onSubmitted, exitAction }
       maxWidth={448}
       outerClassName="flex items-end sm:items-center justify-center"
       backdropStyle={{
-        background: 'rgba(4,2,18,0.4)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        background: 'rgba(4,2,18,0.78)',
         transition: 'opacity 0.28s ease',
         opacity: visible ? 1 : 0,
       }}

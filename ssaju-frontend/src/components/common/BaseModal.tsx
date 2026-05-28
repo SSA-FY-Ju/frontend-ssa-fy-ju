@@ -73,9 +73,7 @@ export function BaseModal({
         style={{
           position: 'absolute',
           inset: 0,
-          background: 'rgba(4,2,18,0.6)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
+          background: 'rgba(4,2,18,0.78)',
           ...backdropStyle,
         }}
       />
@@ -87,13 +85,12 @@ export function BaseModal({
           position: 'relative',
           width: '100%',
           maxWidth,
-          background: 'linear-gradient(150deg, rgba(30,20,60,0.75) 0%, rgba(15,10,35,0.8) 100%)',
+          background: 'linear-gradient(150deg, rgba(30,20,60,0.97) 0%, rgba(15,10,35,0.99) 100%)',
           border: '1px solid rgba(139,92,246,0.25)',
           borderRadius: 24,
           overflow: 'hidden',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
           boxShadow: '0 32px 80px rgba(0,0,0,0.5)',
+          willChange: 'opacity, transform',
           ...containerStyle,
         }}
       >

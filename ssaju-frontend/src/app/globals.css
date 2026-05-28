@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Swiper 래퍼를 GPU 레이어로 승격 — 슬라이드 전환 compositor-only */
+.swiper-wrapper {
+  will-change: transform;
+}
+
 /* Global Styles */
 html {
   scroll-behavior: smooth;
@@ -242,18 +247,16 @@ button {
 .landing-glass {
   padding: 24px 22px;
   border-radius: 16px;
-  background: rgba(13, 27, 61, 0.45);
+  background: rgba(13, 27, 61, 0.72);
   border: 1px solid rgba(244, 236, 216, 0.12);
-  backdrop-filter: blur(10px);
 }
 
 .landing-service-card {
   display: block;
   padding: 24px 22px;
   border-radius: 16px;
-  background: rgba(13, 27, 61, 0.5);
+  background: rgba(13, 27, 61, 0.72);
   border: 1px solid rgba(244, 236, 216, 0.15);
-  backdrop-filter: blur(12px);
   transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -504,7 +507,7 @@ button {
 }
 
 .swiper-slide-active .animate-item {
-  animation: slide-up-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: slide-up-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) 0.85s both;
 }
 
 /* 마이페이지 버튼 반짝이기 */

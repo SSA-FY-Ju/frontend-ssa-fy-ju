@@ -36,8 +36,7 @@ export function FeedbackPromptCard({ onClose }: FeedbackPromptCardProps) {
           className="flex flex-col gap-3 rounded-2xl shadow-2xl p-4"
           style={{
             width: 240,
-            backdropFilter: 'blur(12px)',
-            background: 'rgba(10,12,28,0.9)',
+            background: 'rgba(10,12,28,0.97)',
             border: '1px solid rgba(139,92,246,0.3)',
           }}
         >
