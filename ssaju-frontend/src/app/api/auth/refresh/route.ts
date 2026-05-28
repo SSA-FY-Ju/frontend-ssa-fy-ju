@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { bypassHeaders } from '@/lib/server/bypass-header';
 
 const BACKEND_URL = process.env.BACKEND_URL!;
 
@@ -20,6 +21,7 @@ export async function POST(req: NextRequest) {
     // 2. 백엔드 명세에 맞춰 헤더 설정 (Refresh-Token: {token})
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      ...bypassHeaders,
     };
 
     if (refreshToken) {

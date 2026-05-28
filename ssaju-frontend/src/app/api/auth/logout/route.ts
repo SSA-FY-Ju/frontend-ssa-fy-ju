@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { bypassHeaders } from '@/lib/server/bypass-header';
 
 const BACKEND_URL = process.env.BACKEND_URL!;
 
@@ -15,6 +16,7 @@ export async function POST(req: NextRequest) {
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
+      ...bypassHeaders,
       ...(authorization ? { Authorization: authorization } : {}),
       ...(cookieHeader ? { Cookie: cookieHeader } : {}),
     };

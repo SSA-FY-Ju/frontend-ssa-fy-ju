@@ -9,6 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { bypassHeaders } from '@/lib/server/bypass-header';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -34,7 +35,7 @@ export async function GET(request: NextRequest) {
     // 백엔드가 HttpOnly 쿠키를 설정하고 응답함
     const response = await fetch(`${apiBaseUrl}/api/auth/callback`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...bypassHeaders },
       body: JSON.stringify({ code, state }),
       credentials: 'include',
     });
