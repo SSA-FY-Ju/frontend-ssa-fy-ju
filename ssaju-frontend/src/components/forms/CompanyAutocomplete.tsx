@@ -32,7 +32,7 @@ export function CompanyAutocomplete({
 }: CompanyAutocompleteProps) {
   const [query, setQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
-  const { suggestions, isOpen, highlightedIndex, search, close, navigateUp, navigateDown } =
+  const { suggestions, isOpen, isLoading, highlightedIndex, search, close, navigateUp, navigateDown } =
     useCompanyAutocomplete();
 
   const closeRef = useRef(close);
@@ -97,7 +97,7 @@ export function CompanyAutocomplete({
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
       <input
         id="companyName"
         type="text"
@@ -113,7 +113,7 @@ export function CompanyAutocomplete({
           highlightedIndex >= 0 ? `autocomplete-item-${highlightedIndex}` : undefined
         }
         style={{
-          width: '100%',
+          flex: 1,
           background: 'rgba(255,255,255,0.05)',
           border: '1px solid rgba(139,92,246,0.25)',
           color: '#fff',
@@ -127,6 +127,21 @@ export function CompanyAutocomplete({
         onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.25)')}
       />
 
+      <div style={{ width: 20, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {isLoading && (
+          <div
+            className="animate-spin"
+            style={{
+              width: 18,
+              height: 18,
+              borderRadius: '50%',
+              border: '2px solid rgba(139,92,246,0.2)',
+              borderTopColor: '#a78bfa',
+            }}
+          />
+        )}
+      </div>
+
       {isOpen && suggestions.length > 0 && (
         <ul
           id="company-autocomplete-list"
@@ -137,7 +152,7 @@ export function CompanyAutocomplete({
             zIndex: 50,
             top: '100%',
             left: 0,
-            right: 0,
+            right: 30,
             marginTop: 6,
             background: 'rgba(10,12,28,0.95)',
             border: '1px solid rgba(139,92,246,0.2)',

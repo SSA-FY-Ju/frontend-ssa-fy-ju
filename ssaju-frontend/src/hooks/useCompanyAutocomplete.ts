@@ -24,6 +24,7 @@ export function preloadCorpList() {
 export function useCompanyAutocomplete() {
   const [suggestions, setSuggestions] = useState<DartCompany[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -35,6 +36,7 @@ export function useCompanyAutocomplete() {
     if (!query.trim()) {
       setSuggestions([]);
       setIsOpen(false);
+      setIsLoading(false);
       return;
     }
 
@@ -45,8 +47,11 @@ export function useCompanyAutocomplete() {
     if (hit) {
       setSuggestions(hit);
       setIsOpen(hit.length > 0);
+      setIsLoading(false);
       return;
     }
+
+    setIsLoading(true);
 
     debounceRef.current = setTimeout(async () => {
       try {
@@ -64,6 +69,8 @@ export function useCompanyAutocomplete() {
       } catch {
         setSuggestions([]);
         setIsOpen(false);
+      } finally {
+        setIsLoading(false);
       }
     }, 300);
   };
@@ -77,5 +84,5 @@ export function useCompanyAutocomplete() {
   const navigateUp = () => setHighlightedIndex((i) => Math.max(i - 1, 0));
   const navigateDown = () => setHighlightedIndex((i) => Math.min(i + 1, suggestions.length - 1));
 
-  return { suggestions, isOpen, highlightedIndex, search, close, navigateUp, navigateDown };
+  return { suggestions, isOpen, isLoading, highlightedIndex, search, close, navigateUp, navigateDown };
 }

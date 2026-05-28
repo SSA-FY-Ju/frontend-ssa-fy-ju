@@ -15,7 +15,7 @@ import { parseSessionData } from '@/lib/validation/schemas';
  * 동작:
  * 1. sessionStorage에서 'sessionData' 로드
  * 2. Zod로 검증 (YYYY-MM-DD, HH:mm 형식)
- * 3. 실패 시: 데이터 초기화 → /survey로 리다이렉트 → 토스트
+ * 3. 실패 시: 데이터 초기화 → /chat으로 리다이렉트 → 토스트
  * 4. 성공 시: sessionStore 초기화 (자동)
  * 5. 없으면: 첫 방문으로 처리 (에러 없음)
  *
@@ -50,8 +50,8 @@ export function useSessionRehydration() {
       // 2. sessionStore 초기화
       clearSession();
 
-      // 3. /survey로 리다이렉트
-      router.push('/survey');
+      // 3. /chat으로 리다이렉트 (생년월일 재입력)
+      router.push('/chat');
 
       // 4. 사용자에게 알림
       toast.error('세션이 만료되었습니다. 다시 시작해주세요');
