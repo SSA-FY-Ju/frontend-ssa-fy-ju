@@ -45,8 +45,7 @@ function CustomTooltip({ active, payload }: TooltipProps<number, string>) {
   return (
     <div
       style={{
-        backdropFilter: 'blur(12px)',
-        background: 'rgba(10,12,28,0.92)',
+        background: 'rgba(10,12,28,0.97)',
         border: `1px solid ${color}55`,
         borderRadius: 10,
         padding: '8px 14px',

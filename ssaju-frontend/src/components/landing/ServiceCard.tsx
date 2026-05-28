@@ -1,8 +1,10 @@
 'use client';
 
-/**\n * 파일 역할: 서비스 선택 화면에서 단일 서비스 카드를 렌더하고 선택 인터랙션을 제공합니다.\n */
+/**
+ * 파일 역할: 서비스 선택 화면에서 단일 서비스 카드를 렌더하고 선택 인터랙션을 제공합니다.
+ */
 
-import { useState, useRef } from 'react';
+import { useRef } from 'react';
 import { motion } from 'framer-motion';
 
 interface ServiceCardProps {
@@ -29,20 +31,18 @@ export default function ServiceCard({
   onClick,
 }: ServiceCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [lightPos, setLightPos] = useState({ x: 0, y: 0 });
 
+  // CSS 변수 직접 조작 → React 리렌더 없음
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!cardRef.current) return;
-
     const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    setLightPos({ x, y });
+    cardRef.current.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+    cardRef.current.style.setProperty('--my', `${e.clientY - rect.top}px`);
+    cardRef.current.style.setProperty('--light-opacity', '1');
   };
 
   const handleMouseLeave = () => {
-    setLightPos({ x: 0, y: 0 });
+    cardRef.current?.style.setProperty('--light-opacity', '0');
   };
 
   return (
@@ -72,36 +72,27 @@ export default function ServiceCard({
         scale: { type: 'spring', stiffness: 260, damping: 22, mass: 0.8 },
         rotate: { duration: 0.3 },
       }}
-      className={`group relative min-h-56 cursor-pointer overflow-hidden rounded-3xl p-7 backdrop-blur-xl transition-[box-shadow,background-color] duration-150 flex flex-col justify-between gap-4 ${
+      className={`group relative min-h-56 cursor-pointer overflow-hidden rounded-3xl p-7 transition-[box-shadow,background-color] duration-150 flex flex-col justify-between gap-4 ${
         isSelected
           ? 'bg-gradient-to-br from-slate-900/95 via-indigo-950/85 to-slate-950/95 shadow-[0_24px_60px_rgba(244,114,182,0.34)]'
           : 'bg-gradient-to-br from-slate-900/85 via-indigo-950/50 to-slate-950/85 hover:shadow-[0_20px_52px_rgba(244,114,182,0.2)]'
       }`}
       aria-label={`${title} 카드`}
-      style={
-        {
-          '--mx': `${lightPos.x}px`,
-          '--my': `${lightPos.y}px`,
-        } as React.CSSProperties & {
-          '--mx': string;
-          '--my': string;
-        }
-      }
     >
-      {/* Radial light effect on mouse move */}
+      {/* 마우스 추적 빛 효과 — CSS 변수로 직접 제어 (리렌더 없음) */}
       <div
         className="absolute pointer-events-none transition-opacity duration-150"
         style={{
           width: '380px',
           height: '320px',
-          background:
-            'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(125, 211, 252, 0.22), transparent 62%)',
-          opacity: lightPos.x > 0 && lightPos.y > 0 ? 1 : 0,
-          left: 'calc(var(--mx) - 160px)',
-          top: 'calc(var(--my) - 160px)',
+          background: 'radial-gradient(circle at var(--mx, 50%) var(--my, 50%), rgba(125, 211, 252, 0.22), transparent 62%)',
+          opacity: 'var(--light-opacity, 0)' as unknown as number,
+          left: 'calc(var(--mx, 50%) - 160px)',
+          top: 'calc(var(--my, 50%) - 160px)',
         }}
       />
 
+      {/* 그라디언트 오버레이 */}
       <motion.div
         className="pointer-events-none absolute inset-0"
         animate={{
@@ -110,14 +101,14 @@ export default function ServiceCard({
         }}
         transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
         style={{
-          background:
-            'linear-gradient(115deg, rgba(251,113,133,0.20) 0%, rgba(244,114,182,0.16) 35%, rgba(196,181,253,0.16) 100%)',
+          background: 'linear-gradient(115deg, rgba(251,113,133,0.20) 0%, rgba(244,114,182,0.16) 35%, rgba(196,181,253,0.16) 100%)',
           backgroundSize: '200% 200%',
         }}
       />
 
+      {/* Indigo glow blob — blur-3xl 제거, radial-gradient로 대체 */}
       <motion.div
-        className="pointer-events-none absolute -left-20 -top-16 h-44 w-44 rounded-full bg-indigo-300/20 blur-3xl"
+        className="pointer-events-none absolute -left-20 -top-16 h-44 w-44 rounded-full"
         animate={{
           x: [0, 18, -10, 0],
           y: [0, -14, 8, 0],
@@ -130,10 +121,12 @@ export default function ServiceCard({
           ease: 'easeInOut',
           delay: Number(number) * 0.4,
         }}
+        style={{ background: 'radial-gradient(circle, rgba(165,180,252,0.35) 0%, transparent 70%)' }}
       />
 
+      {/* Rose glow blob — blur-3xl 제거, radial-gradient로 대체 */}
       <motion.div
-        className="pointer-events-none absolute -top-14 -right-10 h-40 w-40 rounded-full bg-rose-300/20 blur-3xl"
+        className="pointer-events-none absolute -top-14 -right-10 h-40 w-40 rounded-full"
         animate={{
           x: [0, -14, 6, 0],
           y: [0, 8, -10, 0],
@@ -141,11 +134,11 @@ export default function ServiceCard({
           opacity: isSelected ? [0.5, 0.8, 0.55, 0.5] : [0.25, 0.45, 0.25],
         }}
         transition={{ duration: 6.5, repeat: Infinity, ease: 'easeInOut' }}
+        style={{ background: 'radial-gradient(circle, rgba(252,165,180,0.35) 0%, transparent 70%)' }}
       />
 
       {/* Content section */}
       <div className="relative z-10">
-        {/* Icon and number */}
         <div className="mb-4 flex items-start justify-between">
           <div
             className={`text-2xl transition-all duration-150 ${
@@ -165,14 +158,13 @@ export default function ServiceCard({
           </span>
         </div>
 
-        {/* Title and description */}
         <h3 className="mb-2 font-serif text-[22px] font-semibold tracking-tight text-slate-100">
           {title}
         </h3>
         <p className="text-sm leading-relaxed text-slate-200/80">{description}</p>
       </div>
 
-      {/* Bottom section with duration and arrow */}
+      {/* Bottom section */}
       <div className="relative z-10 flex items-center justify-between gap-3 border-t border-slate-300/15 pt-4">
         <span className="text-xs uppercase tracking-[0.16em] text-slate-300/65">{duration}</span>
         <motion.div
@@ -183,16 +175,7 @@ export default function ServiceCard({
               : 'bg-rose-200/15 text-rose-100/80 group-hover:bg-rose-300/25 group-hover:text-rose-100'
           }`}
         >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M5 12h14M13 5l7 7-7 7" />
           </svg>
         </motion.div>

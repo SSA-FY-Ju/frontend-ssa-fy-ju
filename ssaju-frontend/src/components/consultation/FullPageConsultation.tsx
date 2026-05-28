@@ -78,7 +78,7 @@ export function FullPageConsultation({ data, currentSectionIndex, onSectionChang
         {SECTIONS.map((section, index) => (
           <SwiperSlide
             key={section.key}
-            style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}
+            style={{ height: '100vh', overflow: 'hidden' }}
             data-testid={`fullpage-section-${index}`}
           >
             <SlideShell color={section.color} index={index} label={section.label}>
@@ -116,7 +116,9 @@ function SlideShell({
   return (
     <div
       style={{
-        minHeight: '100vh',
+        height: '100vh',
+        overflowY: 'auto',
+        overflowX: 'hidden',
         background: `radial-gradient(ellipse at 70% 10%, ${color}12 0%, transparent 55%)`,
         boxSizing: 'border-box',
         display: 'flex',

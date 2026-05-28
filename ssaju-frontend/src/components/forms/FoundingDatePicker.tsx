@@ -133,11 +133,10 @@ export function FoundingDatePicker({ companyName, onConfirm }: FoundingDatePicke
 
       {/* 캘린더 카드 */}
       <div style={{
-        background: 'rgba(255,255,255,0.03)',
+        background: 'rgba(10,12,28,0.95)',
         border: '1px solid rgba(139,92,246,0.18)',
         borderRadius: 20,
         padding: '24px 20px 20px',
-        backdropFilter: 'blur(12px)',
         overflow: 'hidden',
       }}>
         {/* 공통 헤더 */}

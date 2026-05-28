@@ -36,9 +36,7 @@ function DetailNav({ onClick }: { onClick: () => void }) {
       style={{
         top: '1.25rem',
         left: '1.25rem',
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.04) 100%)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        background: 'rgba(10,8,24,0.75)',
         border: '1px solid rgba(255,255,255,0.12)',
         borderRadius: '14px',
         padding: '0.5rem 0.875rem 0.5rem 0.625rem',

@@ -129,7 +129,6 @@ export default function CompatibilityPage() {
                   border: '1px solid rgba(139,92,246,0.28)',
                   borderRadius: 100, padding: '6px 18px',
                   marginBottom: 24,
-                  backdropFilter: 'blur(8px)',
                 }}>
                   <span style={{ fontSize: 9, color: '#c4b5fd', opacity: 0.7 }}>✦</span>
                   <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.22em', color: '#c4b5fd', textTransform: 'uppercase' }}>
@@ -202,11 +201,10 @@ export default function CompatibilityPage() {
                       autoFocus
                       style={{
                         width: '100%', padding: '15px 20px', borderRadius: 16,
-                        background: 'rgba(255,255,255,0.05)',
+                        background: 'rgba(10,12,28,0.85)',
                         border: '1px solid rgba(139,92,246,0.35)',
                         color: '#fff', fontSize: 15, outline: 'none',
                         boxSizing: 'border-box', transition: 'border-color 0.2s',
-                        backdropFilter: 'blur(12px)',
                       }}
                       onFocus={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.7)')}
                       onBlur={(e) => (e.currentTarget.style.borderColor = 'rgba(139,92,246,0.35)')}

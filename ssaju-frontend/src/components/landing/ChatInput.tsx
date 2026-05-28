@@ -96,11 +96,10 @@ function PickerSelect({
             right: 0,
             maxHeight: 180,
             overflowY: 'auto',
-            background: 'rgba(20,12,45,0.98)',
+            background: 'rgba(10,6,28,0.99)',
             border: '1px solid rgba(139,92,246,0.3)',
             borderRadius: 12,
             zIndex: 300,
-            backdropFilter: 'blur(20px)',
             boxShadow: '0 -4px 28px rgba(0,0,0,0.7)',
           }}
         >
@@ -381,7 +380,7 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
                 style={
                   m.who === 'bot'
                     ? {
-                        background: 'rgba(255,255,255,0.05)',
+                        background: 'rgba(20,12,45,0.85)',
                         border: '1px solid rgba(255,255,255,0.1)',
                         borderLeft: '2px solid rgba(139,92,246,0.5)',
                         borderRadius: '18px 18px 18px 18px',
@@ -389,7 +388,6 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
                         color: 'rgba(255,255,255,0.88)',
                         fontSize: 14,
                         lineHeight: 1.65,
-                        backdropFilter: 'blur(8px)',
                       }
                     : {
                         background: 'linear-gradient(135deg, #fcd34d, #f9c846)',
@@ -587,12 +585,11 @@ export default function ChatInput({ onStateChange: _onStateChange }: ChatInputPr
             <div style={{ alignSelf: 'flex-start' }}>
               <div
                 style={{
-                  background: 'rgba(255,255,255,0.05)',
+                  background: 'rgba(20,12,45,0.85)',
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderLeft: '2px solid rgba(139,92,246,0.5)',
                   borderRadius: '18px 18px 18px 18px',
                   padding: '14px 18px',
-                  backdropFilter: 'blur(8px)',
                 }}
               >
                 <div className="chat-typing-dots">

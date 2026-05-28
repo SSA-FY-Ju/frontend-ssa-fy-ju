@@ -36,9 +36,7 @@ export function WithdrawalModal({ onClose }: WithdrawalModalProps) {
       zIndex={9999}
       accentBar={false}
       backdropStyle={{
-        background: 'rgba(4,2,18,0.7)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
+        background: 'rgba(4,2,18,0.78)',
         transition: 'opacity 0.3s ease',
         opacity: visible ? 1 : 0,
       }}

@@ -76,11 +76,10 @@ export default function MyPage() {
         <div
           className="flex-shrink-0"
           style={{
-            background: 'linear-gradient(135deg, rgba(30,20,60,0.7) 0%, rgba(15,10,40,0.75) 100%)',
+            background: 'linear-gradient(135deg, rgba(30,20,60,0.97) 0%, rgba(15,10,40,0.98) 100%)',
             border: '1px solid rgba(139,92,246,0.25)',
             borderRadius: 20,
             padding: '20px 24px',
-            backdropFilter: 'blur(16px)',
             boxShadow: '0 8px 32px rgba(0,0,0,0.35)',
             position: 'relative',
             overflow: 'hidden',
@@ -185,11 +184,10 @@ export default function MyPage() {
         <div
           className="flex flex-col"
           style={{
-            background: 'rgba(255,255,255,0.02)',
+            background: 'rgba(10,12,28,0.6)',
             border: '1px solid rgba(139,92,246,0.15)',
             borderRadius: 16,
             overflow: 'hidden',
-            backdropFilter: 'blur(12px)',
           }}
         >
           {/* 헤더 */}
