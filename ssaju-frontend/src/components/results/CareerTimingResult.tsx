@@ -95,7 +95,7 @@ function CircularGauge({ score, grade }: { score: number; grade: ReturnType<type
           fill="none"
           stroke={grade.color}
           strokeWidth="8"
-          strokeLinecap="round"
+          strokeLinecap={score >= 100 ? "butt" : "round"}
           strokeDasharray={circumference}
           strokeDashoffset={circumference}
           className="career-gauge-arc"
