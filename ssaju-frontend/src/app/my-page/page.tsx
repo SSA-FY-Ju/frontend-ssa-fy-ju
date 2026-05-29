@@ -265,11 +265,12 @@ export default function MyPage() {
               </div>
             )}
 
-            {/* 빈 기록 — 로딩 중 아니고 에러도 없는데 기록이 없을 때 표시 */}
-            {!isLoading && !error && analyses.length === 0 && (
+            {/* 빈 기록 — 성공했는데 데이터가 없을 때 표시 */}
+            {isSuccess && analyses.length === 0 && (
               <div
                 key={activeTab}
                 className="flex items-center justify-center py-6"
+                style={{ animation: 'fadeInUp 0.22s ease forwards' }}
               >
                 <EmptyState />
               </div>
