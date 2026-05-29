@@ -33,7 +33,7 @@ export function useMyPage() {
   const setUser = useAuthStore((s) => s.setUser);
   const accessToken = useAuthStore((s) => s.accessToken);
 
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isPending, status, error, refetch } = useQuery({
     queryKey: MYPAGE_QUERY_KEY,
     queryFn: async () => {
       const data = await fetchMyPageData({ page: 0, size: 1000 });
@@ -55,6 +55,8 @@ export function useMyPage() {
       })) as MyPageAnalysisSummary[];
     },
     enabled: !!accessToken,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 
   const allAnalyses = useMemo(
@@ -79,7 +81,8 @@ export function useMyPage() {
     analyses,
     allAnalyses,
     totalCount: allAnalyses.length,
-    isLoading,
+    isLoading: isPending,
+    isSuccess: status === 'success',
     error: error ? (error instanceof Error ? error.message : '기록을 불러오는 데 실패했습니다.') : null,
     activeTab,
     setActiveTab: handleSetActiveTab,
