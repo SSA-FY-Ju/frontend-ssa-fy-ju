@@ -84,7 +84,7 @@ function ScoreSection({
               stroke={gradeColor} strokeWidth="10"
               strokeDasharray={circumference}
               strokeDashoffset={offset}
-              strokeLinecap="round"
+              strokeLinecap={score >= 100 ? "butt" : "round"}
               style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.22,1,0.36,1)', filter: `drop-shadow(0 0 8px ${gradeColor}88)` }}
             />
           </svg>

@@ -195,7 +195,7 @@ function CoreSection({ data, color }: { data: ConsultationData; color: string })
             <svg width="96" height="96" style={{ transform: 'rotate(-90deg)' }}>
               <circle cx="48" cy="48" r="40" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="7" />
               <circle cx="48" cy="48" r="40" fill="none" stroke={color} strokeWidth="7"
-                strokeLinecap="round" strokeDasharray={C} strokeDashoffset={offset}
+                strokeLinecap={score >= 100 ? "butt" : "round"} strokeDasharray={C} strokeDashoffset={offset}
                 style={{ transition: 'stroke-dashoffset 1.2s ease' }} />
             </svg>
             <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
