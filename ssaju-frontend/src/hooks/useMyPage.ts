@@ -38,15 +38,19 @@ export function useMyPage() {
     queryFn: async () => {
       const data = await fetchMyPageData({ page: 0, size: 1000 });
 
+      // 배포 환경 안정성을 위한 null 체크
+      if (!data) return [];
+
       if (data.profile) {
         setUser({
-          userId: data.profile.id.toString(),
-          name: data.profile.name,
-          email: data.profile.email,
+          userId: data.profile.id?.toString() || '',
+          name: data.profile.name || '사용자',
+          email: data.profile.email || '',
         });
       }
 
-      return (data.analyses || []).map((item) => ({
+      const rawAnalyses = data.analyses || [];
+      return rawAnalyses.map((item) => ({
         ...item,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         id: (item as Record<string, any>).analysisId || item.id,
