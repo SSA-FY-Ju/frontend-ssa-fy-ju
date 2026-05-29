@@ -21,12 +21,11 @@ const ROLE_CATEGORIES: { value: RoleCategory; label: string }[] = [
   { value: 'TECH_INFRA',     label: '인프라/DevOps' },
   { value: 'FINANCE',        label: '재무/회계' },
   { value: 'MARKETING',      label: '마케팅' },
-  { value: 'HR',             label: '인사/HR' },
+  { value: 'HR',             label: '인사/조직' },
   { value: 'OPERATIONS',     label: '운영/기획' },
   { value: 'SALES',          label: '영업' },
   { value: 'STRATEGY',       label: '전략/경영' },
   { value: 'RESEARCH',       label: '연구개발' },
-  { value: 'OTHER',          label: '기타' },
 ];
 
 export default function CompatibilityPage() {

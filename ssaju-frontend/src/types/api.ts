@@ -210,8 +210,7 @@ export type RoleCategory =
   | 'OPERATIONS'
   | 'SALES'
   | 'STRATEGY'
-  | 'RESEARCH'
-  | 'OTHER';
+  | 'RESEARCH';
 
 /** 직무 정보 */
 export interface TargetRole {
