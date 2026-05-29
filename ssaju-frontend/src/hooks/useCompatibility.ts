@@ -58,13 +58,14 @@ export function useCompatibility() {
     setPhase('loading');
 
     try {
+      const toHHmmss = (t: string) => (t.length === 5 ? `${t}:00` : t);
       const request: CompatibilityRequest = {
         userBirthDate: args.birthDate,
-        userBirthTime: args.birthTime,
+        userBirthTime: args.birthTime ? toHHmmss(args.birthTime) : undefined,
         targetRole: args.targetRole,
         companyName: args.companyName,
         ...(args.companyFoundingDate ? { companyFoundingDate: args.companyFoundingDate } : {}),
-        ...(args.companyFoundingTime ? { companyFoundingTime: args.companyFoundingTime } : {}),
+        ...(args.companyFoundingTime ? { companyFoundingTime: toHHmmss(args.companyFoundingTime) } : {}),
       };
 
       const data = await fetchCompatibility(request);
