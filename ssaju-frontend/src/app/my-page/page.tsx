@@ -27,6 +27,7 @@ export default function MyPage() {
     allAnalyses,
     totalCount,
     isLoading,
+    isSuccess,
     error,
     activeTab,
     setActiveTab,
@@ -55,7 +56,7 @@ export default function MyPage() {
   const initial = user?.name?.charAt(0)?.toUpperCase() ?? '?';
 
   return (
-    <div className="h-screen overflow-hidden text-white pt-16 flex flex-col">
+    <div className="min-h-screen text-white pt-16 pb-8">
       <div className="max-w-2xl w-full mx-auto px-4 py-5 flex flex-col gap-4">
         {/* 뒤로가기 */}
         <button
@@ -216,7 +217,21 @@ export default function MyPage() {
 
           {/* 카드 목록 */}
           <div className="flex flex-col p-3">
-            {error && !isLoading && (
+            {/* 로딩 스켈레톤 — 최초 성공 전에만 표시 */}
+            {isLoading && !isSuccess && (
+              <div className="flex flex-col gap-2.5">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-20 rounded-xl animate-pulse"
+                    style={{ background: 'rgba(255,255,255,0.06)' }}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* 에러 — 최초 성공 전(첫 로드 실패)에만 표시 */}
+            {error && !isLoading && !isSuccess && (
               <div className="flex flex-col items-center justify-center flex-1 gap-3">
                 <p className="text-sm" style={{ color: 'rgba(248,113,113,0.8)' }}>
                   {error}
@@ -231,23 +246,12 @@ export default function MyPage() {
               </div>
             )}
 
-            {isLoading && !error && (
-              <div className="flex flex-col gap-2.5">
-                {[1, 2, 3].map((i) => (
-                  <div
-                    key={i}
-                    className="h-20 rounded-xl animate-pulse"
-                    style={{ background: 'rgba(255,255,255,0.04)' }}
-                  />
-                ))}
-              </div>
-            )}
-
-            {!isLoading && !error && analyses.length > 0 && (
+            {/* 기록 카드 목록 */}
+            {isSuccess && analyses.length > 0 && (
               <div
                 key={`${activeTab}-${currentPage}`}
                 className="flex flex-col gap-2.5"
-                style={{ animation: 'fadeInUp 0.22s ease' }}
+                style={{ animation: 'fadeInUp 0.22s ease forwards' }}
               >
                 {analyses.map((summary) => (
                   <HistoryCard
@@ -259,11 +263,11 @@ export default function MyPage() {
               </div>
             )}
 
+            {/* 빈 기록 — 로딩 중 아니고 에러도 없는데 기록이 없을 때 표시 */}
             {!isLoading && !error && analyses.length === 0 && (
               <div
                 key={activeTab}
                 className="flex items-center justify-center py-6"
-                style={{ animation: 'fadeInUp 0.22s ease' }}
               >
                 <EmptyState />
               </div>

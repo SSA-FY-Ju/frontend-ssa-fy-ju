@@ -12,7 +12,7 @@ import Link from 'next/link';
 
 export function EmptyState() {
   return (
-    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+    <div className="flex flex-col items-center justify-center py-10 px-6 text-center">
       {/* 별 아이콘 장식 */}
       <div className="flex gap-3 mb-5" style={{ color: 'rgba(167,139,250,0.4)', fontSize: 20 }}>
         <span>✦</span>
