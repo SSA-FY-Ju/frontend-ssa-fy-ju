@@ -201,17 +201,16 @@ export interface ConsultationData {
 export type RoleCategory =
   | 'TECH_BACKEND'
   | 'TECH_FRONTEND'
-  | 'TECH_FULLSTACK'
-  | 'TECH_DATA'
-  | 'TECH_DEVOPS'
   | 'TECH_MOBILE'
-  | 'PLANNING'
-  | 'DESIGN'
-  | 'MARKETING'
-  | 'SALES'
-  | 'HR'
+  | 'TECH_DATA'
+  | 'TECH_INFRA'
   | 'FINANCE'
-  | 'MANAGEMENT'
+  | 'MARKETING'
+  | 'HR'
+  | 'OPERATIONS'
+  | 'SALES'
+  | 'STRATEGY'
+  | 'RESEARCH'
   | 'OTHER';
 
 /** 직무 정보 */
