@@ -12,7 +12,7 @@
  *   6. 주의사항    — cautions
  */
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel, Keyboard, A11y } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
@@ -68,6 +68,62 @@ export function FullPageCompatibility({ result, companyName, hasFeedback, onFeed
 
   const navigateTo = (index: number) => swiperRef.current?.slideTo(index);
 
+  // result/companyName이 바뀔 때만 재생성 — activeIndex 변경 시 리렌더 없음
+  const slides = useMemo(() => (
+    <>
+      <SwiperSlide style={{ height: '100vh' }}>
+        <SlideShell section={SECTIONS[0]}>
+          <ScoreSection
+            score={result.compatibilityScore}
+            companyName={companyName}
+            breakdown={result.analysisBreakdown}
+            summary={result.summary}
+            color={SECTIONS[0].color}
+          />
+        </SlideShell>
+      </SwiperSlide>
+
+      <SwiperSlide style={{ height: '100vh' }}>
+        <SlideShell section={SECTIONS[1]}>
+          <RoleSection analysis={result.targetRoleAnalysis} color={SECTIONS[1].color} />
+        </SlideShell>
+      </SwiperSlide>
+
+      <SwiperSlide style={{ height: '100vh' }}>
+        <SlideShell section={SECTIONS[2]}>
+          <OhangSection data={result.fiveElements} color={SECTIONS[2].color} />
+        </SlideShell>
+      </SwiperSlide>
+
+      <SwiperSlide style={{ height: '100vh' }}>
+        <SlideShell section={SECTIONS[3]} scrollable>
+          <InterviewSection
+            questions={result.expectedInterviewQuestions}
+            roles={result.roleCompatibility}
+            strategy={result.actionableStrategy}
+            color={SECTIONS[3].color}
+          />
+        </SlideShell>
+      </SwiperSlide>
+
+      <SwiperSlide style={{ height: '100vh' }}>
+        <SlideShell section={SECTIONS[4]} scrollable>
+          <MonthlySection
+            forecasts={result.monthlyForecast}
+            bestTiming={result.actionableStrategy?.bestTiming}
+            color={SECTIONS[4].color}
+          />
+        </SlideShell>
+      </SwiperSlide>
+
+      <SwiperSlide style={{ height: '100vh' }}>
+        <SlideShell section={SECTIONS[5]}>
+          <CautionSection cautions={result.cautions} color={SECTIONS[5].color} />
+        </SlideShell>
+      </SwiperSlide>
+    </>
+  ), [result, companyName]);
+
   return (
     <div
       style={{
@@ -75,6 +131,7 @@ export function FullPageCompatibility({ result, companyName, hasFeedback, onFeed
         opacity: mounted ? 1 : 0,
         transform: mounted ? 'translateY(0)' : 'translateY(14px)',
         transition: 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.22,1,0.36,1)',
+        willChange: 'opacity, transform',
       }}
     >
       <RightNavigator sections={SECTIONS} activeIndex={activeIndex} onNavigate={navigateTo} />
@@ -94,58 +151,7 @@ export function FullPageCompatibility({ result, companyName, hasFeedback, onFeed
         onSlideChange={handleSlideChange}
         style={{ height: '100vh', willChange: 'transform' }}
       >
-        {/* 1. 종합 점수 */}
-        <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[0]}>
-            <ScoreSection
-              score={result.compatibilityScore}
-              companyName={companyName}
-              breakdown={result.analysisBreakdown}
-              summary={result.summary}
-              color={SECTIONS[0].color}
-            />
-          </SlideShell>
-        </SwiperSlide>
-
-        {/* 2. 직군 분석 */}
-        <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[1]}>
-            <RoleSection analysis={result.targetRoleAnalysis} color={SECTIONS[1].color} />
-          </SlideShell>
-        </SwiperSlide>
-
-        {/* 3. 오행 분석 */}
-        <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[2]}>
-            <OhangSection data={result.fiveElements} color={SECTIONS[2].color} />
-          </SlideShell>
-        </SwiperSlide>
-
-        {/* 4. 면접 준비 */}
-        <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[3]} scrollable>
-            <InterviewSection
-              questions={result.expectedInterviewQuestions}
-              roles={result.roleCompatibility}
-              strategy={result.actionableStrategy}
-              color={SECTIONS[3].color}
-            />
-          </SlideShell>
-        </SwiperSlide>
-
-        {/* 5. 월별 운세 */}
-        <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[4]} scrollable>
-            <MonthlySection forecasts={result.monthlyForecast} bestTiming={result.actionableStrategy?.bestTiming} color={SECTIONS[4].color} />
-          </SlideShell>
-        </SwiperSlide>
-
-        {/* 6. 주의사항 */}
-        <SwiperSlide style={{ height: '100vh' }}>
-          <SlideShell section={SECTIONS[5]}>
-            <CautionSection cautions={result.cautions} color={SECTIONS[5].color} />
-          </SlideShell>
-        </SwiperSlide>
+        {slides}
       </Swiper>
 
       {/* 피드백 floating 카드 — 마지막 섹션 도달 시 우측 하단에 표시 */}
@@ -165,8 +171,7 @@ export function FullPageCompatibility({ result, companyName, hasFeedback, onFeed
             className="flex flex-col gap-3 rounded-2xl shadow-2xl p-4"
             style={{
               width: 240,
-              backdropFilter: 'blur(12px)',
-              background: 'rgba(10,12,28,0.9)',
+              background: 'rgba(10,12,28,0.97)',
               border: '1px solid rgba(139,92,246,0.3)',
             }}
           >
@@ -284,8 +289,10 @@ function ScoreSection({
               stroke={gradeColor} strokeWidth="10"
               strokeDasharray={circumference}
               strokeDashoffset={offset}
+
               strokeLinecap={score >= 100 ? "butt" : "round"}
               style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.22,1,0.36,1)', filter: `drop-shadow(0 0 8px ${gradeColor}88)` }}
+
             />
           </svg>
           <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>

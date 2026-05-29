@@ -33,7 +33,7 @@ export function DeleteConfirmModal({
       onClose={onClose}
       maxWidth={320}
       accentBar={false}
-      backdropStyle={{ backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+      backdropStyle={{ background: 'rgba(4,2,18,0.78)' }}
       containerStyle={{
         background: 'linear-gradient(135deg, rgba(30,20,60,0.85) 0%, rgba(15,10,35,0.9) 100%)',
         borderRadius: 16,

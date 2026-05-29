@@ -34,9 +34,8 @@ export default function Page2() {
                 animationDelay: `${0.1 + i * 0.1}s`,
                 padding: '24px 26px',
                 borderRadius: '16px',
-                background: 'rgba(13, 27, 61, 0.45)',
+                background: 'rgba(13, 27, 61, 0.72)',
                 border: '1px solid rgba(244, 236, 216, 0.12)',
-                backdropFilter: 'blur(8px)',
               }}
             >
               <div

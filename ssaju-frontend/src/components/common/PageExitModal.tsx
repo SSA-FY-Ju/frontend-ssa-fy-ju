@@ -31,9 +31,7 @@ export function PageExitModal({
       maxWidth={384}
       outerClassName="flex items-center justify-center p-4"
       backdropStyle={{
-        background: 'rgba(4,2,18,0.5)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        background: 'rgba(4,2,18,0.78)',
       }}
       containerStyle={{
         background: 'linear-gradient(150deg, rgba(30,20,60,0.72) 0%, rgba(15,10,35,0.78) 100%)',
@@ -118,7 +116,6 @@ export function PageExitModal({
                 background: 'rgba(255,255,255,0.06)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 color: '#cbd5e1',
-                backdropFilter: 'blur(4px)',
               }}
             >
               결과 계속 보기

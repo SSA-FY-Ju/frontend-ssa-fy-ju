@@ -213,8 +213,7 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
         aria-hidden="true"
         style={{
           position: 'absolute', inset: 0,
-          background: 'rgba(2,1,12,0.55)',
-          backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+          background: 'rgba(2,1,12,0.75)',
           transition: 'opacity 0.35s ease', opacity: visible ? 1 : 0,
         }}
       />
@@ -223,6 +222,7 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
       <div style={{
         position: 'relative', width: '100%', maxWidth: 420,
         borderRadius: 32, overflow: 'hidden',
+        willChange: 'opacity, transform',
         transition: 'opacity 0.35s ease, transform 0.4s cubic-bezier(0.22,1,0.36,1)',
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0) scale(1)' : 'translateY(32px) scale(0.94)',
@@ -231,8 +231,7 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
         {/* ── 배경 레이어 ── */}
         <div style={{
           position: 'absolute', inset: 0,
-          background: 'linear-gradient(160deg, rgba(22,14,50,0.92) 0%, rgba(8,5,24,0.96) 100%)',
-          backdropFilter: 'blur(40px)', WebkitBackdropFilter: 'blur(40px)',
+          background: 'linear-gradient(160deg, rgba(22,14,50,0.97) 0%, rgba(8,5,24,0.99) 100%)',
         }} />
         {/* 테두리 */}
         <div style={{

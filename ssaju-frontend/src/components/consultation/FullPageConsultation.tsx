@@ -13,7 +13,7 @@
  * 7. 성향 & 케어    — workStyle · environmentFit · mentalCare · wealthStyle · relationshipStrategy
  */
 
-import { useRef } from 'react';
+import { useRef, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel, Keyboard, A11y } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
@@ -50,6 +50,29 @@ interface FullPageConsultationProps {
 export function FullPageConsultation({ data, currentSectionIndex, onSectionChange }: FullPageConsultationProps) {
   const swiperRef = useRef<SwiperType | null>(null);
 
+  // data가 바뀔 때만 재생성 — onSectionChange/currentSectionIndex 변경 시 리렌더 없음
+  const slides = useMemo(() => SECTIONS.map((section, index) => (
+    <SwiperSlide
+      key={section.key}
+      style={{ height: '100vh', overflow: 'hidden' }}
+      data-testid={`fullpage-section-${index}`}
+    >
+      <SlideShell color={section.color} index={index} label={section.label}>
+        {index === 0  && <CoreSection       data={data}                     color={section.color} />}
+        {index === 1  && <SajuSection       profile={data.sajuProfile}      color={section.color} />}
+        {index === 2  && <IndustrySection   industries={data.industries}    color={section.color} />}
+        {index === 3  && <InterviewSection  data={data}                     color={section.color} />}
+        {index === 4  && <BrandingSection   data={data}                     color={section.color} />}
+        {index === 5  && <PivotSection      timeline={data.careerTimeline}  color={section.color} />}
+        {index === 6  && <ForecastSection   timeline={data.careerTimeline}  color={section.color} />}
+        {index === 7  && <RoadmapSection    data={data}                     color={section.color} />}
+        {index === 8  && <WorkStyleSection  data={data}                     color={section.color} />}
+        {index === 9  && <MentalSection     data={data}                     color={section.color} />}
+        {index === 10 && <WealthSection     data={data}                     color={section.color} />}
+      </SlideShell>
+    </SwiperSlide>
+  )), [data]);
+
   return (
     <div className="relative">
       <SectionNavigator
@@ -75,27 +98,7 @@ export function FullPageConsultation({ data, currentSectionIndex, onSectionChang
         tabIndex={0}
         data-testid="fullpage-container"
       >
-        {SECTIONS.map((section, index) => (
-          <SwiperSlide
-            key={section.key}
-            style={{ height: '100vh', overflowY: 'auto', overflowX: 'hidden' }}
-            data-testid={`fullpage-section-${index}`}
-          >
-            <SlideShell color={section.color} index={index} label={section.label}>
-              {index === 0  && <CoreSection       data={data}                     color={section.color} />}
-              {index === 1  && <SajuSection       profile={data.sajuProfile}      color={section.color} />}
-              {index === 2  && <IndustrySection   industries={data.industries}    color={section.color} />}
-              {index === 3  && <InterviewSection  data={data}                     color={section.color} />}
-              {index === 4  && <BrandingSection   data={data}                     color={section.color} />}
-              {index === 5  && <PivotSection      timeline={data.careerTimeline}  color={section.color} />}
-              {index === 6  && <ForecastSection   timeline={data.careerTimeline}  color={section.color} />}
-              {index === 7  && <RoadmapSection    data={data}                     color={section.color} />}
-              {index === 8  && <WorkStyleSection  data={data}                     color={section.color} />}
-              {index === 9  && <MentalSection     data={data}                     color={section.color} />}
-              {index === 10 && <WealthSection     data={data}                     color={section.color} />}
-            </SlideShell>
-          </SwiperSlide>
-        ))}
+        {slides}
       </Swiper>
     </div>
   );
@@ -116,7 +119,9 @@ function SlideShell({
   return (
     <div
       style={{
-        minHeight: '100vh',
+        height: '100vh',
+        overflowY: 'auto',
+        overflowX: 'hidden',
         background: `radial-gradient(ellipse at 70% 10%, ${color}12 0%, transparent 55%)`,
         boxSizing: 'border-box',
         display: 'flex',

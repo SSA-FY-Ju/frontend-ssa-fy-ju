@@ -31,20 +31,25 @@ type Stage = 'landing' | 'select';
 export function StoryLandingExperience() {
   const [stage, setStage] = useState<Stage>('landing');
   const [pageIndex, setPageIndex] = useState(0);
+  const pageIndexRef = useRef(0);
   const landingPagesRef = useRef<HTMLElement | null>(null);
   const pageRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  useEffect(() => {
+    pageIndexRef.current = pageIndex;
+  }, [pageIndex]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!landingPagesRef.current) return;
       if (['ArrowDown', 'PageDown', ' '].includes(e.key)) {
         e.preventDefault();
-        const next = Math.min(pageIndex + 1, TOTAL_PAGES - 1);
+        const next = Math.min(pageIndexRef.current + 1, TOTAL_PAGES - 1);
         pageRefs.current[next]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
       if (['ArrowUp', 'PageUp'].includes(e.key)) {
         e.preventDefault();
-        const prev = Math.max(pageIndex - 1, 0);
+        const prev = Math.max(pageIndexRef.current - 1, 0);
         pageRefs.current[prev]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     };
@@ -53,7 +58,7 @@ export function StoryLandingExperience() {
     return () => {
       window.removeEventListener('keydown', onKey);
     };
-  }, [stage, pageIndex]);
+  }, [stage]);
 
   useEffect(() => {
     if (stage !== 'landing') return;
@@ -74,13 +79,13 @@ export function StoryLandingExperience() {
         }
       });
 
-      if (closestIndex !== pageIndex) setPageIndex(closestIndex);
+      setPageIndex((prev) => (prev !== closestIndex ? closestIndex : prev));
     };
 
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
-  }, [stage, pageIndex]);
+  }, [stage]);
 
   const handleDotClick = (index: number) => {
     pageRefs.current[index]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -137,7 +142,7 @@ export function StoryLandingExperience() {
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
                 {worries.map((w, i) => (
-                  <div key={w.title} className={`fade-in-up delay-${i + 1}`} style={{ padding: '24px 26px', borderRadius: 16, background: 'rgba(13, 27, 61, 0.45)', border: '1px solid rgba(244, 236, 216, 0.12)', backdropFilter: 'blur(8px)' }}>
+                  <div key={w.title} className={`fade-in-up delay-${i + 1}`} style={{ padding: '24px 26px', borderRadius: 16, background: 'rgba(13, 27, 61, 0.72)', border: '1px solid rgba(244, 236, 216, 0.12)' }}>
                     <div className="headline" style={{ fontSize: 18, fontWeight: 500, marginBottom: 10, lineHeight: 1.5 }}>{w.title}</div>
                     <div style={{ fontSize: 13, color: 'rgba(244,236,216,0.55)' }}>{w.sub}</div>
                   </div>
@@ -174,7 +179,7 @@ export function StoryLandingExperience() {
               </p>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16 }}>
                 {services.map((s, i) => (
-                  <div key={s.number} className={`fade-in-up delay-${i + 1}`} style={{ padding: '24px 22px', borderRadius: 14, background: 'rgba(13, 27, 61, 0.4)', border: '1px solid rgba(244, 236, 216, 0.1)', backdropFilter: 'blur(8px)', minHeight: 170, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div key={s.number} className={`fade-in-up delay-${i + 1}`} style={{ padding: '24px 22px', borderRadius: 14, background: 'rgba(13, 27, 61, 0.72)', border: '1px solid rgba(244, 236, 216, 0.1)', minHeight: 170, display: 'flex', flexDirection: 'column', gap: 10 }}>
                     <div style={{ fontStyle: 'italic', fontSize: 22, color: 'var(--moon-glow)' }}>{s.number}</div>
                     <div className="headline" style={{ fontSize: 19, fontWeight: 600 }}>{s.title}</div>
                     <div style={{ fontSize: 13, color: 'rgba(244,236,216,0.65)', flex: 1 }}>{s.sub}</div>
