@@ -55,3 +55,13 @@ Thumbs.db
 # TypeScript build cache
 tsconfig.tsbuildinfo
 *.tsbuildinfo
+
+# Claude Code / Spec Kit (개인 도구)
+.claude/
+.specify/
+
+# SWC 캐시
+.swc/
+
+# Husky (로컬 훅)
+.husky/

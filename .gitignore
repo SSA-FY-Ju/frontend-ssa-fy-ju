@@ -23,3 +23,14 @@ Thumbs.db
 .bash_history
 .zcompdump*
 .zsh_sessions/
+
+# Claude Code / Spec Kit (개인 도구)
+.claude/
+.specify/
+
+# 샘플 데이터
+sample/
+
+# AI / Spec Kit 전용 문서
+CLAUDE.md
+EXCEPTIONS.md
