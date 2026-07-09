@@ -1,4 +1,5 @@
 import { http, HttpResponse } from 'msw';
+import type { ApiResponse } from '@/types/api';
 
 /**
  * MSW 요청 핸들러
@@ -11,3 +12,13 @@ export const handlers = [
     return HttpResponse.json({ status: 'ok' });
   }),
 ];
+
+/** apiFetch가 기대하는 ApiResponse<T> 봉투로 감싼 성공 응답 */
+export function apiSuccess<T>(data: T): ApiResponse<T> {
+  return { success: true, data, error: null, timestamp: Date.now() };
+}
+
+/** apiFetch가 기대하는 ApiResponse<T> 봉투로 감싼 에러 응답 */
+export function apiError(code: string, message: string): ApiResponse<null> {
+  return { success: false, data: null, error: { code, message, requestId: 'story-mock' }, timestamp: Date.now() };
+}
