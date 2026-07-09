@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Providers } from './providers';
 import { Header } from '@/components/common/Header';
 import { SessionRehydrationWrapper } from '@/components/providers/SessionRehydrationWrapper';
+import { MockingProvider } from '@/components/providers/MockingProvider';
 import StarryBackground from '@/components/landing/StarryBackground';
 import './globals.css';
 import '@/styles/landing.css';
@@ -46,10 +47,12 @@ export default function RootLayout({
       <body>
         <StarryBackground />
         <Providers>
-          <SessionRehydrationWrapper>
-            <Header />
-            {children}
-          </SessionRehydrationWrapper>
+          <MockingProvider>
+            <SessionRehydrationWrapper>
+              <Header />
+              {children}
+            </SessionRehydrationWrapper>
+          </MockingProvider>
         </Providers>
       </body>
     </html>
