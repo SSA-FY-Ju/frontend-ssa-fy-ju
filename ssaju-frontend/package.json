@@ -11,7 +11,9 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css}\"",
     "test": "jest --coverage --coveragePathIgnorePatterns=node_modules --testPathIgnorePatterns=node_modules",
     "test:watch": "jest --watch",
-    "fetch-dart-corps": "node scripts/fetchDartCorps.mjs"
+    "fetch-dart-corps": "node scripts/fetchDartCorps.mjs",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.100.14",
@@ -52,7 +54,13 @@
     "tailwindcss": "^3.3.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.0",
-    "undici": "^8.2.0"
+    "undici": "^8.2.0",
+    "storybook": "^10.4.6",
+    "@storybook/nextjs": "^10.4.6",
+    "@storybook/addon-a11y": "^10.4.6",
+    "@storybook/addon-docs": "^10.4.6",
+    "@storybook/addon-onboarding": "^10.4.6",
+    "eslint-plugin-storybook": "^10.4.6"
   },
   "engines": {
     "node": ">=18.17.0",
