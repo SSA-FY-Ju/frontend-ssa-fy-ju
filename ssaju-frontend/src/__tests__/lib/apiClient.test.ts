@@ -282,28 +282,54 @@ describe('apiFetch', () => {
 
   // ─── 401 — 토큰 갱신 후 재시도 ──────────────────────────────────
 
-  it('401 응답 시 /api/auth/refresh 호출 후 원본 요청 재시도', async () => {
+  // 401 재시도는 axiosInstance의 response interceptor(client.ts)에서 처리되므로,
+  // axiosInstance.request를 직접 스텁하면 인터셉터 체인 자체가 우회되어 검증이 안 됨.
+  // adapter 레벨에서 모킹해 실제 인터셉터가 개입하는 경로를 그대로 태운다.
+  it('401 응답 시 인터셉터가 /api/auth/refresh 호출 후 원본 요청 재시도', async () => {
+    requestSpy.mockRestore(); // 이 테스트만 실제 request()+interceptor 파이프라인을 태움
+    const originalAdapter = axiosInstance.defaults.adapter;
     const mockData = { result: '인증 후 성공' };
 
-    requestSpy
-      .mockRejectedValueOnce(buildApiErrorReject(401, 'UNAUTHORIZED', '인증 만료'))
-      // 원본 요청 재시도 성공
-      .mockResolvedValueOnce(buildOkResponse(mockData));
+    const adapterMock = jest.fn()
+      // 1) 원본 요청 — 401
+      .mockImplementationOnce((cfg) => Promise.reject({
+        isAxiosError: true,
+        config: cfg,
+        response: {
+          status: 401,
+          data: { success: false, data: null, error: { code: 'UNAUTHORIZED', message: '인증 만료', requestId: 'req-401' }, timestamp: Date.now() },
+        },
+      }))
+      // 2) tryRefreshToken()의 axiosInstance.post('/api/auth/refresh') 호출
+      .mockImplementationOnce((cfg) => Promise.resolve({
+        status: 200,
+        data: { data: { accessToken: 'new-token' } },
+        headers: {},
+        config: cfg,
+      }))
+      // 3) 인터셉터가 재시도하는 원본 요청 — 성공
+      .mockImplementationOnce((cfg) => Promise.resolve({
+        status: 200,
+        data: { success: true, data: mockData, error: null, timestamp: Date.now() },
+        headers: {},
+        config: cfg,
+      }));
 
-    // refresh 요청 (axiosInstance.post) 성공
-    postSpy.mockResolvedValueOnce({ status: 200, data: { data: { accessToken: 'new-token' } }, headers: {} });
+    axiosInstance.defaults.adapter = adapterMock;
 
-    const result = await apiFetch<typeof mockData>('/api/test', {
-      method: 'POST',
-      retry: { maxAttempts: 3 },
-    });
+    try {
+      const result = await apiFetch<typeof mockData>('/api/test', {
+        method: 'POST',
+        retry: { maxAttempts: 3 },
+      });
 
-    expect(result).toEqual(mockData);
-    expect(postSpy).toHaveBeenCalledWith(
-      expect.stringContaining('/api/auth/refresh'),
-      {},
-      expect.objectContaining({ withCredentials: true }),
-    );
+      expect(result).toEqual(mockData);
+      expect(adapterMock).toHaveBeenCalledTimes(3);
+      expect(adapterMock.mock.calls[1][0].url).toEqual(expect.stringContaining('/api/auth/refresh'));
+    } finally {
+      axiosInstance.defaults.adapter = originalAdapter;
+      requestSpy = jest.spyOn(axiosInstance, 'request');
+    }
   });
 
   it('401 + refresh 실패 시 ApiError(401) throw', async () => {

@@ -12,7 +12,7 @@
  * - 에러 처리
  */
 
-import axios, { AxiosError } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { config } from '../config/env';
 
 export const axiosInstance = axios.create({ withCredentials: true });
@@ -135,6 +135,50 @@ export async function tryRefreshToken(): Promise<boolean> {
   return refreshPromise;
 }
 
+type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+/**
+ * 401 응답 자동 갱신 인터셉터
+ *
+ * - 401 수신 시 tryRefreshToken() 1회 시도 → 성공하면 원요청에 새 토큰을 실어 재시도
+ * - /api/auth/refresh 자체가 401을 반환하는 경우는 재시도 대상에서 제외 (무한 루프 방지)
+ * - 갱신 실패 시 로그아웃 + 로그인 모달 오픈
+ */
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalConfig = error.config as RetriableConfig | undefined;
+    const status = error.response?.status;
+    const isRefreshCall = originalConfig?.url?.includes('/api/auth/refresh');
+
+    if (status === 401 && originalConfig && !originalConfig._retry && !isRefreshCall) {
+      originalConfig._retry = true;
+
+      const refreshed = await tryRefreshToken();
+      if (refreshed) {
+        originalConfig.headers = {
+          ...originalConfig.headers,
+          ...getAuthHeader(),
+        } as InternalAxiosRequestConfig['headers'];
+        return axiosInstance(originalConfig);
+      }
+
+      // 갱신 실패 (리프레시 토큰 만료) → 로그아웃 + 로그인 모달 오픈
+      if (typeof window !== 'undefined') {
+        try {
+          const { useAuthStore } = require('@/stores/authStore');
+          const store = useAuthStore.getState();
+          store.logout();
+          store.openLoginModal();
+        } catch {
+          // 스토어 접근 실패 시 무시
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 /**
  * 중앙 API fetch 래퍼
@@ -200,35 +244,18 @@ export async function apiFetch<T>(
         const axiosError = error as AxiosError<ApiResponse<T>>;
         const status = axiosError.response?.status;
 
-        // 401 — 토큰 갱신 시도 후 1회 재요청
-        if (status === 401 && attempt === 0) {
-          const refreshed = await tryRefreshToken();
-          if (refreshed) {
-            // 재시도
-            lastError = new Error('TOKEN_REFRESHED');
-            continue;
-          }
-          // 갱신 실패 (리프레시 토큰 만료) → 로그아웃 + 로그인 모달 오픈
-          if (typeof window !== 'undefined') {
-            try {
-              const { useAuthStore } = require('@/stores/authStore');
-              const store = useAuthStore.getState();
-              store.logout();
-              store.openLoginModal();
-            } catch {
-              // 스토어 접근 실패 시 무시
-            }
-          }
-          throw new ApiError(401, 'UNAUTHORIZED', '인증이 만료되었습니다. 다시 로그인해주세요.', 'unknown');
-        }
-
         // 4xx 에러 (재시도 하지 않음)
+        // 401은 axiosInstance의 response interceptor가 이미 갱신+재시도를 시도한 뒤이므로,
+        // 여기 도달했다는 건 갱신도 실패했다는 뜻 (로그아웃/모달도 인터셉터에서 처리됨)
         if (status !== undefined && status >= 400 && status < 500) {
           const json = axiosError.response?.data;
+          const message = status === 401
+            ? '인증이 만료되었습니다. 다시 로그인해주세요.'
+            : json?.error?.message || json?.message || axiosError.message;
           throw new ApiError(
             status,
-            json?.error?.code || json?.errorCode || 'CLIENT_ERROR',
-            json?.error?.message || json?.message || axiosError.message,
+            json?.error?.code || json?.errorCode || (status === 401 ? 'UNAUTHORIZED' : 'CLIENT_ERROR'),
+            message,
             json?.error?.requestId || 'unknown',
           );
         }
