@@ -12,7 +12,10 @@
  * - 에러 처리
  */
 
+import axios, { AxiosError } from 'axios';
 import { config } from '../config/env';
+
+export const axiosInstance = axios.create({ withCredentials: true });
 
 interface FetchOptions {
   method?: 'GET' | 'POST' | 'DELETE' | 'PUT';
@@ -62,6 +65,20 @@ const updateLoadingState = (loading: boolean): void => {
   }
 };
 
+/** 현재 accessToken으로 Authorization 헤더 구성 (클라이언트 환경에서만) */
+function getAuthHeader(): Record<string, string> {
+  try {
+    if (typeof window !== 'undefined') {
+      const { useAuthStore } = require('@/stores/authStore');
+      const token = useAuthStore.getState().accessToken;
+      if (token) return { Authorization: `Bearer ${token}` };
+    }
+  } catch {
+    // 스토어 접근 실패 시 무시
+  }
+  return {};
+}
+
 /**
  * 토큰 갱신 잠금 변수 (중복 갱신 방지)
  */
@@ -79,18 +96,16 @@ export async function tryRefreshToken(): Promise<boolean> {
   refreshPromise = (async () => {
     try {
       const baseUrl = (config.apiBaseUrl || '').replace(/\/$/, '');
-      const response = await fetch(`${baseUrl}/api/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-        credentials: 'include',
-      });
-      if (!response.ok) return false;
+      const response = await axiosInstance.post(
+        `${baseUrl}/api/auth/refresh`,
+        {},
+        { withCredentials: true },
+      );
 
-      const json = await response.json().catch(() => ({}));
+      const json = response.data ?? {};
 
       // 1순위: 응답 헤더 Authorization (대소문자 무관하게 처리)
-      const authHeader = response.headers.get('authorization') ?? response.headers.get('Authorization') ?? '';
+      const authHeader = response.headers['authorization'] ?? response.headers['Authorization'] ?? '';
       let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
 
       // 2순위: 응답 바디
@@ -110,7 +125,7 @@ export async function tryRefreshToken(): Promise<boolean> {
         return true;
       }
       return false;
-    } catch (err) {
+    } catch {
       return false;
     } finally {
       refreshPromise = null;
@@ -153,56 +168,40 @@ export async function apiFetch<T>(
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-        // authStore에서 accessToken 읽어 Authorization 헤더 자동 주입
-        let authHeader: Record<string, string> = {};
-        try {
-          if (typeof window !== 'undefined') {
-            const { useAuthStore } = require('@/stores/authStore');
-            const token = useAuthStore.getState().accessToken;
-            if (token) authHeader = { Authorization: `Bearer ${token}` };
-          }
-        } catch {
-          // 스토어 접근 실패 시 무시
-        }
-
-
-        const response = await fetch(url, {
+        const response = await axiosInstance.request<ApiResponse<T>>({
+          url,
           method,
-          credentials: 'include', // refreshToken HttpOnly 쿠키 자동 전송 (logout 등에서 필요)
+          data: body ?? undefined,
+          timeout,
+          withCredentials: true, // refreshToken HttpOnly 쿠키 자동 전송 (logout 등에서 필요)
           headers: {
             'Content-Type': 'application/json',
-            ...authHeader,
+            ...getAuthHeader(),
             ...headers,
           },
-          body: body ? JSON.stringify(body) : null,
-          signal: controller.signal,
         });
 
-        clearTimeout(timeoutId);
+        const json = response.data;
 
-        // 성공 응답 처리
-        if (response.ok) {
-          const json = (await response.json()) as ApiResponse<T>;
-
-
-          if (json.success) {
-            return json.data as T;
-          }
-
-          // API 비즈니스 에러
-          throw new ApiError(
-            response.status,
-            json.error?.code || json.errorCode || 'UNKNOWN_ERROR',
-            json.error?.message || json.message || 'Unknown error',
-            json.error?.requestId || 'unknown',
-          );
+        if (json.success) {
+          return json.data as T;
         }
 
+        // API 비즈니스 에러 (2xx 응답이지만 success:false)
+        throw new ApiError(
+          response.status,
+          json.error?.code || json.errorCode || 'UNKNOWN_ERROR',
+          json.error?.message || json.message || 'Unknown error',
+          json.error?.requestId || 'unknown',
+        );
+      } catch (error) {
+        if (error instanceof ApiError) throw error;
+
+        const axiosError = error as AxiosError<ApiResponse<T>>;
+        const status = axiosError.response?.status;
+
         // 401 — 토큰 갱신 시도 후 1회 재요청
-        if (response.status === 401 && attempt === 0) {
+        if (status === 401 && attempt === 0) {
           const refreshed = await tryRefreshToken();
           if (refreshed) {
             // 재시도
@@ -224,27 +223,21 @@ export async function apiFetch<T>(
         }
 
         // 4xx 에러 (재시도 하지 않음)
-        if (response.status >= 400 && response.status < 500) {
-          let json: ApiResponse<T> | null = null;
-          try { json = (await response.json()) as ApiResponse<T>; } catch { /* non-JSON body */ }
+        if (status !== undefined && status >= 400 && status < 500) {
+          const json = axiosError.response?.data;
           throw new ApiError(
-            response.status,
+            status,
             json?.error?.code || json?.errorCode || 'CLIENT_ERROR',
-            json?.error?.message || json?.message || response.statusText,
+            json?.error?.message || json?.message || axiosError.message,
             json?.error?.requestId || 'unknown',
           );
         }
 
-        // 5xx 에러 (재시도 가능)
-        lastError = new Error(`Server error: ${response.statusText}`);
-        throw lastError;
-      } catch (error) {
+        // 5xx / 네트워크 / 타임아웃 에러
         lastError = error as Error;
 
-        // 재시도 여부 판단 (Q5: 타임아웃/네트워크 에러만)
-        const isRetryable =
-          error instanceof TypeError || // 네트워크 에러
-          (error instanceof Error && error.name === 'AbortError'); // 타임아웃
+        // 재시도 여부 판단 (Q5: 타임아웃/네트워크 에러만 — 응답이 없는 경우)
+        const isRetryable = status === undefined;
 
         if (isRetryable && attempt < maxAttempts - 1) {
           // 지수 백오프
@@ -254,10 +247,6 @@ export async function apiFetch<T>(
         }
 
         // 재시도 불가능하면 에러 발생
-        if (lastError instanceof ApiError) {
-          throw lastError;
-        }
-
         throw new Error(
           `Failed to fetch ${path} after ${maxAttempts} attempts: ${lastError?.message || 'Unknown error'}`,
         );

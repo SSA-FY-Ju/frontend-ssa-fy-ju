@@ -10,12 +10,14 @@ import { fetchCareerTiming, fetchConsultation } from '@/lib/api/career';
 import { login, logout } from '@/lib/api/auth';
 import { submitFeedback } from '@/lib/api/feedback';
 
-// apiFetch 전체 모킹
+// apiFetch / axiosInstance 전체 모킹
 jest.mock('@/lib/api/client', () => ({
   apiFetch: jest.fn(),
+  axiosInstance: { post: jest.fn() },
+  ApiError: jest.requireActual('@/lib/api/client').ApiError,
 }));
 
-const { apiFetch } = jest.requireMock('@/lib/api/client');
+const { apiFetch, axiosInstance } = jest.requireMock('@/lib/api/client');
 
 // ─────────────────────────────────────────────────────────────
 // career.ts
@@ -95,20 +97,27 @@ describe('login', () => {
     jest.clearAllMocks();
   });
 
-  it('올바른 경로와 옵션으로 apiFetch 호출', async () => {
-    apiFetch.mockResolvedValueOnce({ accessToken: 'tok', accessTokenExpiresIn: 3600 });
+  it('올바른 경로와 옵션으로 axiosInstance.post 호출', async () => {
+    axiosInstance.post.mockResolvedValueOnce({
+      data: { data: { accessToken: 'tok' } },
+      headers: {},
+    });
 
     const result = await login({ email: 'a@b.com', password: 'password1' });
 
-    expect(apiFetch).toHaveBeenCalledWith('/api/auth/login', expect.objectContaining({
-      method: 'POST',
-      body: { email: 'a@b.com', password: 'password1' },
-    }));
+    expect(axiosInstance.post).toHaveBeenCalledWith(
+      expect.stringContaining('/api/auth/login'),
+      { email: 'a@b.com', password: 'password1' },
+      expect.objectContaining({ withCredentials: true }),
+    );
     expect(result.accessToken).toBe('tok');
   });
 
-  it('apiFetch 실패 시 에러 전파', async () => {
-    apiFetch.mockRejectedValueOnce(new Error('이메일 또는 비밀번호 오류'));
+  it('axios 요청 실패 시 ApiError 전파', async () => {
+    axiosInstance.post.mockRejectedValueOnce({
+      isAxiosError: true,
+      response: { status: 401, data: { error: { message: '이메일 또는 비밀번호 오류' } } },
+    });
 
     await expect(login({ email: 'a@b.com', password: 'wrong' })).rejects.toThrow('이메일 또는 비밀번호 오류');
   });
