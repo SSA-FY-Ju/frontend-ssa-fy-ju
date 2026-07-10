@@ -5,11 +5,20 @@
 import { renderHook, act } from '@testing-library/react';
 import { useAuth } from '@/hooks/useAuth';
 import { useAuthStore } from '@/stores/authStore';
+import { QueryClientWrapper } from '../queryClientWrapper';
 
 jest.mock('@/lib/api/auth', () => ({
   login: jest.fn(),
   signup: jest.fn(),
   logout: jest.fn(),
+}));
+
+jest.mock('@/lib/api/mypage', () => ({
+  fetchMyPageData: jest.fn().mockResolvedValue({
+    profile: { id: 1, name: '테스트', email: 'test@test.com', createdAt: '', lastLoginAt: '' },
+    analyses: [],
+    pagination: { page: 0, size: 1, total: 0, totalPages: 0 },
+  }),
 }));
 
 jest.mock('@/stores/analysisStore', () => ({
@@ -33,7 +42,7 @@ describe('useAuth', () => {
   });
 
   it('초기 상태는 비로그인', () => {
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: QueryClientWrapper });
     expect(result.current.isLoggedIn).toBe(false);
     expect(result.current.user).toBeNull();
   });
@@ -44,7 +53,7 @@ describe('useAuth', () => {
       accessTokenExpiresIn: 3600,
     });
 
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: QueryClientWrapper });
 
     await act(async () => {
       await result.current.login({ email: 'test@test.com', password: 'password1' });
@@ -56,7 +65,7 @@ describe('useAuth', () => {
   it('login 실패 시 loginError 설정', async () => {
     loginApi.mockRejectedValueOnce(new Error('이메일 또는 비밀번호가 올바르지 않습니다.'));
 
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: QueryClientWrapper });
 
     await act(async () => {
       try {
@@ -74,7 +83,7 @@ describe('useAuth', () => {
     logoutApi.mockResolvedValueOnce(undefined);
     useAuthStore.getState().setUser({ userId: 'u1', email: 'a@b.com', name: '테스트' });
 
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: QueryClientWrapper });
 
     await act(async () => {
       await result.current.logout();
@@ -88,7 +97,7 @@ describe('useAuth', () => {
     logoutApi.mockRejectedValueOnce(new Error('Server error'));
     useAuthStore.getState().setUser({ userId: 'u1', email: 'a@b.com', name: '테스트' });
 
-    const { result } = renderHook(() => useAuth());
+    const { result } = renderHook(() => useAuth(), { wrapper: QueryClientWrapper });
 
     await act(async () => {
       await result.current.logout();

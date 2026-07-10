@@ -4,7 +4,7 @@ import { ConsultationLoading } from '@/components/results/ConsultationLoading';
 describe('ConsultationLoading', () => {
   it('renders loading text content', () => {
     render(<ConsultationLoading />);
-    expect(screen.getByText('AI 분석 중입니다...')).toBeInTheDocument();
+    expect(screen.getByText('AI가 당신의 사주를 분석하고 있어요')).toBeInTheDocument();
   });
 
   it('renders a live region with accessible label indicating analysis in progress', () => {
@@ -23,7 +23,7 @@ describe('ConsultationLoading', () => {
 
   it('renders the decorative star icon as aria-hidden', () => {
     render(<ConsultationLoading />);
-    const star = screen.getByText('★');
+    const star = screen.getByText('✦');
     expect(star).toHaveAttribute('aria-hidden', 'true');
   });
 });

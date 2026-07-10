@@ -6,6 +6,8 @@ import { fetchCompatibility, fetchCompanyAutocomplete } from '@/lib/api/company'
 
 jest.mock('@/lib/api/client', () => ({
   apiFetch: jest.fn(),
+  axiosInstance: { get: jest.fn() },
+  TIMEOUTS: { SHORT: 5000, DEFAULT: 10000, LONG: 60000 },
 }));
 
 import { apiFetch } from '@/lib/api/client';

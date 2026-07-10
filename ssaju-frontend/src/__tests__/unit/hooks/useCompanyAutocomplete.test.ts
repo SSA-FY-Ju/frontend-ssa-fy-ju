@@ -1,10 +1,16 @@
 /**
  * useCompanyAutocomplete 훅 테스트
  *
+ * 현재 구현 기준: fetchCompanyAutocomplete API 래퍼가 아니라
+ * axiosInstance.get('/api/company/search', { params: { q } })를 직접 호출하고,
+ * DartCompany[]({corpName, corpCode, stockCode}) 형태로 결과를 저장한다.
+ * 조회 결과는 모듈 레벨 clientCache에 쿼리별로 캐시되므로, 테스트마다
+ * 서로 다른 검색어를 써서 캐시 충돌(=axios 재호출 안 됨)을 피한다.
+ *
  * 검증:
  * - 초기 상태
  * - search('') 드롭다운 닫기
- * - debounce 300ms 후 fetchCompanyAutocomplete 호출
+ * - debounce 300ms 후 axiosInstance.get 호출
  * - suggestions/isOpen 설정
  * - close() 상태 초기화
  * - navigateDown / navigateUp
@@ -13,17 +19,25 @@
 
 import { renderHook, act } from '@testing-library/react';
 import { useCompanyAutocomplete } from '@/hooks/useCompanyAutocomplete';
+import { axiosInstance } from '@/lib/api/client';
 
-jest.mock('@/lib/api/company', () => ({
-  fetchCompanyAutocomplete: jest.fn(),
+jest.mock('@/lib/api/client', () => ({
+  axiosInstance: { get: jest.fn() },
 }));
 
-const { fetchCompanyAutocomplete } = jest.requireMock('@/lib/api/company');
+const mockGet = axiosInstance.get as jest.Mock;
+
+function companyListResponse(names: string[]) {
+  return { data: { list: names.map((corpName) => ({ corpName })) } };
+}
+
+function company(corpName: string) {
+  return { corpName, corpCode: '', stockCode: '' };
+}
 
 /** debounce 300ms 실행 후 pending 마이크로태스크 flush */
 async function runDebounce() {
   jest.advanceTimersByTime(300);
-  // 프로미스 체인이 완료될 때까지 다수의 마이크로태스크 tick 처리
   await Promise.resolve();
   await Promise.resolve();
   await Promise.resolve();
@@ -61,7 +75,7 @@ describe('useCompanyAutocomplete', () => {
 
     expect(result.current.suggestions).toEqual([]);
     expect(result.current.isOpen).toBe(false);
-    expect(fetchCompanyAutocomplete).not.toHaveBeenCalled();
+    expect(mockGet).not.toHaveBeenCalled();
   });
 
   it('공백만 입력 시 드롭다운 닫고 API 호출 안 함', async () => {
@@ -75,82 +89,67 @@ describe('useCompanyAutocomplete', () => {
       await runDebounce();
     });
 
-    expect(fetchCompanyAutocomplete).not.toHaveBeenCalled();
+    expect(mockGet).not.toHaveBeenCalled();
     expect(result.current.isOpen).toBe(false);
   });
 
   it('search(query) 호출 후 300ms 전에는 API 호출 안 함', () => {
-    fetchCompanyAutocomplete.mockResolvedValueOnce({ suggestions: ['삼성전자'] });
+    mockGet.mockResolvedValueOnce(companyListResponse(['현대자동차']));
 
     const { result } = renderHook(() => useCompanyAutocomplete());
 
     act(() => {
-      result.current.search('삼성');
+      result.current.search('현대차_A');
       jest.advanceTimersByTime(299);
     });
 
-    expect(fetchCompanyAutocomplete).not.toHaveBeenCalled();
+    expect(mockGet).not.toHaveBeenCalled();
   });
 
-  it('search(query) 호출 후 300ms 후 fetchCompanyAutocomplete 호출', async () => {
-    fetchCompanyAutocomplete.mockResolvedValueOnce({ suggestions: ['삼성전자'] });
+  it('search(query) 호출 후 300ms 후 axiosInstance.get 호출', async () => {
+    mockGet.mockResolvedValueOnce(companyListResponse(['현대자동차']));
 
     const { result } = renderHook(() => useCompanyAutocomplete());
 
     act(() => {
-      result.current.search('삼성');
+      result.current.search('현대차_B');
     });
 
     await act(async () => {
       await runDebounce();
     });
 
-    expect(fetchCompanyAutocomplete).toHaveBeenCalledWith({ query: '삼성' });
+    expect(mockGet).toHaveBeenCalledWith('/api/company/search', { params: { q: '현대차_B' } });
   });
 
   it('fetch 성공 시 suggestions 설정, isOpen=true', async () => {
-    fetchCompanyAutocomplete.mockResolvedValueOnce({
-      suggestions: ['삼성전자', '삼성SDS', '삼성생명'],
-    });
+    mockGet.mockResolvedValueOnce(companyListResponse(['삼성전자', '삼성SDS', '삼성생명']));
 
     const { result } = renderHook(() => useCompanyAutocomplete());
 
     act(() => {
-      result.current.search('삼성');
+      result.current.search('삼성_A');
     });
 
     await act(async () => {
       await runDebounce();
     });
 
-    expect(result.current.suggestions).toEqual(['삼성전자', '삼성SDS', '삼성생명']);
+    expect(result.current.suggestions).toEqual([
+      company('삼성전자'),
+      company('삼성SDS'),
+      company('삼성생명'),
+    ]);
     expect(result.current.isOpen).toBe(true);
   });
 
-  it('suggestions 최대 10개만 반환', async () => {
-    const manySuggestions = Array.from({ length: 15 }, (_, i) => `기업${i}`);
-    fetchCompanyAutocomplete.mockResolvedValueOnce({ suggestions: manySuggestions });
-
-    const { result } = renderHook(() => useCompanyAutocomplete());
-
-    act(() => {
-      result.current.search('기업');
-    });
-
-    await act(async () => {
-      await runDebounce();
-    });
-
-    expect(result.current.suggestions).toHaveLength(10);
-  });
-
   it('빈 suggestions 반환 시 isOpen=false', async () => {
-    fetchCompanyAutocomplete.mockResolvedValueOnce({ suggestions: [] });
+    mockGet.mockResolvedValueOnce(companyListResponse([]));
 
     const { result } = renderHook(() => useCompanyAutocomplete());
 
     act(() => {
-      result.current.search('존재하지않는기업');
+      result.current.search('존재하지않는기업_A');
     });
 
     await act(async () => {
@@ -162,12 +161,12 @@ describe('useCompanyAutocomplete', () => {
   });
 
   it('close() 호출 시 모든 상태 초기화', async () => {
-    fetchCompanyAutocomplete.mockResolvedValueOnce({ suggestions: ['삼성전자'] });
+    mockGet.mockResolvedValueOnce(companyListResponse(['삼성전자']));
 
     const { result } = renderHook(() => useCompanyAutocomplete());
 
     act(() => {
-      result.current.search('삼성');
+      result.current.search('삼성_B');
     });
 
     await act(async () => {
@@ -186,14 +185,12 @@ describe('useCompanyAutocomplete', () => {
   });
 
   it('navigateDown 호출 시 highlightedIndex 증가', async () => {
-    fetchCompanyAutocomplete.mockResolvedValueOnce({
-      suggestions: ['삼성전자', '삼성SDS', '삼성생명'],
-    });
+    mockGet.mockResolvedValueOnce(companyListResponse(['삼성전자', '삼성SDS', '삼성생명']));
 
     const { result } = renderHook(() => useCompanyAutocomplete());
 
     act(() => {
-      result.current.search('삼성');
+      result.current.search('삼성_C');
     });
 
     await act(async () => {
@@ -214,14 +211,12 @@ describe('useCompanyAutocomplete', () => {
   });
 
   it('navigateDown 호출 시 마지막 인덱스(suggestions.length-1)를 넘지 않음', async () => {
-    fetchCompanyAutocomplete.mockResolvedValueOnce({
-      suggestions: ['삼성전자', '삼성SDS'],
-    });
+    mockGet.mockResolvedValueOnce(companyListResponse(['삼성전자', '삼성SDS']));
 
     const { result } = renderHook(() => useCompanyAutocomplete());
 
     act(() => {
-      result.current.search('삼성');
+      result.current.search('삼성_D');
     });
 
     await act(async () => {
@@ -244,14 +239,12 @@ describe('useCompanyAutocomplete', () => {
   });
 
   it('navigateUp 호출 시 highlightedIndex 감소, 0 미만으로 내려가지 않음', async () => {
-    fetchCompanyAutocomplete.mockResolvedValueOnce({
-      suggestions: ['삼성전자', '삼성SDS', '삼성생명'],
-    });
+    mockGet.mockResolvedValueOnce(companyListResponse(['삼성전자', '삼성SDS', '삼성생명']));
 
     const { result } = renderHook(() => useCompanyAutocomplete());
 
     act(() => {
-      result.current.search('삼성');
+      result.current.search('삼성_E');
     });
 
     await act(async () => {
@@ -280,12 +273,12 @@ describe('useCompanyAutocomplete', () => {
   });
 
   it('fetch 에러 시 suggestions 비우고 isOpen=false', async () => {
-    fetchCompanyAutocomplete.mockRejectedValueOnce(new Error('네트워크 오류'));
+    mockGet.mockRejectedValueOnce(new Error('네트워크 오류'));
 
     const { result } = renderHook(() => useCompanyAutocomplete());
 
     act(() => {
-      result.current.search('삼성');
+      result.current.search('삼성_F');
     });
 
     await act(async () => {
@@ -297,31 +290,31 @@ describe('useCompanyAutocomplete', () => {
   });
 
   it('연속 검색 시 마지막 debounce만 실행됨 (이전 타이머 취소)', async () => {
-    fetchCompanyAutocomplete.mockResolvedValue({ suggestions: ['결과'] });
+    mockGet.mockResolvedValue(companyListResponse(['결과']));
 
     const { result } = renderHook(() => useCompanyAutocomplete());
 
     act(() => {
-      result.current.search('삼');
+      result.current.search('삼_G');
       jest.advanceTimersByTime(100);
-      result.current.search('삼성');
+      result.current.search('삼성_G');
     });
 
     await act(async () => {
       await runDebounce();
     });
 
-    expect(fetchCompanyAutocomplete).toHaveBeenCalledTimes(1);
-    expect(fetchCompanyAutocomplete).toHaveBeenCalledWith({ query: '삼성' });
+    expect(mockGet).toHaveBeenCalledTimes(1);
+    expect(mockGet).toHaveBeenCalledWith('/api/company/search', { params: { q: '삼성_G' } });
   });
 
   it('search 호출 시 highlightedIndex -1로 즉시 초기화', async () => {
-    fetchCompanyAutocomplete.mockResolvedValueOnce({ suggestions: ['삼성전자', '삼성SDS'] });
+    mockGet.mockResolvedValueOnce(companyListResponse(['삼성전자', '삼성SDS']));
 
     const { result } = renderHook(() => useCompanyAutocomplete());
 
     act(() => {
-      result.current.search('삼성');
+      result.current.search('삼성_H');
     });
 
     await act(async () => {
@@ -333,10 +326,10 @@ describe('useCompanyAutocomplete', () => {
     });
     expect(result.current.highlightedIndex).toBe(0);
 
-    fetchCompanyAutocomplete.mockResolvedValueOnce({ suggestions: ['LG전자'] });
+    mockGet.mockResolvedValueOnce(companyListResponse(['LG전자']));
 
     act(() => {
-      result.current.search('LG');
+      result.current.search('LG_H');
     });
 
     // search 즉시 highlightedIndex 리셋

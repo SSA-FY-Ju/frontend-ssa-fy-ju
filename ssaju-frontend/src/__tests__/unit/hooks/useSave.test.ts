@@ -7,6 +7,7 @@
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { QueryClientWrapper } from '../queryClientWrapper';
 import { useSave } from '@/hooks/useSave';
 import { useSessionStore } from '@/stores/sessionStore';
 
@@ -33,19 +34,20 @@ describe('useSave', () => {
   });
 
   it('초기 상태: isSaving이 false이다', () => {
-    const { result } = renderHook(() => useSave('CAREER_TIMING'));
+    const { result } = renderHook(() => useSave('CAREER_TIMING'), { wrapper: QueryClientWrapper });
     expect(result.current.isSaving).toBe(false);
   });
 
   it('sajuResultId가 없을 때 save() 호출 시 에러 토스트를 표시하고 apiFetch를 호출하지 않는다', async () => {
     // sajuResultId는 null (기본 상태)
-    const { result } = renderHook(() => useSave('CAREER_TIMING'));
+    const { result } = renderHook(() => useSave('CAREER_TIMING'), { wrapper: QueryClientWrapper });
 
-    await act(async () => {
-      await result.current.save();
+    act(() => {
+      result.current.save();
     });
 
-    expect(toastUtils.error).toHaveBeenCalledWith('저장할 분석 결과가 없습니다');
+    // onError는 항상 고정된 안내 문구를 띄운다 (실제 에러 메시지와 무관)
+    await waitFor(() => expect(toastUtils.error).toHaveBeenCalledWith('저장에 실패했습니다. 다시 시도해주세요.'));
     expect(apiFetch).not.toHaveBeenCalled();
   });
 
@@ -53,12 +55,13 @@ describe('useSave', () => {
     useSessionStore.getState().setSajuResultId('test-result-123');
     apiFetch.mockResolvedValueOnce(undefined);
 
-    const { result } = renderHook(() => useSave('CONSULTATION'));
+    const { result } = renderHook(() => useSave('CONSULTATION'), { wrapper: QueryClientWrapper });
 
-    await act(async () => {
-      await result.current.save();
+    act(() => {
+      result.current.save();
     });
 
+    await waitFor(() => expect(apiFetch).toHaveBeenCalled());
     expect(apiFetch).toHaveBeenCalledWith('/api/saju-result/save', {
       method: 'POST',
       body: { sajuResultId: 'test-result-123', analysisType: 'CONSULTATION' },
@@ -69,26 +72,26 @@ describe('useSave', () => {
     useSessionStore.getState().setSajuResultId('test-result-456');
     apiFetch.mockResolvedValueOnce(undefined);
 
-    const { result } = renderHook(() => useSave('COMPATIBILITY'));
+    const { result } = renderHook(() => useSave('COMPATIBILITY'), { wrapper: QueryClientWrapper });
 
-    await act(async () => {
-      await result.current.save();
+    act(() => {
+      result.current.save();
     });
 
-    expect(toastUtils.success).toHaveBeenCalledWith('분석 결과가 저장되었습니다');
+    await waitFor(() => expect(toastUtils.success).toHaveBeenCalledWith('분석 결과가 저장되었습니다'));
   });
 
   it('저장 실패 시 에러 토스트를 표시한다', async () => {
     useSessionStore.getState().setSajuResultId('test-result-789');
     apiFetch.mockRejectedValueOnce(new Error('Network Error'));
 
-    const { result } = renderHook(() => useSave('CAREER_TIMING'));
+    const { result } = renderHook(() => useSave('CAREER_TIMING'), { wrapper: QueryClientWrapper });
 
-    await act(async () => {
-      await result.current.save();
+    act(() => {
+      result.current.save();
     });
 
-    expect(toastUtils.error).toHaveBeenCalledWith('저장에 실패했습니다. 다시 시도해주세요.');
+    await waitFor(() => expect(toastUtils.error).toHaveBeenCalledWith('저장에 실패했습니다. 다시 시도해주세요.'));
   });
 
   it('save() 실행 중 isSaving이 true이고, 완료 후 false가 된다', async () => {
@@ -102,7 +105,7 @@ describe('useSave', () => {
         }),
     );
 
-    const { result } = renderHook(() => useSave('CAREER_TIMING'));
+    const { result } = renderHook(() => useSave('CAREER_TIMING'), { wrapper: QueryClientWrapper });
 
     act(() => {
       result.current.save();
@@ -114,6 +117,6 @@ describe('useSave', () => {
       resolveFetch();
     });
 
-    expect(result.current.isSaving).toBe(false);
+    await waitFor(() => expect(result.current.isSaving).toBe(false));
   });
 });

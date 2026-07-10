@@ -6,6 +6,7 @@
  */
 
 import { renderHook, act, waitFor } from '@testing-library/react';
+import { QueryClientWrapper } from '../queryClientWrapper';
 import { useCareerTiming } from '@/hooks/useCareerTiming';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useAnalysisStore } from '@/stores/analysisStore';
@@ -20,7 +21,7 @@ jest.useFakeTimers();
 const { fetchCareerTiming } = jest.requireMock('@/lib/api/career');
 
 const mockResult = {
-  sajuResultId: 'test-saju-001',
+  analysisId: 'test-saju-001',
   h1Period: '2025년 상반기',
   h2Period: '2026년 하반기',
   h1Confidence: 82,
@@ -43,14 +44,14 @@ describe('useCareerTiming', () => {
   });
 
   it('초기 phase는 idle, result/error null', () => {
-    const { result } = renderHook(() => useCareerTiming());
+    const { result } = renderHook(() => useCareerTiming(), { wrapper: QueryClientWrapper });
     expect(result.current.phase).toBe('idle');
     expect(result.current.result).toBeNull();
     expect(result.current.error).toBeNull();
   });
 
   it('submitAnalysis 호출 시 즉시 phase가 disclaimer로 전환', () => {
-    const { result } = renderHook(() => useCareerTiming());
+    const { result } = renderHook(() => useCareerTiming(), { wrapper: QueryClientWrapper });
 
     act(() => { result.current.submitAnalysis('1990-10-10', '14:30'); });
 
@@ -60,7 +61,7 @@ describe('useCareerTiming', () => {
 
   it('disclaimer 완료 후 phase가 loading으로 전환', async () => {
     fetchCareerTiming.mockReturnValueOnce(new Promise(() => {})); // 무한 대기
-    const { result } = renderHook(() => useCareerTiming());
+    const { result } = renderHook(() => useCareerTiming(), { wrapper: QueryClientWrapper });
 
     act(() => { result.current.submitAnalysis('1990-10-10', '14:30'); });
     await skipDisclaimer();
@@ -71,7 +72,7 @@ describe('useCareerTiming', () => {
 
   it('API 성공 시 phase가 result, result 설정됨', async () => {
     fetchCareerTiming.mockResolvedValueOnce(mockResult);
-    const { result } = renderHook(() => useCareerTiming());
+    const { result } = renderHook(() => useCareerTiming(), { wrapper: QueryClientWrapper });
 
     act(() => { result.current.submitAnalysis('1990-10-10', '14:30'); });
     await skipDisclaimer();
@@ -83,7 +84,7 @@ describe('useCareerTiming', () => {
 
   it('성공 시 sessionStore에 sajuResultId와 분석 타입 저장', async () => {
     fetchCareerTiming.mockResolvedValueOnce(mockResult);
-    const { result } = renderHook(() => useCareerTiming());
+    const { result } = renderHook(() => useCareerTiming(), { wrapper: QueryClientWrapper });
 
     act(() => { result.current.submitAnalysis('1990-10-10', '14:30'); });
     await skipDisclaimer();
@@ -97,7 +98,7 @@ describe('useCareerTiming', () => {
     fetchCareerTiming.mockResolvedValueOnce(mockResult);
     expect(useAuthStore.getState().isLoggedIn).toBe(false);
 
-    const { result } = renderHook(() => useCareerTiming());
+    const { result } = renderHook(() => useCareerTiming(), { wrapper: QueryClientWrapper });
     act(() => { result.current.submitAnalysis('1990-10-10', '14:30'); });
     await skipDisclaimer();
     await waitFor(() => expect(result.current.phase).toBe('result'));
@@ -113,7 +114,7 @@ describe('useCareerTiming', () => {
     fetchCareerTiming.mockResolvedValueOnce(mockResult);
     useAuthStore.getState().setUser({ userId: 'u1', email: 'a@b.com', name: '테스트' });
 
-    const { result } = renderHook(() => useCareerTiming());
+    const { result } = renderHook(() => useCareerTiming(), { wrapper: QueryClientWrapper });
     act(() => { result.current.submitAnalysis('1990-10-10', '14:30'); });
     await skipDisclaimer();
     await waitFor(() => expect(result.current.phase).toBe('result'));
@@ -123,7 +124,7 @@ describe('useCareerTiming', () => {
 
   it('시간 미입력 시 기본값 12:00으로 API 호출', async () => {
     fetchCareerTiming.mockResolvedValueOnce(mockResult);
-    const { result } = renderHook(() => useCareerTiming());
+    const { result } = renderHook(() => useCareerTiming(), { wrapper: QueryClientWrapper });
 
     act(() => { result.current.submitAnalysis('1990-10-10'); });
     await skipDisclaimer();
@@ -136,7 +137,7 @@ describe('useCareerTiming', () => {
 
   it('API 실패 시 phase가 error, error 메시지 설정', async () => {
     fetchCareerTiming.mockRejectedValueOnce(new Error('타임아웃 오류'));
-    const { result } = renderHook(() => useCareerTiming());
+    const { result } = renderHook(() => useCareerTiming(), { wrapper: QueryClientWrapper });
 
     act(() => { result.current.submitAnalysis('1990-10-10', '14:30'); });
     await skipDisclaimer();
@@ -148,7 +149,7 @@ describe('useCareerTiming', () => {
 
   it('API 실패 시 analysisStore에 에러 저장', async () => {
     fetchCareerTiming.mockRejectedValueOnce(new Error('네트워크 오류'));
-    const { result } = renderHook(() => useCareerTiming());
+    const { result } = renderHook(() => useCareerTiming(), { wrapper: QueryClientWrapper });
 
     act(() => { result.current.submitAnalysis('1990-10-10', '14:30'); });
     await skipDisclaimer();
@@ -159,7 +160,7 @@ describe('useCareerTiming', () => {
 
   it('진행 중 두 번째 submitAnalysis 호출 무시 (중복 방지)', () => {
     fetchCareerTiming.mockReturnValue(new Promise(() => {}));
-    const { result } = renderHook(() => useCareerTiming());
+    const { result } = renderHook(() => useCareerTiming(), { wrapper: QueryClientWrapper });
 
     act(() => { result.current.submitAnalysis('1990-10-10', '14:30'); });
     act(() => { result.current.submitAnalysis('1991-01-01', '09:00'); });
@@ -171,7 +172,7 @@ describe('useCareerTiming', () => {
 
   it('reset() 호출 시 phase idle, 결과 초기화', async () => {
     fetchCareerTiming.mockResolvedValueOnce(mockResult);
-    const { result } = renderHook(() => useCareerTiming());
+    const { result } = renderHook(() => useCareerTiming(), { wrapper: QueryClientWrapper });
 
     act(() => { result.current.submitAnalysis('1990-10-10', '14:30'); });
     await skipDisclaimer();

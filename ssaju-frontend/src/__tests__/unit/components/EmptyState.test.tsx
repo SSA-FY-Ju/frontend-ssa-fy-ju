@@ -16,10 +16,10 @@ describe('EmptyState', () => {
     expect(screen.getByText(/지금 분석을 시작해보세요/)).toBeInTheDocument();
   });
 
-  it('renders action link element pointing to career-timing page', () => {
+  it('renders action link element pointing to service select page', () => {
     render(<EmptyState />);
     const link = screen.getByRole('link', { name: '분석 시작하기' });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', '/career-timing');
+    expect(link).toHaveAttribute('href', '/select');
   });
 });

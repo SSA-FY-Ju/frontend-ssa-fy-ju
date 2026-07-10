@@ -11,6 +11,7 @@ import { fetchMyPageData, fetchAnalysisRecord, deleteAnalysisRecord } from '@/li
 
 jest.mock('@/lib/api/client', () => ({
   apiFetch: jest.fn(),
+  TIMEOUTS: { SHORT: 5000, DEFAULT: 10000, LONG: 60000 },
 }));
 
 const { apiFetch } = jest.requireMock('@/lib/api/client');
@@ -74,7 +75,8 @@ describe('fetchAnalysisRecord', () => {
 
     const result = await fetchAnalysisRecord('1', 'TIMING');
 
-    expect(apiFetch).toHaveBeenCalledWith('/api/mypage/analyses/1?type=TIMING', expect.objectContaining({ method: 'GET' }));
+    // TYPE_MAP: TIMING → SAJU (백엔드 명세 기준 변환)
+    expect(apiFetch).toHaveBeenCalledWith('/api/mypage/analyses/1?type=SAJU', expect.objectContaining({ method: 'GET' }));
     expect(result).toEqual(mockRecord);
   });
 
@@ -84,7 +86,8 @@ describe('fetchAnalysisRecord', () => {
     await fetchAnalysisRecord('abc-123', 'CONSULTATION');
 
     const [path] = apiFetch.mock.calls[0];
-    expect(path).toBe('/api/mypage/analyses/abc-123?type=CONSULTATION');
+    // TYPE_MAP: CONSULTATION → CAREER_CONSULTATION
+    expect(path).toBe('/api/mypage/analyses/abc-123?type=CAREER_CONSULTATION');
   });
 
   it('apiFetch 실패 시 에러 전파', async () => {

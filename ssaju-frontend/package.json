@@ -11,6 +11,9 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css}\"",
     "test": "jest --coverage --coveragePathIgnorePatterns=node_modules --testPathIgnorePatterns=node_modules",
     "test:watch": "jest --watch",
+    "test:unit": "jest src/__tests__/unit --coverage --coveragePathIgnorePatterns=node_modules",
+    "test:flow": "jest src/__tests__/flows",
+    "test:flow:watch": "jest src/__tests__/flows --watch",
     "fetch-dart-corps": "node scripts/fetchDartCorps.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"

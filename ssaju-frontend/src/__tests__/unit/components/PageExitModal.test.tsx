@@ -55,25 +55,25 @@ describe('PageExitModal', () => {
     expect(dialog).toHaveAttribute('aria-modal', 'true');
   });
 
-  it('"지금 로그인하기" 클릭 시 openLoginModal과 onLoginAndStay가 호출됨', () => {
+  it('"로그인하고 결과 저장" 클릭 시 openLoginModal과 onLoginAndStay가 호출됨', () => {
     const onLoginAndStay = jest.fn();
     renderModal(true, { onLoginAndStay });
-    fireEvent.click(screen.getByRole('button', { name: '지금 로그인하기' }));
+    fireEvent.click(screen.getByRole('button', { name: /로그인하고 결과 저장/ }));
     expect(mockOpenLoginModal).toHaveBeenCalledTimes(1);
     expect(onLoginAndStay).toHaveBeenCalledTimes(1);
   });
 
-  it('"계속 보기" 클릭 시 onCancelExit가 호출됨', () => {
+  it('"결과 계속 보기" 클릭 시 onCancelExit가 호출됨', () => {
     const onCancelExit = jest.fn();
     renderModal(true, { onCancelExit });
-    fireEvent.click(screen.getByRole('button', { name: '계속 보기' }));
+    fireEvent.click(screen.getByRole('button', { name: '결과 계속 보기' }));
     expect(onCancelExit).toHaveBeenCalledTimes(1);
   });
 
-  it('"그냥 나가기" 클릭 시 onConfirmExit가 호출됨', () => {
+  it('"결과 삭제하고 나가기" 클릭 시 onConfirmExit가 호출됨', () => {
     const onConfirmExit = jest.fn();
     renderModal(true, { onConfirmExit });
-    fireEvent.click(screen.getByRole('button', { name: '그냥 나가기' }));
+    fireEvent.click(screen.getByRole('button', { name: '결과 삭제하고 나가기' }));
     expect(onConfirmExit).toHaveBeenCalledTimes(1);
   });
 });

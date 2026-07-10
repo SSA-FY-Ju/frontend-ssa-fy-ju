@@ -15,6 +15,7 @@ jest.mock('@/lib/api/client', () => ({
   apiFetch: jest.fn(),
   axiosInstance: { post: jest.fn() },
   ApiError: jest.requireActual('@/lib/api/client').ApiError,
+  TIMEOUTS: { SHORT: 5000, DEFAULT: 10000, LONG: 60000 },
 }));
 
 const { apiFetch, axiosInstance } = jest.requireMock('@/lib/api/client');
@@ -74,7 +75,7 @@ describe('fetchConsultation', () => {
     expect(apiFetch).toHaveBeenCalledWith('/api/career/consultation', {
       method: 'POST',
       body: request,
-      timeout: 15000,
+      timeout: 60000, // TIMEOUTS.LONG — AI 컨설팅은 응답이 오래 걸림
     });
     expect(result).toEqual(mockData);
   });
