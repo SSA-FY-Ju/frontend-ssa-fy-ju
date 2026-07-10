@@ -44,6 +44,11 @@ export async function POST(req: NextRequest) {
     // 4. 새 AccessToken 브라우저로 전달
     if (newAccessToken) {
       nextResponse.headers.set('authorization', newAccessToken);
+
+      // [마이그레이션 1단계] accessToken을 HttpOnly 쿠키로도 함께 내려준다.
+      // 기존 헤더 방식은 그대로 유지 — 클라이언트 코드는 아직 안 바꿈.
+      const accessToken = newAccessToken.startsWith('Bearer ') ? newAccessToken.slice(7) : newAccessToken;
+      nextResponse.headers.append('set-cookie', `accessToken=${accessToken}; HttpOnly; Path=/; SameSite=Lax`);
     }
 
     // 5. 새 RefreshToken을 HttpOnly 쿠키로 설정하여 브라우저로 전달

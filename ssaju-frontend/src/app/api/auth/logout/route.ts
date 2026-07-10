@@ -33,6 +33,10 @@ export async function POST(req: NextRequest) {
     const data = await res.json().catch(() => ({}));
     const nextResponse = NextResponse.json(data, { status: res.status });
 
+    // [마이그레이션 1단계] accessToken 쿠키는 백엔드가 모르는 Next.js 레이어의
+    // 자체 쿠키이므로, 백엔드 Set-Cookie 전달과 별개로 직접 만료시켜야 한다.
+    nextResponse.headers.append('set-cookie', 'accessToken=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0');
+
     // 백엔드에서 온 모든 Set-Cookie 헤더를 브라우저로 전달
     // 특히 토큰 만료(Max-Age=0) 쿠키가 포함되어야 함
     const setCookies = typeof res.headers.getSetCookie === 'function'
