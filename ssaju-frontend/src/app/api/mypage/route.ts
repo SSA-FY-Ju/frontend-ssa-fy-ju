@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bypassHeaders } from '@/lib/server/bypass-header';
+import { resolveAuthorization } from '@/lib/server/resolve-authorization';
 
 const BACKEND_URL = process.env.BACKEND_URL!;
 
@@ -7,7 +8,7 @@ const BACKEND_URL = process.env.BACKEND_URL!;
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const authorization = req.headers.get('authorization') ?? '';
+    const authorization = resolveAuthorization(req);
     const cookie = req.headers.get('cookie') ?? '';
 
     const query = searchParams.toString();

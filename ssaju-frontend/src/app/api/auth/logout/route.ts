@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bypassHeaders } from '@/lib/server/bypass-header';
+import { resolveAuthorization } from '@/lib/server/resolve-authorization';
 
 const BACKEND_URL = process.env.BACKEND_URL!;
 
 /** 로그아웃 — 실제 백엔드 프록시 (refreshToken 쿠키 전달 + 쿠키 삭제 응답 전달) */
 export async function POST(req: NextRequest) {
   try {
-    const authorization = req.headers.get('authorization') ?? '';
+    const authorization = resolveAuthorization(req);
     const cookieHeader = req.headers.get('cookie') ?? '';
 
     // 백엔드 명세에 맞춰 refreshToken 추출 및 헤더 추가
