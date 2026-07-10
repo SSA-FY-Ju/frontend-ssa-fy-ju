@@ -4,11 +4,11 @@
  * 저장하는 정보:
  * - 로그인 여부 (isLoggedIn)
  * - 사용자 정보 (userId, name, email)
- * - JWT accessToken
+ *
+ * accessToken은 이 스토어가 아닌 HttpOnly accessToken 쿠키에만 존재한다.
+ * 브라우저가 요청마다 자동으로 실어주므로 클라이언트 상태로 들고 있을 필요가 없다.
  *
  * 영속화: isLoggedIn + user → localStorage (새로고침 후에도 UI 상태 유지)
- * 비영속(메모리): accessToken → XSS 방어를 위해 localStorage 저장 안 함
- *   → 새로고침 시 accessToken=null, 첫 API 호출에서 401 → tryRefreshToken() 자동 재발급
  */
 
 import { create } from 'zustand';
@@ -25,7 +25,6 @@ interface AuthStore {
   // 영속 상태
   isLoggedIn: boolean;
   user: User | null;
-  accessToken: string | null;
 
   // 비영속 상태
   _hasHydrated: boolean;
@@ -37,7 +36,6 @@ interface AuthStore {
 
   // Actions
   setUser: (user: User | null) => void;
-  setAccessToken: (token: string | null) => void;
   setIsLoggedIn: (isLoggedIn: boolean) => void;
   setLoginError: (error: string | null) => void;
   setIsLoading: (isLoading: boolean) => void;
@@ -55,7 +53,6 @@ export const useAuthStore = create<AuthStore>()(
       // 초기 상태
       isLoggedIn: false,
       user: null,
-      accessToken: null,
       _hasHydrated: false,
       isAuthReady: false,
       loginError: null,
@@ -64,10 +61,6 @@ export const useAuthStore = create<AuthStore>()(
 
       setUser: (user: User | null) => {
         set({ user, isLoggedIn: !!user, loginError: null });
-      },
-
-      setAccessToken: (token: string | null) => {
-        set({ accessToken: token });
       },
 
       setIsLoggedIn: (isLoggedIn: boolean) => {
@@ -91,14 +84,13 @@ export const useAuthStore = create<AuthStore>()(
       },
 
       logout: () => {
-        set({ isLoggedIn: false, user: null, accessToken: null, loginError: null });
+        set({ isLoggedIn: false, user: null, loginError: null });
       },
 
       reset: () => {
         set({
           isLoggedIn: false,
           user: null,
-          accessToken: null,
           loginError: null,
           isLoading: false,
         });
@@ -110,7 +102,6 @@ export const useAuthStore = create<AuthStore>()(
     {
       name: 'auth-storage',
       storage: createJSONStorage(() => localStorage),
-      // accessToken은 보안상 localStorage에 저장하지 않음 (새로고침 시 null)
       partialize: (state) => ({
         isLoggedIn: state.isLoggedIn,
         user: state.user,

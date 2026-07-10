@@ -17,9 +17,6 @@ const defaultAuthState = {
   isLoggedIn: true,
   isAuthReady: true,
   _hasHydrated: true,
-  // useMyPage 등 accessToken 존재 여부로 게이트되는 쿼리(enabled: !!accessToken)를
-  // 통과시키기 위한 목 토큰. 실제 인증에는 사용되지 않는다.
-  accessToken: 'story-mock-access-token',
   user: { userId: 'u1', email: 'user@example.com', name: '홍길동' },
 };
 

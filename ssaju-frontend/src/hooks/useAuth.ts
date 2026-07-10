@@ -26,17 +26,13 @@ export function useAuth() {
     authStore.setIsLoading(true);
     authStore.setLoginError(null);
     try {
-      const result = await loginApi(req);
-      const token = result.accessToken;
-      authStore.setAccessToken(token);
+      await loginApi(req);
       authStore.setIsLoggedIn(true);
 
       // [핵심 추가] 로그인 직후 즉시 마이페이지 정보를 가져와 유저 정보 동기화
+      // (login 응답 시점에 accessToken 쿠키가 이미 세팅되어 자동으로 실린다)
       try {
-        const myPageData = await fetchMyPageData(
-          { page: 0, size: 1 },
-          { Authorization: `Bearer ${token}` }
-        );
+        const myPageData = await fetchMyPageData({ page: 0, size: 1 });
 
         if (myPageData?.profile) {
           authStore.setUser({

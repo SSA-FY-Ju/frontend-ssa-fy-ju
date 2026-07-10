@@ -65,20 +65,6 @@ const updateLoadingState = (loading: boolean): void => {
   }
 };
 
-/** 현재 accessToken으로 Authorization 헤더 구성 (클라이언트 환경에서만) */
-function getAuthHeader(): Record<string, string> {
-  try {
-    if (typeof window !== 'undefined') {
-      const { useAuthStore } = require('@/stores/authStore');
-      const token = useAuthStore.getState().accessToken;
-      if (token) return { Authorization: `Bearer ${token}` };
-    }
-  } catch {
-    // 스토어 접근 실패 시 무시
-  }
-  return {};
-}
-
 /**
  * 토큰 갱신 잠금 변수 (중복 갱신 방지)
  */
@@ -96,35 +82,16 @@ export async function tryRefreshToken(): Promise<boolean> {
   refreshPromise = (async () => {
     try {
       const baseUrl = (config.apiBaseUrl || '').replace(/\/$/, '');
-      const response = await axiosInstance.post(
-        `${baseUrl}/api/auth/refresh`,
-        {},
-        { withCredentials: true },
-      );
+      await axiosInstance.post(`${baseUrl}/api/auth/refresh`, {}, { withCredentials: true });
 
-      const json = response.data ?? {};
-
-      // 1순위: 응답 헤더 Authorization (대소문자 무관하게 처리)
-      const authHeader = response.headers['authorization'] ?? response.headers['Authorization'] ?? '';
-      let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
-
-      // 2순위: 응답 바디
-      if (!token) {
-        token = json.data?.accessToken ?? json.accessToken ?? '';
+      // accessToken은 이제 응답의 Set-Cookie로 세팅되므로 값 자체를 파싱할 필요가 없다.
+      // 요청이 2xx로 성공했다는 것 자체가 갱신 성공 신호.
+      // user 정보(name, email)는 authStore localStorage에 영속되므로 별도 API 호출 불필요
+      if (typeof window !== 'undefined') {
+        const { useAuthStore } = require('@/stores/authStore');
+        useAuthStore.getState().setIsLoggedIn(true);
       }
-
-      if (token) {
-        // 새 accessToken을 authStore에 저장 및 로그인 상태 업데이트
-        // user 정보(name, email)는 authStore localStorage에 영속되므로 별도 API 호출 불필요
-        if (typeof window !== 'undefined') {
-          const { useAuthStore } = require('@/stores/authStore');
-          const store = useAuthStore.getState();
-          store.setAccessToken(token);
-          store.setIsLoggedIn(true);
-        }
-        return true;
-      }
-      return false;
+      return true;
     } catch {
       return false;
     } finally {
@@ -156,10 +123,7 @@ axiosInstance.interceptors.response.use(
 
       const refreshed = await tryRefreshToken();
       if (refreshed) {
-        originalConfig.headers = {
-          ...originalConfig.headers,
-          ...getAuthHeader(),
-        } as InternalAxiosRequestConfig['headers'];
+        // 새 accessToken은 이미 쿠키로 세팅되어 있으므로 헤더 조작 없이 그대로 재시도
         return axiosInstance(originalConfig);
       }
 
@@ -220,7 +184,6 @@ export async function apiFetch<T>(
           withCredentials: true, // refreshToken HttpOnly 쿠키 자동 전송 (logout 등에서 필요)
           headers: {
             'Content-Type': 'application/json',
-            ...getAuthHeader(),
             ...headers,
           },
         });

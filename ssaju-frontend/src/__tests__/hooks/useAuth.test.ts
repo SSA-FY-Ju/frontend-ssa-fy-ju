@@ -51,7 +51,6 @@ describe('useAuth', () => {
     });
 
     expect(useAuthStore.getState().isLoggedIn).toBe(true);
-    expect(useAuthStore.getState().accessToken).toBe('test-token-123');
   });
 
   it('login 실패 시 loginError 설정', async () => {
@@ -74,7 +73,6 @@ describe('useAuth', () => {
   it('logout 호출 시 스토어 초기화', async () => {
     logoutApi.mockResolvedValueOnce(undefined);
     useAuthStore.getState().setUser({ userId: 'u1', email: 'a@b.com', name: '테스트' });
-    useAuthStore.getState().setAccessToken('some-token');
 
     const { result } = renderHook(() => useAuth());
 
@@ -84,7 +82,6 @@ describe('useAuth', () => {
 
     expect(useAuthStore.getState().isLoggedIn).toBe(false);
     expect(useAuthStore.getState().user).toBeNull();
-    expect(useAuthStore.getState().accessToken).toBeNull();
   });
 
   it('logout API 실패해도 클라이언트 상태 초기화', async () => {

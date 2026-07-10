@@ -31,7 +31,7 @@ export function useMyPage() {
   const [currentPage, setCurrentPage] = useState(0);
 
   const setUser = useAuthStore((s) => s.setUser);
-  const accessToken = useAuthStore((s) => s.accessToken);
+  const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
 
   const { data, isPending, status, error, refetch } = useQuery({
     queryKey: MYPAGE_QUERY_KEY,
@@ -58,7 +58,7 @@ export function useMyPage() {
         type: mapType((item as Record<string, any>).type as string),
       })) as MyPageAnalysisSummary[];
     },
-    enabled: !!accessToken,
+    enabled: isLoggedIn,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
