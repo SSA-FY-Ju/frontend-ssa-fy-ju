@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { renderHook } from '@testing-library/react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { toast } from 'sonner';
@@ -11,7 +11,6 @@ jest.mock('sonner');
 jest.mock('@/stores/sessionStore');
 
 const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>;
-const mockUsePathname = usePathname as jest.MockedFunction<typeof usePathname>;
 const mockUseSessionStore = useSessionStore as jest.MockedFunction<typeof useSessionStore>;
 const mockToast = toast as jest.Mocked<typeof toast>;
 
@@ -21,64 +20,55 @@ describe('useRouteGuard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseRouter.mockReturnValue({ push: mockPush } as any);
-    mockToast.error = jest.fn();
+    mockToast.info = jest.fn();
   });
 
-  it('should allow access when birthDate exists', () => {
-    mockUsePathname.mockReturnValue('/career-timing');
+  it('birthDate가 있으면 통과시키고 리다이렉트하지 않는다', () => {
     mockUseSessionStore.mockReturnValue({
       birthDate: '2000-01-01',
+      _hasHydrated: true,
     } as any);
 
-    renderHook(() => useRouteGuard(true));
+    const { result } = renderHook(() => useRouteGuard(true));
 
+    expect(result.current.isAllowed).toBe(true);
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it('should redirect to /survey when birthDate is missing', () => {
-    mockUsePathname.mockReturnValue('/career-timing');
+  it('birthDate가 없으면 /chat으로 리다이렉트하고 안내 토스트를 띄운다', () => {
     mockUseSessionStore.mockReturnValue({
       birthDate: null,
+      _hasHydrated: true,
     } as any);
 
-    renderHook(() => useRouteGuard(true));
+    const { result } = renderHook(() => useRouteGuard(true));
 
-    expect(mockPush).toHaveBeenCalledWith('/survey');
-    expect(mockToast.error).toHaveBeenCalledWith(
-      '먼저 기본 정보를 입력해주세요'
-    );
+    expect(result.current.isAllowed).toBe(false);
+    expect(mockPush).toHaveBeenCalledWith('/chat?fromGuard=1');
+    expect(mockToast.info).toHaveBeenCalledWith('생년월일을 먼저 입력해주세요');
   });
 
-  it('should not guard when required=false', () => {
-    mockUsePathname.mockReturnValue('/career-timing');
+  it('sessionStore 하이드레이션 전에는 판정을 보류한다', () => {
     mockUseSessionStore.mockReturnValue({
       birthDate: null,
+      _hasHydrated: false,
     } as any);
 
-    renderHook(() => useRouteGuard(false));
+    const { result } = renderHook(() => useRouteGuard(true));
 
+    expect(result.current.isAllowed).toBe(false);
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it('should not guard /survey pages (entry point)', () => {
-    mockUsePathname.mockReturnValue('/survey');
+  it('required=false면 즉시 통과시킨다', () => {
     mockUseSessionStore.mockReturnValue({
       birthDate: null,
+      _hasHydrated: true,
     } as any);
 
-    renderHook(() => useRouteGuard(true));
+    const { result } = renderHook(() => useRouteGuard(false));
 
-    expect(mockPush).not.toHaveBeenCalled();
-  });
-
-  it('should not guard /survey/[step] pages', () => {
-    mockUsePathname.mockReturnValue('/survey/step2');
-    mockUseSessionStore.mockReturnValue({
-      birthDate: null,
-    } as any);
-
-    renderHook(() => useRouteGuard(true));
-
+    expect(result.current.isAllowed).toBe(true);
     expect(mockPush).not.toHaveBeenCalled();
   });
 });

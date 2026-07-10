@@ -12,16 +12,6 @@ import { NextRequest, NextResponse } from 'next/server';
  * 생년월일(birthDate) 입력 여부 체크는 서버가 알 수 없는 클라이언트 상태
  * (sessionStore)에 있으므로 그대로 useRouteGuard가 담당한다.
  */
-const PROTECTED_PATHS = [
-  '/select',
-  '/chat',
-  '/career-timing',
-  '/compatibility',
-  '/compatibility/result',
-  '/consultation',
-  '/my-page',
-];
-
 export function middleware(req: NextRequest) {
   const hasSession = !!req.cookies.get('refreshToken')?.value;
 
@@ -34,6 +24,17 @@ export function middleware(req: NextRequest) {
   return NextResponse.next();
 }
 
+// Next.js가 빌드 시점에 이 배열을 정적으로 분석하므로 리터럴로 직접 작성해야 한다.
+// (변수를 spread로 넣으면 정적 분석이 안 되어 모든 경로에 적용되는 사고가 났었음)
 export const config = {
-  matcher: [...PROTECTED_PATHS, '/my-page/:path*'],
+  matcher: [
+    '/select',
+    '/chat',
+    '/career-timing',
+    '/compatibility',
+    '/compatibility/result',
+    '/consultation',
+    '/my-page',
+    '/my-page/:path*',
+  ],
 };

@@ -5,17 +5,16 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import ChatInput from '@/components/landing/ChatInput';
 import type { PageState } from '@/components/landing/types';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useSessionStore } from '@/stores/sessionStore';
 
+// 로그인 여부는 미들웨어(src/middleware.ts)가 서버에서 먼저 걸러낸다.
 function ChatPageInner() {
-  const { isAllowed } = useAuthGuard(true);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { selectedService, _hasHydrated } = useSessionStore();
 
   useEffect(() => {
-    if (!isAllowed || !_hasHydrated) return;
+    if (!_hasHydrated) return;
     if (!selectedService) {
       // useRouteGuard가 리다이렉트한 경우 toast 생략 (이미 다른 toast 출력됨)
       const fromGuard = searchParams.get('fromGuard') === '1';
@@ -24,7 +23,7 @@ function ChatPageInner() {
       }
       router.push('/select');
     }
-  }, [isAllowed, _hasHydrated, selectedService, router, searchParams]);
+  }, [_hasHydrated, selectedService, router, searchParams]);
 
   const handleStateChange = (state: PageState) => {
     if (state === 'landing') {
@@ -32,7 +31,7 @@ function ChatPageInner() {
     }
   };
 
-  if (!isAllowed || !selectedService) return null;
+  if (!selectedService) return null;
   return <ChatInput onStateChange={handleStateChange} />;
 }
 

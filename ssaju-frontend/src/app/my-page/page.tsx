@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthGuard } from '@/hooks/useAuthGuard';
 import { useMyPage } from '@/hooks/useMyPage';
 import { useDeleteHistory } from '@/hooks/useDeleteHistory';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,8 +12,8 @@ import { DeleteConfirmModal } from '@/components/history/DeleteConfirmModal';
 import { ProfileCard } from '@/components/history/ProfileCard';
 import { Pagination } from '@/components/history/Pagination';
 
+// 로그인 여부는 미들웨어(src/middleware.ts)가 서버에서 먼저 걸러낸다.
 export default function MyPage() {
-  const { isAllowed } = useAuthGuard(true);
   const router = useRouter();
   const { user } = useAuth();
 
@@ -46,8 +45,6 @@ export default function MyPage() {
     }),
     [allAnalyses],
   );
-
-  if (!isAllowed) return null;
 
   return (
     <div className="min-h-screen text-white pt-16 pb-8">
