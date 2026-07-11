@@ -20,6 +20,11 @@ export async function POST(req: NextRequest) {
     const authHeader = res.headers.get('authorization') ?? res.headers.get('Authorization') ?? '';
     if (authHeader) {
       nextResponse.headers.set('authorization', authHeader);
+
+      // [마이그레이션 1단계] accessToken을 HttpOnly 쿠키로도 함께 내려준다.
+      // 기존 헤더 방식은 그대로 유지 — 클라이언트 코드는 아직 안 바꿈.
+      const accessToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
+      nextResponse.headers.append('set-cookie', `accessToken=${accessToken}; HttpOnly; Path=/; SameSite=Lax`);
     }
 
     // 2. 백엔드 명세: Refresh-Token 헤더를 읽어 쿠키로 설정

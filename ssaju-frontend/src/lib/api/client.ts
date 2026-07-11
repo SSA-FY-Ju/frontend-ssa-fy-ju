@@ -12,7 +12,10 @@
  * - 에러 처리
  */
 
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { config } from '../config/env';
+
+export const axiosInstance = axios.create({ withCredentials: true });
 
 interface FetchOptions {
   method?: 'GET' | 'POST' | 'DELETE' | 'PUT';
@@ -79,38 +82,17 @@ export async function tryRefreshToken(): Promise<boolean> {
   refreshPromise = (async () => {
     try {
       const baseUrl = (config.apiBaseUrl || '').replace(/\/$/, '');
-      const response = await fetch(`${baseUrl}/api/auth/refresh`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-        credentials: 'include',
-      });
-      if (!response.ok) return false;
+      await axiosInstance.post(`${baseUrl}/api/auth/refresh`, {}, { withCredentials: true });
 
-      const json = await response.json().catch(() => ({}));
-
-      // 1순위: 응답 헤더 Authorization (대소문자 무관하게 처리)
-      const authHeader = response.headers.get('authorization') ?? response.headers.get('Authorization') ?? '';
-      let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
-
-      // 2순위: 응답 바디
-      if (!token) {
-        token = json.data?.accessToken ?? json.accessToken ?? '';
+      // accessToken은 이제 응답의 Set-Cookie로 세팅되므로 값 자체를 파싱할 필요가 없다.
+      // 요청이 2xx로 성공했다는 것 자체가 갱신 성공 신호.
+      // user 정보(name, email)는 authStore localStorage에 영속되므로 별도 API 호출 불필요
+      if (typeof window !== 'undefined') {
+        const { useAuthStore } = require('@/stores/authStore');
+        useAuthStore.getState().setIsLoggedIn(true);
       }
-
-      if (token) {
-        // 새 accessToken을 authStore에 저장 및 로그인 상태 업데이트
-        // user 정보(name, email)는 authStore localStorage에 영속되므로 별도 API 호출 불필요
-        if (typeof window !== 'undefined') {
-          const { useAuthStore } = require('@/stores/authStore');
-          const store = useAuthStore.getState();
-          store.setAccessToken(token);
-          store.setIsLoggedIn(true);
-        }
-        return true;
-      }
-      return false;
-    } catch (err) {
+      return true;
+    } catch {
       return false;
     } finally {
       refreshPromise = null;
@@ -120,6 +102,47 @@ export async function tryRefreshToken(): Promise<boolean> {
   return refreshPromise;
 }
 
+type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
+
+/**
+ * 401 응답 자동 갱신 인터셉터
+ *
+ * - 401 수신 시 tryRefreshToken() 1회 시도 → 성공하면 원요청에 새 토큰을 실어 재시도
+ * - /api/auth/refresh 자체가 401을 반환하는 경우는 재시도 대상에서 제외 (무한 루프 방지)
+ * - 갱신 실패 시 로그아웃 + 로그인 모달 오픈
+ */
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalConfig = error.config as RetriableConfig | undefined;
+    const status = error.response?.status;
+    const isRefreshCall = originalConfig?.url?.includes('/api/auth/refresh');
+
+    if (status === 401 && originalConfig && !originalConfig._retry && !isRefreshCall) {
+      originalConfig._retry = true;
+
+      const refreshed = await tryRefreshToken();
+      if (refreshed) {
+        // 새 accessToken은 이미 쿠키로 세팅되어 있으므로 헤더 조작 없이 그대로 재시도
+        return axiosInstance(originalConfig);
+      }
+
+      // 갱신 실패 (리프레시 토큰 만료) → 로그아웃 + 로그인 모달 오픈
+      if (typeof window !== 'undefined') {
+        try {
+          const { useAuthStore } = require('@/stores/authStore');
+          const store = useAuthStore.getState();
+          store.logout();
+          store.openLoginModal();
+        } catch {
+          // 스토어 접근 실패 시 무시
+        }
+      }
+    }
+
+    return Promise.reject(error);
+  },
+);
 
 /**
  * 중앙 API fetch 래퍼
@@ -153,98 +176,58 @@ export async function apiFetch<T>(
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-        // authStore에서 accessToken 읽어 Authorization 헤더 자동 주입
-        let authHeader: Record<string, string> = {};
-        try {
-          if (typeof window !== 'undefined') {
-            const { useAuthStore } = require('@/stores/authStore');
-            const token = useAuthStore.getState().accessToken;
-            if (token) authHeader = { Authorization: `Bearer ${token}` };
-          }
-        } catch {
-          // 스토어 접근 실패 시 무시
-        }
-
-
-        const response = await fetch(url, {
+        const response = await axiosInstance.request<ApiResponse<T>>({
+          url,
           method,
-          credentials: 'include', // refreshToken HttpOnly 쿠키 자동 전송 (logout 등에서 필요)
+          data: body ?? undefined,
+          timeout,
+          withCredentials: true, // refreshToken HttpOnly 쿠키 자동 전송 (logout 등에서 필요)
           headers: {
             'Content-Type': 'application/json',
-            ...authHeader,
             ...headers,
           },
-          body: body ? JSON.stringify(body) : null,
-          signal: controller.signal,
         });
 
-        clearTimeout(timeoutId);
+        const json = response.data;
 
-        // 성공 응답 처리
-        if (response.ok) {
-          const json = (await response.json()) as ApiResponse<T>;
-
-
-          if (json.success) {
-            return json.data as T;
-          }
-
-          // API 비즈니스 에러
-          throw new ApiError(
-            response.status,
-            json.error?.code || json.errorCode || 'UNKNOWN_ERROR',
-            json.error?.message || json.message || 'Unknown error',
-            json.error?.requestId || 'unknown',
-          );
+        if (json.success) {
+          return json.data as T;
         }
 
-        // 401 — 토큰 갱신 시도 후 1회 재요청
-        if (response.status === 401 && attempt === 0) {
-          const refreshed = await tryRefreshToken();
-          if (refreshed) {
-            // 재시도
-            lastError = new Error('TOKEN_REFRESHED');
-            continue;
-          }
-          // 갱신 실패 (리프레시 토큰 만료) → 로그아웃 + 로그인 모달 오픈
-          if (typeof window !== 'undefined') {
-            try {
-              const { useAuthStore } = require('@/stores/authStore');
-              const store = useAuthStore.getState();
-              store.logout();
-              store.openLoginModal();
-            } catch {
-              // 스토어 접근 실패 시 무시
-            }
-          }
-          throw new ApiError(401, 'UNAUTHORIZED', '인증이 만료되었습니다. 다시 로그인해주세요.', 'unknown');
-        }
+        // API 비즈니스 에러 (2xx 응답이지만 success:false)
+        throw new ApiError(
+          response.status,
+          json.error?.code || json.errorCode || 'UNKNOWN_ERROR',
+          json.error?.message || json.message || 'Unknown error',
+          json.error?.requestId || 'unknown',
+        );
+      } catch (error) {
+        if (error instanceof ApiError) throw error;
+
+        const axiosError = error as AxiosError<ApiResponse<T>>;
+        const status = axiosError.response?.status;
 
         // 4xx 에러 (재시도 하지 않음)
-        if (response.status >= 400 && response.status < 500) {
-          let json: ApiResponse<T> | null = null;
-          try { json = (await response.json()) as ApiResponse<T>; } catch { /* non-JSON body */ }
+        // 401은 axiosInstance의 response interceptor가 이미 갱신+재시도를 시도한 뒤이므로,
+        // 여기 도달했다는 건 갱신도 실패했다는 뜻 (로그아웃/모달도 인터셉터에서 처리됨)
+        if (status !== undefined && status >= 400 && status < 500) {
+          const json = axiosError.response?.data;
+          const message = status === 401
+            ? '인증이 만료되었습니다. 다시 로그인해주세요.'
+            : json?.error?.message || json?.message || axiosError.message;
           throw new ApiError(
-            response.status,
-            json?.error?.code || json?.errorCode || 'CLIENT_ERROR',
-            json?.error?.message || json?.message || response.statusText,
+            status,
+            json?.error?.code || json?.errorCode || (status === 401 ? 'UNAUTHORIZED' : 'CLIENT_ERROR'),
+            message,
             json?.error?.requestId || 'unknown',
           );
         }
 
-        // 5xx 에러 (재시도 가능)
-        lastError = new Error(`Server error: ${response.statusText}`);
-        throw lastError;
-      } catch (error) {
+        // 5xx / 네트워크 / 타임아웃 에러
         lastError = error as Error;
 
-        // 재시도 여부 판단 (Q5: 타임아웃/네트워크 에러만)
-        const isRetryable =
-          error instanceof TypeError || // 네트워크 에러
-          (error instanceof Error && error.name === 'AbortError'); // 타임아웃
+        // 재시도 여부 판단 (Q5: 타임아웃/네트워크 에러만 — 응답이 없는 경우)
+        const isRetryable = status === undefined;
 
         if (isRetryable && attempt < maxAttempts - 1) {
           // 지수 백오프
@@ -254,10 +237,6 @@ export async function apiFetch<T>(
         }
 
         // 재시도 불가능하면 에러 발생
-        if (lastError instanceof ApiError) {
-          throw lastError;
-        }
-
         throw new Error(
           `Failed to fetch ${path} after ${maxAttempts} attempts: ${lastError?.message || 'Unknown error'}`,
         );

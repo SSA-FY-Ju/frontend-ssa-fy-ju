@@ -61,6 +61,16 @@ export default function LandingPage() {
       openLoginModal();
     }
   };
+
+  // 미들웨어가 비로그인 접근을 이 페이지로 리다이렉트하며 붙이는 신호(?login=1)
+  // useSearchParams 대신 window.location을 직접 읽어 Suspense 경계 없이 처리
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (new URLSearchParams(window.location.search).get('login') !== '1') return;
+    openLoginModal();
+    router.replace('/');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const totalPages = PAGES.length;
   const containerRef = useRef<HTMLDivElement>(null);
 

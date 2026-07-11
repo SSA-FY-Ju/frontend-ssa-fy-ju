@@ -8,7 +8,8 @@
  * - POST /api/auth/logout     - 로그아웃
  */
 
-import { apiFetch, ApiError, TIMEOUTS } from './client';
+import { AxiosError } from 'axios';
+import { apiFetch, axiosInstance, ApiError, TIMEOUTS } from './client';
 import { config } from '../config/env';
 
 export interface LoginRequest {
@@ -33,30 +34,19 @@ export interface SignupRequest {
  *
  * apiFetch 미사용 이유: 백엔드가 accessToken을 응답 헤더(Authorization: Bearer ...)로
  * 내려주므로 헤더 파싱이 필요함. apiFetch는 ApiResponse<T>.data만 반환하기 때문에
- * 헤더 접근이 불가능하여 raw fetch를 사용.
+ * 헤더 접근이 불가능하여 axiosInstance를 직접 사용.
  */
 export async function login(req: LoginRequest): Promise<LoginResult> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), TIMEOUTS.DEFAULT);
-
   try {
-    const res = await fetch(`${config.apiBaseUrl}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify(req),
-      signal: controller.signal,
+    const res = await axiosInstance.post(`${config.apiBaseUrl}/api/auth/login`, req, {
+      timeout: TIMEOUTS.DEFAULT,
+      withCredentials: true,
     });
 
-    const json = await res.json().catch(() => ({}));
-
-    if (!res.ok) {
-      const msg = json?.error?.message ?? json?.message ?? '로그인에 실패했습니다.';
-      throw new ApiError(res.status, json?.error?.code ?? 'LOGIN_FAILED', msg, 'unknown');
-    }
+    const json = res.data ?? {};
 
     // 1순위: 응답 헤더 Authorization (백엔드가 헤더로 내려주는 경우)
-    const authHeader = res.headers.get('authorization') ?? '';
+    const authHeader = res.headers['authorization'] ?? '';
     let accessToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : authHeader;
 
     // 2순위: 응답 body의 data.accessToken (명세 기준)
@@ -69,8 +59,13 @@ export async function login(req: LoginRequest): Promise<LoginResult> {
     }
 
     return { accessToken };
-  } finally {
-    clearTimeout(timeoutId);
+  } catch (err) {
+    if (err instanceof ApiError) throw err;
+
+    const axiosErr = err as AxiosError<{ error?: { code?: string; message?: string }; message?: string }>;
+    const json = axiosErr.response?.data;
+    const msg = json?.error?.message ?? json?.message ?? '로그인에 실패했습니다.';
+    throw new ApiError(axiosErr.response?.status ?? 500, json?.error?.code ?? 'LOGIN_FAILED', msg, 'unknown');
   }
 }
 

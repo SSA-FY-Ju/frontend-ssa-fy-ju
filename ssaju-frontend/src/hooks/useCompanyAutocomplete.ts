@@ -9,6 +9,7 @@
  */
 
 import { useState, useRef } from 'react';
+import { axiosInstance } from '@/lib/api/client';
 import type { DartCompany } from '@/lib/api/company';
 
 export type { DartCompany };
@@ -55,9 +56,10 @@ export function useCompanyAutocomplete() {
 
     debounceRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/company/search?q=${encodeURIComponent(query.trim())}`);
-        if (!res.ok) throw new Error('search failed');
-        const data: { list: { corpName: string }[] } = await res.json();
+        const res = await axiosInstance.get<{ list: { corpName: string }[] }>('/api/company/search', {
+          params: { q: query.trim() },
+        });
+        const data = res.data;
         const result: DartCompany[] = data.list.map((item) => ({
           corpName: item.corpName,
           corpCode: '',

@@ -65,3 +65,6 @@ tsconfig.tsbuildinfo
 
 # Husky (로컬 훅)
 .husky/
+
+*storybook.log
+storybook-static

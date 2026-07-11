@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { bypassHeaders } from '@/lib/server/bypass-header';
+import { resolveAuthorization } from '@/lib/server/resolve-authorization';
 
 const BACKEND_URL = process.env.BACKEND_URL!;
 
@@ -7,7 +8,7 @@ const BACKEND_URL = process.env.BACKEND_URL!;
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const authorization = req.headers.get('authorization') ?? '';
+    const authorization = resolveAuthorization(req);
     const cookie = req.headers.get('cookie') ?? '';
 
     const res = await fetch(`${BACKEND_URL}/api/career/consultation`, {
