@@ -61,8 +61,7 @@ describe('DeleteConfirmModal', () => {
     const onClose = jest.fn();
     const user = userEvent.setup();
     render(<DeleteConfirmModal {...defaultProps} onClose={onClose} />);
-    // The backdrop is the aria-hidden div behind the modal content
-    const backdrop = document.querySelector('[aria-hidden="true"]') as HTMLElement;
+    const backdrop = screen.getByTestId('dialog-overlay');
     await user.click(backdrop);
     expect(onClose).toHaveBeenCalledTimes(1);
   });

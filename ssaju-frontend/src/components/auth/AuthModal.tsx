@@ -7,8 +7,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { checkEmail } from '@/lib/api/auth';
 import { ApiError } from '@/lib/api/client';
 import { toastUtils } from '@/lib/toast';
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { motion } from 'framer-motion';
+import { DialogTitle } from '@/components/ui/dialog';
+import { ModalShell } from '@/components/common/ModalShell';
 
 type View = 'select' | 'login' | 'signup';
 
@@ -193,21 +193,12 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="max-w-[420px] border-0 bg-transparent p-0 shadow-none [&>button:last-child]:hidden">
-        <DialogTitle className="sr-only">
-          {view === 'select' ? 'SSAju 시작하기' : view === 'login' ? '로그인' : '회원가입'}
-        </DialogTitle>
-
-        {/* 카드 */}
-        <motion.div
-          initial={{ opacity: 0, y: 32, scale: 0.94 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.96 }}
-          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          style={{ position: 'relative', width: '100%', maxWidth: 420, borderRadius: 32, overflow: 'hidden' }}
-        >
-
+    <ModalShell
+      open={isOpen}
+      onOpenChange={(open) => { if (!open) onClose(); }}
+      maxWidth={420}
+      borderRadius={32}
+    >
         {/* ── 배경 레이어 ── */}
         <div style={{
           position: 'absolute', inset: 0,
@@ -286,13 +277,15 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
               <span style={{ fontSize: 26, filter: 'drop-shadow(0 0 8px rgba(167,139,250,0.6))' }}>✦</span>
             </div>
 
-            <h2 id="auth-modal-title" style={{
-              fontSize: view === 'select' ? '1.4rem' : '1.2rem',
-              fontWeight: 800, color: '#fff', marginBottom: 6, letterSpacing: '-0.02em',
-              textShadow: '0 0 24px rgba(167,139,250,0.3)',
-            }}>
-              {view === 'select' ? 'SSAju 시작하기' : view === 'login' ? '로그인' : '회원가입'}
-            </h2>
+            <DialogTitle asChild>
+              <h2 id="auth-modal-title" style={{
+                fontSize: view === 'select' ? '1.4rem' : '1.2rem',
+                fontWeight: 800, color: '#fff', marginBottom: 6, letterSpacing: '-0.02em',
+                textShadow: '0 0 24px rgba(167,139,250,0.3)',
+              }}>
+                {view === 'select' ? 'SSAju 시작하기' : view === 'login' ? '로그인' : '회원가입'}
+              </h2>
+            </DialogTitle>
 
             {view === 'select' && (
               <p style={{ fontSize: 13.5, color: 'rgba(196,181,253,0.4)', lineHeight: 1.7, letterSpacing: '0.01em' }}>
@@ -618,8 +611,6 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
             </div>
           )}
         </div>
-        </motion.div>
-      </DialogContent>
-    </Dialog>
+    </ModalShell>
   );
 }

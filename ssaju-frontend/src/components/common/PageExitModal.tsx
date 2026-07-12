@@ -1,7 +1,8 @@
 'use client';
 
 import { useAuthStore } from '@/stores/authStore';
-import { BaseModal } from '@/components/common/BaseModal';
+import { DialogTitle } from '@/components/ui/dialog';
+import { ModalShell } from '@/components/common/ModalShell';
 
 interface PageExitModalProps {
   isOpen: boolean;
@@ -18,28 +19,25 @@ export function PageExitModal({
 }: PageExitModalProps) {
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
 
-  if (!isOpen) return null;
-
   const handleLoginAndStay = () => {
     openLoginModal();
     onLoginAndStay();
   };
 
   return (
-    <BaseModal
-      accentBar="red"
+    <ModalShell
+      open={isOpen}
+      onOpenChange={() => {}}
       maxWidth={384}
-      outerClassName="flex items-center justify-center p-4"
-      backdropStyle={{
-        background: 'rgba(4,2,18,0.78)',
-      }}
-      containerStyle={{
+      borderRadius={24}
+      accentBar="red"
+      contentClassName="mx-4"
+      cardStyle={{
         background: 'linear-gradient(150deg, rgba(30,20,60,0.72) 0%, rgba(15,10,35,0.78) 100%)',
         border: '1px solid rgba(255,255,255,0.07)',
         boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 40px 80px rgba(0,0,0,0.7), 0 0 80px rgba(239,68,68,0.08)',
       }}
     >
-
         <div className="relative p-7">
           {/* 배경 장식 */}
           <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -76,12 +74,14 @@ export function PageExitModal({
 
             {/* 텍스트 */}
             <div className="text-center">
-              <h2
-                id="exit-modal-title"
-                className="text-white font-bold text-xl mb-2"
-              >
-                잠깐, 결과가 사라져요!
-              </h2>
+              <DialogTitle asChild>
+                <h2
+                  id="exit-modal-title"
+                  className="text-white font-bold text-xl mb-2"
+                >
+                  잠깐, 결과가 사라져요!
+                </h2>
+              </DialogTitle>
               <p id="exit-modal-desc" className="text-slate-400 text-sm leading-relaxed">
                 지금 나가면 분석 결과가 사라져요.
                 <br />
@@ -141,6 +141,6 @@ export function PageExitModal({
             </button>
           </div>
         </div>
-    </BaseModal>
+    </ModalShell>
   );
 }

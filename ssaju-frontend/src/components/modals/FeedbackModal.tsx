@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useFeedback } from '@/hooks/useFeedback';
-import { BaseModal } from '@/components/common/BaseModal';
+import { DialogTitle } from '@/components/ui/dialog';
+import { ModalShell } from '@/components/common/ModalShell';
 
 type FeedbackType = 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
 
@@ -61,23 +62,10 @@ const OPTIONS = [
 export function FeedbackModal({ feedbackType, onClose, onSubmitted, exitAction }: FeedbackModalProps) {
   const [satisfaction, setSatisfaction] = useState<'SATISFIED' | 'DISSATISFIED' | null>(null);
   const [content, setContent] = useState('');
-  const [mounted, setMounted] = useState(false);
-  const [visible, setVisible] = useState(false);
-
-  // 열릴 때 마운트 → 다음 프레임에서 visible=true (슬라이드업 트리거)
-  useEffect(() => {
-    setMounted(true);
-    requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
-  }, []);
-
-  const handleClose = () => {
-    setVisible(false);
-    setTimeout(onClose, 280);
-  };
 
   const { submit, isSubmitting, error } = useFeedback(feedbackType, () => {
     onSubmitted?.();
-    handleClose();
+    onClose();
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -90,28 +78,23 @@ export function FeedbackModal({ feedbackType, onClose, onSubmitted, exitAction }
     if (e.target.value.length <= 500) setContent(e.target.value);
   };
 
-  if (!mounted) return null;
-
   return (
-    <BaseModal
-      onClose={handleClose}
+    <ModalShell
+      open={true}
+      onOpenChange={(open) => { if (!open) onClose(); }}
       maxWidth={448}
-      outerClassName="flex items-end sm:items-center justify-center"
-      backdropStyle={{
-        background: 'rgba(4,2,18,0.78)',
-        transition: 'opacity 0.28s ease',
-        opacity: visible ? 1 : 0,
-      }}
-      containerStyle={{
+      borderRadius={24}
+      contentClassName="inset-x-0 bottom-0 top-auto translate-x-0 translate-y-0 sm:inset-x-auto sm:left-1/2 sm:top-1/2 sm:bottom-auto sm:-translate-x-1/2 sm:-translate-y-1/2 mx-4 mb-4 sm:mb-0"
+      cardStyle={{
         background: 'radial-gradient(ellipse at top, rgba(30,15,60,0.92) 0%, rgba(5,8,20,0.95) 70%)',
         border: '1px solid rgba(139,92,246,0.2)',
         boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(109,40,217,0.12)',
-        transition: 'transform 0.32s cubic-bezier(0.22,1,0.36,1), opacity 0.28s ease',
-        transform: visible ? 'translateY(0) scale(1)' : 'translateY(32px) scale(0.97)',
-        opacity: visible ? 1 : 0,
       }}
-      containerClassName="mx-4 mb-4 sm:mb-0"
-      accentBar={false}
+      motionProps={{
+        initial: { opacity: 0, y: 32, scale: 0.97 },
+        exit: { opacity: 0, y: 20, scale: 0.98 },
+        transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
+      }}
     >
         {/* 배경 별빛 장식 */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -129,7 +112,7 @@ export function FeedbackModal({ feedbackType, onClose, onSubmitted, exitAction }
         <div className="relative p-6 pt-7">
           {/* 닫기 버튼 */}
           <button
-            onClick={handleClose}
+            onClick={onClose}
             aria-label="모달 닫기"
             className="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full transition-all duration-200 text-slate-500 hover:text-white"
             style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
@@ -152,12 +135,14 @@ export function FeedbackModal({ feedbackType, onClose, onSubmitted, exitAction }
                 style={{ background: 'linear-gradient(90deg, rgba(139,92,246,0.4), transparent)' }}
               />
             </div>
-            <h2
-              id="feedback-modal-title"
-              className="text-white text-xl font-bold text-center"
-            >
-              분석이 도움이 됐나요?
-            </h2>
+            <DialogTitle asChild>
+              <h2
+                id="feedback-modal-title"
+                className="text-white text-xl font-bold text-center"
+              >
+                분석이 도움이 됐나요?
+              </h2>
+            </DialogTitle>
             <p className="text-slate-500 text-xs text-center mt-1.5">
               솔직한 피드백이 서비스 개선에 큰 힘이 돼요
             </p>
@@ -268,6 +253,6 @@ export function FeedbackModal({ feedbackType, onClose, onSubmitted, exitAction }
             )}
           </form>
         </div>
-    </BaseModal>
+    </ModalShell>
   );
 }
