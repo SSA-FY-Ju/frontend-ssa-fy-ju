@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { HistoryTabs } from '@/components/history/HistoryTabs';
 import { HistoryCard } from '@/components/history/HistoryCard';
 import { EmptyState } from '@/components/history/EmptyState';
-import { DeleteConfirmModal } from '@/components/history/DeleteConfirmModal';
+import { DeleteConfirmModal } from '@/components/history/DeleteConfirmModal/DeleteConfirmModal';
 import { ProfileCard } from '@/components/history/ProfileCard';
 import { Pagination } from '@/components/history/Pagination';
 

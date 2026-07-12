@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { WithdrawalModal } from '@/components/auth/WithdrawalModal';
+import { WithdrawalModal } from '@/components/auth/WithdrawalModal/WithdrawalModal';
 
 /**
  * 로그인 후 프로필 메뉴

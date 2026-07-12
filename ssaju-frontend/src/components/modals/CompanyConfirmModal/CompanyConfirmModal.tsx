@@ -2,16 +2,8 @@
 
 import { useState, useRef } from 'react';
 import { DialogTitle } from '@/components/ui/dialog';
-import { ModalShell } from '@/components/common/ModalShell';
-
-interface CompanyConfirmModalProps {
-  suggestions: string[];
-  originalInput: string;
-  onConfirm: (companyName: string) => void;
-  onManualInput: () => void;
-  onClose: () => void;
-  confirmLabel?: string;
-}
+import { ModalShell } from '@/components/common/ModalShell/ModalShell';
+import type { CompanyConfirmModalProps } from './CompanyConfirmModal.types';
 
 export function CompanyConfirmModal({
   suggestions,

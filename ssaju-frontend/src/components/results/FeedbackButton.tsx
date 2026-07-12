@@ -8,7 +8,7 @@
  */
 
 import { useState } from 'react';
-import { FeedbackModal } from '@/components/modals/FeedbackModal';
+import { FeedbackModal } from '@/components/modals/FeedbackModal/FeedbackModal';
 
 type FeedbackType = 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
 

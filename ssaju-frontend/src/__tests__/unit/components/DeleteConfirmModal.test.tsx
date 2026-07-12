@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { DeleteConfirmModal } from '@/components/history/DeleteConfirmModal';
+import { DeleteConfirmModal } from '@/components/history/DeleteConfirmModal/DeleteConfirmModal';
 
 const defaultProps = {
   recordId: 'rec-123',

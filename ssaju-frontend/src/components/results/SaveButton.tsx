@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
-import { AuthModal } from '@/components/auth/AuthModal';
+import { AuthModal } from '@/components/auth/AuthModal/AuthModal';
 import { useSave } from '@/hooks/useSave';
 
 interface SaveButtonProps {

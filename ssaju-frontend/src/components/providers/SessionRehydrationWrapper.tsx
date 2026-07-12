@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { useSessionRehydration } from '@/hooks/useSessionRehydration';
-import { AuthModal } from '@/components/auth/AuthModal';
+import { AuthModal } from '@/components/auth/AuthModal/AuthModal';
 import { useAuthStore } from '@/stores/authStore';
 import { tryRefreshToken } from '@/lib/api/client';
 

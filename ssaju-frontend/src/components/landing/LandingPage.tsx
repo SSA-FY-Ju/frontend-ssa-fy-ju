@@ -10,7 +10,7 @@ import Page2 from './pages/Page2';
 import Page3 from './pages/Page3';
 import Page4 from './pages/Page4';
 import Page5 from './pages/Page5';
-import { AuthModal } from '@/components/auth/AuthModal';
+import { AuthModal } from '@/components/auth/AuthModal/AuthModal';
 import { useAuthStore } from '@/stores/authStore';
 
 type PageState = 'landing' | 'chat';

@@ -4,7 +4,7 @@
 
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import React from 'react';
-import { FeedbackModal } from '@/components/modals/FeedbackModal';
+import { FeedbackModal } from '@/components/modals/FeedbackModal/FeedbackModal';
 
 jest.mock('@/hooks/useFeedback', () => ({
   useFeedback: jest.fn(() => ({

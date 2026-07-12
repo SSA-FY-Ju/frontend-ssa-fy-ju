@@ -1,24 +1,8 @@
 'use client';
 
 import { DialogTitle } from '@/components/ui/dialog';
-import { ModalShell } from '@/components/common/ModalShell';
-
-/**
- * 삭제 확인 모달 컴포넌트 (T106)
- *
- * Props:
- * - recordId: 삭제 대상 ID (null이면 렌더링 안 함)
- * - onConfirm: 삭제 확인
- * - onClose: 모달 닫기
- * - isDeleting: 삭제 진행 중 여부
- */
-
-interface DeleteConfirmModalProps {
-  recordId: string | null;
-  onConfirm: (id: string) => void;
-  onClose: () => void;
-  isDeleting: boolean;
-}
+import { ModalShell } from '@/components/common/ModalShell/ModalShell';
+import type { DeleteConfirmModalProps } from './DeleteConfirmModal.types';
 
 export function DeleteConfirmModal({
   recordId,

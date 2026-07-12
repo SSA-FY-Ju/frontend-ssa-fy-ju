@@ -14,7 +14,7 @@ jest.mock('@/hooks/useAuth', () => ({
   useAuth: jest.fn(),
 }));
 
-jest.mock('@/components/auth/AuthModal', () => ({
+jest.mock('@/components/auth/AuthModal/AuthModal', () => ({
   AuthModal: ({ isOpen }: { isOpen: boolean }) => isOpen ? <div data-testid="login-modal" /> : null,
 }));
 

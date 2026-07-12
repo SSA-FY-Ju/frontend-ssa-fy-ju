@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FeedbackButton } from '@/components/results/FeedbackButton';
 
-jest.mock('@/components/modals/FeedbackModal', () => ({
+jest.mock('@/components/modals/FeedbackModal/FeedbackModal', () => ({
   FeedbackModal: ({ onClose }: { onClose: () => void }) => (
     <div data-testid="feedback-modal">
       <button onClick={onClose}>닫기</button>

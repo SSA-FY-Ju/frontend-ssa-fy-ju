@@ -2,14 +2,8 @@
 
 import { useAuthStore } from '@/stores/authStore';
 import { DialogTitle } from '@/components/ui/dialog';
-import { ModalShell } from '@/components/common/ModalShell';
-
-interface PageExitModalProps {
-  isOpen: boolean;
-  onConfirmExit: () => void;
-  onCancelExit: () => void;
-  onLoginAndStay: () => void;
-}
+import { ModalShell } from '@/components/common/ModalShell/ModalShell';
+import type { PageExitModalProps } from './PageExitModal.types';
 
 export function PageExitModal({
   isOpen,

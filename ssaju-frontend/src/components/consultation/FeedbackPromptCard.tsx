@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FeedbackModal } from '@/components/modals/FeedbackModal';
+import { FeedbackModal } from '@/components/modals/FeedbackModal/FeedbackModal';
 
 interface FeedbackPromptCardProps {
   onClose: () => void;

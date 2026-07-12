@@ -3,11 +3,8 @@
 import { useEffect, useRef } from 'react';
 import { useDeleteAccount } from '@/hooks/useDeleteAccount';
 import { DialogTitle } from '@/components/ui/dialog';
-import { ModalShell } from '@/components/common/ModalShell';
-
-interface WithdrawalModalProps {
-  onClose: () => void;
-}
+import { ModalShell } from '@/components/common/ModalShell/ModalShell';
+import type { WithdrawalModalProps } from './WithdrawalModal.types';
 
 export function WithdrawalModal({ onClose }: WithdrawalModalProps) {
   const { password, setPassword, isDeleting, error, submit } = useDeleteAccount();
