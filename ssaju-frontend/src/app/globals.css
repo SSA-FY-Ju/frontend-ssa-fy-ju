@@ -4,6 +4,49 @@
 @tailwind components;
 @tailwind utilities;
 
+/* shadcn/ui CSS variables — SSAju 다크 테마 색상으로 매핑 */
+@layer base {
+  :root {
+    /* night-900 (#0a0e27) */
+    --background: 232 60% 10%;
+    --foreground: 0 0% 100%;
+
+    /* night-800 (#1a1f3a) */
+    --card: 232 38% 16%;
+    --card-foreground: 0 0% 100%;
+
+    /* night-800 (#1a1f3a) */
+    --popover: 232 38% 16%;
+    --popover-foreground: 0 0% 100%;
+
+    /* star-500 (#ffd700) */
+    --primary: 51 100% 50%;
+    --primary-foreground: 232 60% 10%;
+
+    /* night-700 (#2a3050) */
+    --secondary: 230 31% 24%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 230 31% 24%;
+    --muted-foreground: 0 0% 65%;
+
+    --accent: 230 31% 24%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* night-700 (#2a3050) */
+    --border: 230 31% 24%;
+    --input: 230 31% 24%;
+
+    /* star-500 (#ffd700) */
+    --ring: 51 100% 50%;
+
+    --radius: 0.5rem;
+  }
+}
+
 /* Swiper 래퍼를 GPU 레이어로 승격 — 슬라이드 전환 compositor-only */
 .swiper-wrapper {
   will-change: transform;
