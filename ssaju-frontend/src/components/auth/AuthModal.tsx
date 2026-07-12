@@ -7,6 +7,8 @@ import { useAuthStore } from '@/stores/authStore';
 import { checkEmail } from '@/lib/api/auth';
 import { ApiError } from '@/lib/api/client';
 import { toastUtils } from '@/lib/toast';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { motion } from 'framer-motion';
 
 type View = 'select' | 'login' | 'signup';
 
@@ -68,8 +70,6 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
   const { login, signup } = useAuth();
   const setLoginError = useAuthStore((s) => s.setLoginError);
 
-  const [mounted, setMounted] = useState(false);
-  const [visible, setVisible] = useState(false);
   const [view, setView] = useState<View>(defaultTab ?? 'select');
   const [localError, setLocalError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -88,18 +88,12 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
 
   useEffect(() => {
     if (isOpen) {
-      setMounted(true);
       setView(defaultTab ?? 'select');
       setLoginError(null);
       setLocalError(null);
       setSubmitting(false);
       setEmailChecked(false);
       setEmailChecking(false);
-      requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
-    } else {
-      setVisible(false);
-      const t = setTimeout(() => setMounted(false), 300);
-      return () => clearTimeout(t);
     }
   }, [isOpen, defaultTab, setLoginError]);
 
@@ -198,35 +192,21 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
     }
   };
 
-  if (!mounted) return null;
-
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="auth-modal-title"
-      style={{ position: 'fixed', inset: 0, zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 20px' }}
-    >
-      {/* 오버레이 */}
-      <div
-        onClick={onClose}
-        aria-hidden="true"
-        style={{
-          position: 'absolute', inset: 0,
-          background: 'rgba(2,1,12,0.75)',
-          transition: 'opacity 0.35s ease', opacity: visible ? 1 : 0,
-        }}
-      />
+    <Dialog open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-[420px] border-0 bg-transparent p-0 shadow-none [&>button:last-child]:hidden">
+        <DialogTitle className="sr-only">
+          {view === 'select' ? 'SSAju 시작하기' : view === 'login' ? '로그인' : '회원가입'}
+        </DialogTitle>
 
-      {/* 카드 */}
-      <div style={{
-        position: 'relative', width: '100%', maxWidth: 420,
-        borderRadius: 32, overflow: 'hidden',
-        willChange: 'opacity, transform',
-        transition: 'opacity 0.35s ease, transform 0.4s cubic-bezier(0.22,1,0.36,1)',
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0) scale(1)' : 'translateY(32px) scale(0.94)',
-      }}>
+        {/* 카드 */}
+        <motion.div
+          initial={{ opacity: 0, y: 32, scale: 0.94 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.96 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          style={{ position: 'relative', width: '100%', maxWidth: 420, borderRadius: 32, overflow: 'hidden' }}
+        >
 
         {/* ── 배경 레이어 ── */}
         <div style={{
@@ -638,7 +618,8 @@ export function AuthModal({ isOpen, onClose, defaultTab }: AuthModalProps) {
             </div>
           )}
         </div>
-      </div>
-    </div>
+        </motion.div>
+      </DialogContent>
+    </Dialog>
   );
 }
