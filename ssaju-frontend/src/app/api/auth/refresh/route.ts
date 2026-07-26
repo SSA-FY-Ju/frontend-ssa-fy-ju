@@ -18,10 +18,13 @@ export async function POST(req: NextRequest) {
     const refreshTokenCookie = cookies.find(c => c.startsWith('refreshToken=') || c.startsWith('refresh_token='));
     const refreshToken = refreshTokenCookie?.split('=')[1];
 
-    // 2. 백엔드 명세에 맞춰 헤더 설정 (Refresh-Token: {token})
+    // 2. 백엔드로 헤더 설정
+    //    신 방식: 백엔드가 refreshToken을 "쿠키"에서 읽으므로 Cookie 헤더를 그대로 전달해야 한다.
+    //    (구 방식 호환) refreshToken이 있으면 Refresh-Token 헤더도 함께 실어 보낸다.
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
       ...bypassHeaders,
+      ...(cookieHeader ? { Cookie: cookieHeader } : {}),
     };
 
     if (refreshToken) {
@@ -51,22 +54,32 @@ export async function POST(req: NextRequest) {
       nextResponse.headers.append('set-cookie', `accessToken=${accessToken}; HttpOnly; Path=/; SameSite=Lax`);
     }
 
-    // 5. 새 RefreshToken을 HttpOnly 쿠키로 설정하여 브라우저로 전달
+    // 5. (구 방식 호환) 백엔드가 Refresh-Token 헤더로 새 토큰을 내려주면 쿠키로 변환
     if (newRefreshToken) {
-      // 보안 속성 정제 및 경로 강제
       const cookieValue = `refreshToken=${newRefreshToken}; HttpOnly; Path=/; SameSite=Lax`;
       nextResponse.headers.append('set-cookie', cookieValue);
     }
 
-    // 백엔드에서 추가로 내려준 Set-Cookie가 있다면 함께 전달 (중복 방지 로직 포함 권장)
-    const otherSetCookies = typeof res.headers.getSetCookie === 'function' 
-      ? res.headers.getSetCookie() 
-      : [];
-    
-    otherSetCookies.forEach(cookie => {
-      if (!cookie.startsWith('refreshToken=')) {
-        nextResponse.headers.append('set-cookie', cookie);
+    // 6. 백엔드 Set-Cookie 정제 후 전달
+    //    신 방식: 백엔드가 새 refreshToken을 Set-Cookie로 내려준다. Domain/Secure 제거,
+    //    SameSite=None→Lax 로 정제해 프론트 오리진(localhost)에 저장되도록 통과시킨다.
+    const otherSetCookies = typeof res.headers.getSetCookie === 'function'
+      ? res.headers.getSetCookie()
+      : (res.headers.get('set-cookie') ? [res.headers.get('set-cookie')!] : []);
+
+    otherSetCookies.forEach((cookie) => {
+      // 구 방식 헤더로 이미 수동 설정한 경우에만 refreshToken 중복 방지 (신 방식에선 그대로 통과)
+      if (newRefreshToken && cookie.startsWith('refreshToken=')) return;
+
+      let processed = cookie
+        .replace(/Domain=[^;]+(; )?/gi, '')
+        .replace(/Secure(; )?/gi, '')
+        .replace(/Path=[^;]+/gi, 'Path=/');
+
+      if (processed.includes('SameSite=None')) {
+        processed = processed.replace('SameSite=None', 'SameSite=Lax');
       }
+      nextResponse.headers.append('set-cookie', processed);
     });
 
     return nextResponse;

@@ -32,7 +32,17 @@ export async function POST(req: NextRequest) {
     });
 
     const data = await res.json().catch(() => ({}));
-    const nextResponse = NextResponse.json(data, { status: res.status });
+
+    // 로그아웃은 "세션 종료"가 목적이다. 백엔드가 refreshToken 쿠키 부재/만료로 401을
+    // 반환하더라도 세션은 이미 끝난 상태이므로, 프론트 관점에선 성공으로 정규화한다.
+    // (아래에서 프론트 쿠키를 항상 제거하므로 클라이언트 상태는 확실히 초기화된다.)
+    // 이렇게 하지 않으면 client.ts의 401 인터셉터가 refresh를 시도하고 실패해
+    // 로그아웃 직후 로그인 모달이 떠버리는 문제가 발생한다.
+    const clientStatus = res.ok || res.status === 401 ? 200 : res.status;
+    const nextResponse = NextResponse.json(
+      res.ok ? data : { success: true },
+      { status: clientStatus },
+    );
 
     // [마이그레이션 1단계] accessToken 쿠키는 백엔드가 모르는 Next.js 레이어의
     // 자체 쿠키이므로, 백엔드 Set-Cookie 전달과 별개로 직접 만료시켜야 한다.
