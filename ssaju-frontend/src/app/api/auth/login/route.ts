@@ -27,21 +27,25 @@ export async function POST(req: NextRequest) {
       nextResponse.headers.append('set-cookie', `accessToken=${accessToken}; HttpOnly; Path=/; SameSite=Lax`);
     }
 
-    // 2. 백엔드 명세: Refresh-Token 헤더를 읽어 쿠키로 설정
+    // 2. (구 방식 호환) 백엔드가 Refresh-Token 헤더로 내려주면 쿠키로 변환.
+    //    신 방식에서는 백엔드가 refreshToken을 Set-Cookie로 직접 내려주므로 이 헤더는 없다.
     const backendRefreshToken = res.headers.get('refresh-token') ?? res.headers.get('Refresh-Token') ?? '';
     if (backendRefreshToken) {
       const cookieValue = `refreshToken=${backendRefreshToken}; HttpOnly; Path=/; SameSite=Lax`;
       nextResponse.headers.append('set-cookie', cookieValue);
     }
 
-    // 3. 기존 Set-Cookie 헤더들도 정제하여 전달
+    // 3. 백엔드 Set-Cookie 헤더 정제 후 전달
+    //    신 방식: 백엔드가 refreshToken을 여기에 실어 보낸다. 프론트 오리진(localhost)에서
+    //    저장되도록 Domain/Secure 제거, SameSite=None→Lax 로 정제해 통과시킨다.
     const setCookies = typeof res.headers.getSetCookie === 'function'
       ? res.headers.getSetCookie()
       : (res.headers.get('set-cookie') ? [res.headers.get('set-cookie')!] : []);
 
     setCookies.forEach((cookie) => {
-      if (cookie.startsWith('refreshToken=')) return; // 위에서 수동 설정한 것과 중복 방지
-      
+      // 구 방식 헤더로 이미 refreshToken을 수동 설정한 경우에만 중복 방지 (신 방식에선 그대로 통과)
+      if (backendRefreshToken && cookie.startsWith('refreshToken=')) return;
+
       let processed = cookie
         .replace(/Domain=[^;]+(; )?/gi, '')
         .replace(/Secure(; )?/gi, '')
