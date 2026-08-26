@@ -68,3 +68,10 @@ tsconfig.tsbuildinfo
 
 *storybook.log
 storybook-static
+
+# 번들 예산 검사용 빌드 로그 (bundle-budget.json 은 커밋 대상)
+build.log
+bundle-report.md
+
+# Lighthouse CI 결과
+.lighthouseci/
