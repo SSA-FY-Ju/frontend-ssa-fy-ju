@@ -68,7 +68,10 @@ html, body {
     radial-gradient(circle at 20% 50%, rgba(200, 180, 255, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 80% 40%, rgba(150, 180, 255, 0.06) 0%, transparent 50%),
     repeating-radial-gradient(circle at 30% 40%, rgba(255,255,255,0.03) 0, rgba(255,255,255,0.03) 2px, transparent 3px, transparent 8px);
-  mix-blend-mode: screen;
+  /* mix-blend-mode: screen 을 제거한 이유:
+     블렌드 모드는 뒷배경을 읽어와 합성해야 해서 GPU 합성 최적화를 깨뜨리고,
+     비용이 화면 면적에 비례한다. inset:-20% 라 화면의 약 2배 면적이다.
+     알파가 0.08/0.06/0.03 로 낮아 일반 합성과 시각 차이가 거의 없다. */
   pointer-events: none;
 }
 
@@ -79,7 +82,7 @@ html, body {
   height: 100%;
   pointer-events: none;
   opacity: 0.15;
-  animation: swirl-drift 80s ease-in-out infinite alternate;
+  /* swirl-drift 선언을 제거했다 — @keyframes 정의가 없어 아무 동작도 하지 않았다 */
 }
 
 @keyframes galaxy-spin {
@@ -100,21 +103,10 @@ html, body {
   inset: 0;
   pointer-events: none;
 }
-.star {
-  position: absolute;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 0 3px #ffffff, 0 0 8px rgba(200, 220, 255, 0.6);
-  animation: twinkle 2.5s ease-in-out infinite;
-}
-.star.gold { background: #e0e6ff; box-shadow: 0 0 4px #e0e6ff, 0 0 12px rgba(224, 230, 255, 0.8); }
-.star.blue { background: #a8d8ff; box-shadow: 0 0 3px #a8d8ff, 0 0 10px rgba(168, 216, 255, 0.7); }
-.star.purple { background: #d8b8ff; box-shadow: 0 0 3px #d8b8ff, 0 0 10px rgba(216, 184, 255, 0.6); }
-
-@keyframes twinkle {
-  0%, 100% { opacity: 0.4; transform: scale(0.8); }
-  50%      { opacity: 1; transform: scale(1.15); }
-}
+/* .star / .star.gold|blue|purple 과 @keyframes twinkle 을 삭제했다.
+   별은 StarryBackground 가 background-image(타일 SVG)로 그리므로 이 클래스를
+   쓰는 요소가 없었다(서빙 HTML 에 .star 요소 0개). box-shadow 4겹 +
+   무한 애니메이션이라 살아있었다면 면적 비례로 비쌌을 규칙이다. */
 
 /* shooting star */
 .shooting-star {
