@@ -1,0 +1,40 @@
+{
+  "ci": {
+    "collect": {
+      "startServerCommand": "npm run start",
+      "startServerReadyPattern": "Ready in|ready started server",
+      "startServerReadyTimeout": 60000,
+      "url": ["http://localhost:3000/"],
+      "numberOfRuns": 3,
+      "settings": {
+        "preset": "desktop",
+        "onlyCategories": ["performance", "accessibility", "best-practices", "seo"],
+        "skipAudits": ["uses-http2", "canonical", "is-on-https", "redirects-http"]
+      }
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["warn", { "minScore": 0.9 }],
+        "categories:accessibility": ["error", { "minScore": 0.9 }],
+        "categories:best-practices": ["warn", { "minScore": 0.9 }],
+        "categories:seo": ["warn", { "minScore": 0.9 }],
+
+        "first-contentful-paint": ["error", { "maxNumericValue": 2000 }],
+        "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
+        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+        "total-blocking-time": ["error", { "maxNumericValue": 300 }],
+        "speed-index": ["warn", { "maxNumericValue": 3400 }],
+
+        "render-blocking-resources": ["warn", { "maxLength": 0 }],
+        "unused-javascript": ["warn", { "maxLength": 0 }],
+        "font-display": ["warn", { "maxLength": 0 }],
+        "total-byte-weight": ["warn", { "maxNumericValue": 1600000 }],
+        "third-party-summary": "off",
+        "unsized-images": "off"
+      }
+    },
+    "upload": {
+      "target": "temporary-public-storage"
+    }
+  }
+}
