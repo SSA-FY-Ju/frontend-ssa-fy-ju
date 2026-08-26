@@ -11,9 +11,19 @@ import { tryRefreshToken } from '@/lib/api/client';
  *
  * 동작:
  * 1. 앱 부팅 시 sessionStorage 세션 데이터 복원 (useSessionRehydration)
- * 2. Zustand Hydration 대기 (_hasHydrated)
- * 3. 첫 mount 시 무조건 silent refresh 시도하여 세션 복구
- * 4. AuthModal 전역 렌더링
+ * 2. 첫 mount 시 무조건 silent refresh 시도하여 세션 복구
+ * 3. AuthModal 전역 렌더링
+ *
+ * 이 컴포넌트는 children을 절대 막지 않는다.
+ *
+ * 과거에 `if (!_hasHydrated) return null` 로 전체 트리를 차단했는데,
+ * _hasHydrated는 브라우저에서 Zustand가 localStorage를 읽은 뒤에만 true가 되므로
+ * 서버에서는 항상 false였다. 결과적으로 prerender된 9개 라우트 전부가
+ * 본문 텍스트 0자인 빈 껍데기(13KB, 스크립트 태그만)로 배포되어 SSR/SSG가
+ * 완전히 무력화됐고, Lighthouse는 LCP 후보를 찾지 못했다(NO_LCP).
+ *
+ * 인증 상태에 따라 모양이 달라지는 UI(헤더의 로그인 버튼/프로필)는 각자
+ * _hasHydrated를 보고 스켈레톤 → 확정 상태로 전환한다. 차단은 그 지점에서만 한다.
  */
 export function SessionRehydrationWrapper({
   children,
@@ -53,12 +63,6 @@ export function SessionRehydrationWrapper({
       }
     })();
   }, [_hasHydrated, setIsAuthReady]);
-
-  // Zustand localStorage 하이드레이션 전까지만 차단 (수 ms 수준)
-  // isAuthReady(네트워크 요청)는 기다리지 않고 백그라운드에서 처리
-  if (!_hasHydrated) {
-    return null;
-  }
 
   return (
     <>
