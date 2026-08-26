@@ -10,8 +10,11 @@ import '@/styles/landing.css';
 export const metadata: Metadata = {
   title: 'SSAju - 사주 기반 커리어 컨설팅',
   description: '당신의 관운을 분석하여 최적의 커리어 경로를 제시합니다.',
+  // ?v=2 를 붙인 이유: 이전 favicon.ico 는 확장자만 .ico 인 macOS .icns 파일이라
+  // 브라우저가 디코딩에 실패했고, 그 "아이콘 없음" 상태가 파비콘 캐시에 남는다.
+  // 파일을 교체해도 URL 이 같으면 캐시를 다시 안 읽으므로 쿼리로 무효화한다.
   icons: {
-    icon: '/favicon.ico',
+    icon: '/favicon.ico?v=2',
   },
   openGraph: {
     title: 'SSAju - 사주 기반 커리어 컨설팅',
