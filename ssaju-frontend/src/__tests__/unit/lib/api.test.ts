@@ -138,7 +138,7 @@ describe('submitFeedback', () => {
 
     const request = {
       analysisId: 1001,
-      feedbackType: 'CAREER_TIMING' as const,
+      feedbackType: 'CAREER_CONSULTATION' as const,
       satisfactionStatus: 'SATISFIED' as const,
       feedbackContent: '매우 도움이 됐습니다.',
     };
@@ -158,7 +158,7 @@ describe('submitFeedback', () => {
     await expect(
       submitFeedback({
         analysisId: 1001,
-        feedbackType: 'CAREER_TIMING',
+        feedbackType: 'CAREER_CONSULTATION',
         satisfactionStatus: 'DISSATISFIED',
       }),
     ).rejects.toThrow('피드백 제출 실패');

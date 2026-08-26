@@ -29,13 +29,13 @@ describe('useFeedback', () => {
   });
 
   it('초기 상태: isSubmitting false, error null', () => {
-    const { result } = renderHook(() => useFeedback('CAREER_TIMING'), { wrapper: QueryClientWrapper });
+    const { result } = renderHook(() => useFeedback('CONSULTATION'), { wrapper: QueryClientWrapper });
     expect(result.current.isSubmitting).toBe(false);
     expect(result.current.error).toBeNull();
   });
 
   it('sajuResultId 없을 때 제출 시 error 설정 (API 미호출)', async () => {
-    const { result } = renderHook(() => useFeedback('CAREER_TIMING'), { wrapper: QueryClientWrapper });
+    const { result } = renderHook(() => useFeedback('CONSULTATION'), { wrapper: QueryClientWrapper });
 
     act(() => {
       result.current.submit('SATISFIED');
@@ -50,7 +50,7 @@ describe('useFeedback', () => {
     useSessionStore.getState().setSajuResultId('1001');
     const onSuccess = jest.fn();
 
-    const { result } = renderHook(() => useFeedback('CAREER_TIMING', onSuccess), { wrapper: QueryClientWrapper });
+    const { result } = renderHook(() => useFeedback('CONSULTATION', onSuccess), { wrapper: QueryClientWrapper });
 
     act(() => {
       result.current.submit('SATISFIED', '좋았습니다');
@@ -72,9 +72,10 @@ describe('useFeedback', () => {
     });
 
     await waitFor(() => expect(submitFeedback).toHaveBeenCalled());
+    // UI 내부 명칭 CONSULTATION → 백엔드 enum 값 CAREER_CONSULTATION 으로 매핑되어야 한다
     expect(submitFeedback).toHaveBeenCalledWith({
       analysisId: 1002,
-      feedbackType: 'CONSULTATION',
+      feedbackType: 'CAREER_CONSULTATION',
       satisfactionStatus: 'DISSATISFIED',
       feedbackContent: '개선 필요',
     });
@@ -92,7 +93,11 @@ describe('useFeedback', () => {
 
     await waitFor(() => expect(submitFeedback).toHaveBeenCalled());
     expect(submitFeedback).toHaveBeenCalledWith(
-      expect.objectContaining({ feedbackContent: undefined }),
+      // COMPATIBILITY → COMPANY_COMPATIBILITY 매핑도 함께 고정한다
+      expect.objectContaining({
+        feedbackType: 'COMPANY_COMPATIBILITY',
+        feedbackContent: undefined,
+      }),
     );
   });
 
@@ -100,7 +105,7 @@ describe('useFeedback', () => {
     submitFeedback.mockRejectedValueOnce(new Error('서버 오류'));
     useSessionStore.getState().setSajuResultId('1004');
 
-    const { result } = renderHook(() => useFeedback('CAREER_TIMING'), { wrapper: QueryClientWrapper });
+    const { result } = renderHook(() => useFeedback('CONSULTATION'), { wrapper: QueryClientWrapper });
 
     act(() => {
       result.current.submit('SATISFIED');
@@ -114,7 +119,7 @@ describe('useFeedback', () => {
     submitFeedback.mockReturnValue(new Promise(() => {})); // 무한 대기
     useSessionStore.getState().setSajuResultId('1005');
 
-    const { result } = renderHook(() => useFeedback('CAREER_TIMING'), { wrapper: QueryClientWrapper });
+    const { result } = renderHook(() => useFeedback('CONSULTATION'), { wrapper: QueryClientWrapper });
 
     act(() => {
       result.current.submit('SATISFIED');
