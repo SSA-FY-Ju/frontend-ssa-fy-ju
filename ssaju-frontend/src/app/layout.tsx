@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Providers } from './providers';
 import { Header } from '@/components/common/Header';
 import { SessionRehydrationWrapper } from '@/components/providers/SessionRehydrationWrapper';
@@ -10,8 +10,11 @@ import '@/styles/landing.css';
 export const metadata: Metadata = {
   title: 'SSAju - 사주 기반 커리어 컨설팅',
   description: '당신의 관운을 분석하여 최적의 커리어 경로를 제시합니다.',
+  // ?v=2 를 붙인 이유: 이전 favicon.ico 는 확장자만 .ico 인 macOS .icns 파일이라
+  // 브라우저가 디코딩에 실패했고, 그 "아이콘 없음" 상태가 파비콘 캐시에 남는다.
+  // 파일을 교체해도 URL 이 같으면 캐시를 다시 안 읽으므로 쿼리로 무효화한다.
   icons: {
-    icon: '/favicon.ico',
+    icon: '/favicon.ico?v=2',
   },
   openGraph: {
     title: 'SSAju - 사주 기반 커리어 컨설팅',
@@ -27,6 +30,17 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * charSet·viewport 를 JSX로 직접 쓰지 않는 이유:
+ * App Router는 metadata/viewport export를 보고 같은 태그를 스스로 주입한다.
+ * <head>에 수동으로 또 넣으면 태그가 2개씩 생기고(viewport ×2, charset ×2)
+ * 서버 HTML과 클라이언트 트리가 어긋나 하이드레이션이 깨진다(React #418 → #423).
+ */
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export default function RootLayout({
   children,
 }: {
@@ -35,10 +49,13 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <head>
-        <meta charSet="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/*
+          tailwind.config.ts 의 font-heading(['Garamond', ...])이 globals.css 에서
+          쓰이므로 이 링크는 살아있는 의존성이다. 렌더 블로킹 요청이라는 문제는
+          남아있으므로 폰트 전체를 next/font 로 옮기는 단계에서 함께 정리한다.
+        */}
         <link
           href="https://fonts.googleapis.com/css2?family=Garamond:wght@400;700&display=swap"
           rel="stylesheet"
