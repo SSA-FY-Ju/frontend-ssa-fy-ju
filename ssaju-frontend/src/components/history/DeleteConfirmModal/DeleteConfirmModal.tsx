@@ -1,23 +1,8 @@
 'use client';
 
-import { BaseModal } from '@/components/common/BaseModal';
-
-/**
- * 삭제 확인 모달 컴포넌트 (T106)
- *
- * Props:
- * - recordId: 삭제 대상 ID (null이면 렌더링 안 함)
- * - onConfirm: 삭제 확인
- * - onClose: 모달 닫기
- * - isDeleting: 삭제 진행 중 여부
- */
-
-interface DeleteConfirmModalProps {
-  recordId: string | null;
-  onConfirm: (id: string) => void;
-  onClose: () => void;
-  isDeleting: boolean;
-}
+import { DialogTitle } from '@/components/ui/dialog';
+import { ModalShell } from '@/components/common/ModalShell/ModalShell';
+import type { DeleteConfirmModalProps } from './DeleteConfirmModal.types';
 
 export function DeleteConfirmModal({
   recordId,
@@ -29,20 +14,21 @@ export function DeleteConfirmModal({
   if (!recordId) return null;
 
   return (
-    <BaseModal
-      onClose={onClose}
+    <ModalShell
+      open={true}
+      onOpenChange={(open) => { if (!open) onClose(); }}
       maxWidth={320}
-      accentBar={false}
-      backdropStyle={{ background: 'rgba(4,2,18,0.78)' }}
-      containerStyle={{
+      borderRadius={16}
+      contentClassName="mx-4"
+      cardStyle={{
         background: 'linear-gradient(135deg, rgba(30,20,60,0.85) 0%, rgba(15,10,35,0.9) 100%)',
-        borderRadius: 16,
         boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
         padding: '28px',
       }}
-      containerClassName="mx-4"
     >
-        <h2 className="text-white text-base font-bold mb-2 text-center">기록 삭제</h2>
+        <DialogTitle asChild>
+          <h2 className="text-white text-base font-bold mb-2 text-center">기록 삭제</h2>
+        </DialogTitle>
         <p className="text-sm text-center mb-6 leading-relaxed" style={{ color: 'rgba(148,163,184,0.6)' }}>
           정말 삭제하시겠습니까?
           <br />
@@ -84,6 +70,6 @@ export function DeleteConfirmModal({
             {isDeleting ? '삭제 중...' : '삭제'}
           </button>
         </div>
-    </BaseModal>
+    </ModalShell>
   );
 }

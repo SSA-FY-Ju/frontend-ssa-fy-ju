@@ -1,54 +1,34 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useDeleteAccount } from '@/hooks/useDeleteAccount';
-import { BaseModal } from '@/components/common/BaseModal';
-
-interface WithdrawalModalProps {
-  onClose: () => void;
-}
+import { DialogTitle } from '@/components/ui/dialog';
+import { ModalShell } from '@/components/common/ModalShell/ModalShell';
+import type { WithdrawalModalProps } from './WithdrawalModal.types';
 
 export function WithdrawalModal({ onClose }: WithdrawalModalProps) {
   const { password, setPassword, isDeleting, error, submit } = useDeleteAccount();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [visible, setVisible] = useState(false);
 
-  // 마운트 직후 visible=true → 열림 트랜지션
   useEffect(() => {
-    requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
     inputRef.current?.focus();
   }, []);
 
-  const handleClose = () => {
-    setVisible(false);
-    setTimeout(onClose, 300);
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Escape') handleClose();
     if (e.key === 'Enter') submit();
   };
 
   return (
-    <BaseModal
-      onClose={handleClose}
+    <ModalShell
+      open={true}
+      onOpenChange={(open) => { if (!open) onClose(); }}
       maxWidth={320}
-      zIndex={9999}
-      accentBar={false}
-      backdropStyle={{
-        background: 'rgba(4,2,18,0.78)',
-        transition: 'opacity 0.3s ease',
-        opacity: visible ? 1 : 0,
-      }}
-      containerStyle={{
+      borderRadius={20}
+      cardStyle={{
         background: 'linear-gradient(135deg, rgba(30,20,60,0.9) 0%, rgba(15,10,35,0.95) 100%)',
         border: '1px solid rgba(239,68,68,0.25)',
-        borderRadius: 20,
         boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
         padding: '28px',
-        transition: 'opacity 0.3s ease, transform 0.35s cubic-bezier(0.22,1,0.36,1)',
-        opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0) scale(1)' : 'translateY(24px) scale(0.96)',
       }}
     >
       <div onKeyDown={handleKeyDown}>
@@ -63,9 +43,11 @@ export function WithdrawalModal({ onClose }: WithdrawalModalProps) {
           </div>
         </div>
 
-        <h2 style={{ color: '#fff', fontSize: 15, fontWeight: 700, textAlign: 'center', marginBottom: 8 }}>
-          회원 탈퇴
-        </h2>
+        <DialogTitle asChild>
+          <h2 style={{ color: '#fff', fontSize: 15, fontWeight: 700, textAlign: 'center', marginBottom: 8 }}>
+            회원 탈퇴
+          </h2>
+        </DialogTitle>
         <p style={{ fontSize: 13, textAlign: 'center', marginBottom: 20, lineHeight: 1.65, color: 'rgba(148,163,184,0.65)' }}>
           탈퇴 후 모든 분석 기록이 삭제되며<br />
           복구할 수 없습니다.<br />
@@ -108,7 +90,7 @@ export function WithdrawalModal({ onClose }: WithdrawalModalProps) {
           {/* 취소 */}
           <button
             type="button"
-            onClick={handleClose}
+            onClick={onClose}
             disabled={isDeleting}
             style={{
               flex: 1, padding: '10px 0', fontSize: 13, borderRadius: 12,
@@ -140,6 +122,6 @@ export function WithdrawalModal({ onClose }: WithdrawalModalProps) {
           </button>
         </div>
       </div>
-    </BaseModal>
+    </ModalShell>
   );
 }

@@ -8,7 +8,7 @@
  */
 
 import { useState } from 'react';
-import { FeedbackModal } from '@/components/modals/FeedbackModal';
+import { FeedbackModal } from '@/components/modals/FeedbackModal/FeedbackModal';
 
 /** 사주(SAJU)는 백엔드 피드백 대상이 아니므로 타입 단계에서 제외한다. */
 type FeedbackType = 'CONSULTATION' | 'COMPATIBILITY';

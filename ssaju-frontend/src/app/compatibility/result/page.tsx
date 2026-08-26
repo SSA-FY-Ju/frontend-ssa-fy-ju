@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { usePageExitGuard } from '@/hooks/usePageExitGuard';
 import { useSessionStore } from '@/stores/sessionStore';
-import { FeedbackModal } from '@/components/modals/FeedbackModal';
+import { FeedbackModal } from '@/components/modals/FeedbackModal/FeedbackModal';
 import { analysisCache } from '@/lib/analysisCache';
 import type { CompatibilityResult } from '@/types/api';
 

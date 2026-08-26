@@ -1,16 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { BaseModal } from '@/components/common/BaseModal';
-
-interface CompanyConfirmModalProps {
-  suggestions: string[];
-  originalInput: string;
-  onConfirm: (companyName: string) => void;
-  onManualInput: () => void;
-  onClose: () => void;
-  confirmLabel?: string;
-}
+import { useState, useRef } from 'react';
+import { DialogTitle } from '@/components/ui/dialog';
+import { ModalShell } from '@/components/common/ModalShell/ModalShell';
+import type { CompanyConfirmModalProps } from './CompanyConfirmModal.types';
 
 export function CompanyConfirmModal({
   suggestions,
@@ -24,12 +17,7 @@ export function CompanyConfirmModal({
   const [showManual, setShowManual] = useState(suggestions.length === 0);
   const [manualValue, setManualValue] = useState(originalInput);
   const [animating, setAnimating] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    requestAnimationFrame(() => requestAnimationFrame(() => setMounted(true)));
-  }, []);
 
   const switchMode = (toManual: boolean) => {
     setAnimating(true);
@@ -41,20 +29,23 @@ export function CompanyConfirmModal({
   };
 
   return (
-    <BaseModal
-      onClose={onClose}
-      backdropStyle={{
-        background: 'rgba(4,2,18,0.78)',
-      }}
-      containerStyle={{
+    <ModalShell
+      open={true}
+      onOpenChange={(open) => { if (!open) onClose(); }}
+      maxWidth={420}
+      borderRadius={24}
+      accentBar="purple"
+      cardStyle={{
+        background: 'linear-gradient(150deg, rgba(30,20,60,0.97) 0%, rgba(15,10,35,0.99) 100%)',
         border: '1px solid rgba(139,92,246,0.3)',
         boxShadow: '0 32px 80px rgba(0,0,0,0.4), 0 0 60px rgba(109,40,217,0.1)',
-        transition: 'opacity 0.28s ease, transform 0.28s cubic-bezier(0.22,1,0.36,1)',
-        opacity: mounted ? 1 : 0,
-        transform: mounted ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.97)',
+      }}
+      motionProps={{
+        initial: { opacity: 0, y: 16, scale: 0.97 },
+        exit: { opacity: 0, y: 12, scale: 0.98 },
+        transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
       }}
     >
-
         {/* 헤더 */}
         <div style={{ padding: '24px 24px 0' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -69,12 +60,14 @@ export function CompanyConfirmModal({
                 <span style={{ fontSize: 16, color: '#a78bfa' }}>✦</span>
               </div>
               <div>
-                <h2
-                  id="company-confirm-title"
-                  style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff', lineHeight: 1.3 }}
-                >
-                  {showManual ? '기업명 직접 입력' : '기업 선택'}
-                </h2>
+                <DialogTitle asChild>
+                  <h2
+                    id="company-confirm-title"
+                    style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff', lineHeight: 1.3 }}
+                  >
+                    {showManual ? '기업명 직접 입력' : '기업 선택'}
+                  </h2>
+                </DialogTitle>
                 <p style={{ fontSize: 11, color: 'rgba(196,181,253,0.45)', marginTop: 2 }}>
                   {showManual
                     ? '입력한 이름 그대로 분석해요'
@@ -296,6 +289,6 @@ export function CompanyConfirmModal({
             </div>
           )}
         </div>
-    </BaseModal>
+    </ModalShell>
   );
 }

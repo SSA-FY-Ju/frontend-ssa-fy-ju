@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
-import { PageExitModal } from '@/components/common/PageExitModal';
+import { PageExitModal } from '@/components/common/PageExitModal/PageExitModal';
 import { useAuthStore } from '@/stores/authStore';
 
 jest.mock('@/stores/authStore', () => ({
