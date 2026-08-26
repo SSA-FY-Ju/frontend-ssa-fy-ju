@@ -21,6 +21,11 @@ export enum ApiErrorCode {
   FASTAPI_TIMEOUT = 'FASTAPI_TIMEOUT',
   SAJU_CALCULATION_ERROR = 'SAJU_CALCULATION_ERROR',
   RESULT_NOT_FOUND = 'RESULT_NOT_FOUND',
+  // 타인 소유 분석 결과 접근 시에도 이 코드로 404가 내려온다 (존재 여부를 노출하지 않기 위함).
+  SAJU_RESULT_NOT_FOUND = 'SAJU_RESULT_NOT_FOUND',
+
+  // 사용량 제한
+  DAILY_LIMIT_EXCEEDED = 'DAILY_LIMIT_EXCEEDED',
 
   // 기업 에러
   COMPANY_NOT_FOUND = 'COMPANY_NOT_FOUND',
@@ -50,6 +55,8 @@ export const ERROR_MESSAGES: Record<ApiErrorCode, string> = {
   [ApiErrorCode.FASTAPI_TIMEOUT]: '사주 데이터 조회 중 시간초과. 잠시 후 다시 시도해주세요',
   [ApiErrorCode.SAJU_CALCULATION_ERROR]: '사주 분석 중 오류가 발생했습니다',
   [ApiErrorCode.RESULT_NOT_FOUND]: '분석 결과를 찾을 수 없습니다',
+  [ApiErrorCode.SAJU_RESULT_NOT_FOUND]: '분석 결과를 찾을 수 없습니다',
+  [ApiErrorCode.DAILY_LIMIT_EXCEEDED]: '오늘 분석 가능 횟수를 모두 사용했습니다. 내일 다시 시도해주세요',
   [ApiErrorCode.COMPANY_NOT_FOUND]: '기업 정보를 찾을 수 없습니다',
   [ApiErrorCode.COMPANY_API_ERROR]: '기업 정보 조회 중 오류가 발생했습니다',
   [ApiErrorCode.INTERNAL_SERVER_ERROR]: '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요',

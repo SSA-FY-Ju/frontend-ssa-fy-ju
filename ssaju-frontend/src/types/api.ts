@@ -305,13 +305,14 @@ export interface CompatibilityResult {
 /**
  * 피드백 요청 — API 스펙 기준 값 사용
  *
- * feedbackType: CAREER_TIMING | CONSULTATION | COMPATIBILITY
+ * feedbackType: CAREER_CONSULTATION | COMPANY_COMPATIBILITY
+ *   - SAJU(사주/관운)는 피드백 대상이 아니며, 요청 시 백엔드가 400을 반환한다.
  * satisfactionStatus: SATISFIED | DISSATISFIED
  * feedbackContent: 선택 입력, 최대 500자
  */
 export interface FeedbackRequest {
   analysisId: number;
-  feedbackType: 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
+  feedbackType: 'CAREER_CONSULTATION' | 'COMPANY_COMPATIBILITY';
   satisfactionStatus: 'SATISFIED' | 'DISSATISFIED';
   feedbackContent?: string;
 }

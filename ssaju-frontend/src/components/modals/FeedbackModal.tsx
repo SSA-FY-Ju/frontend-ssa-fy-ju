@@ -4,10 +4,10 @@ import { useEffect, useState } from 'react';
 import { useFeedback } from '@/hooks/useFeedback';
 import { BaseModal } from '@/components/common/BaseModal';
 
-type FeedbackType = 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
+/** 사주(SAJU)는 백엔드 피드백 대상이 아니므로 타입 단계에서 제외한다. */
+type FeedbackType = 'CONSULTATION' | 'COMPATIBILITY';
 
 const FEEDBACK_TYPE_LABEL: Record<FeedbackType, string> = {
-  CAREER_TIMING: '관운 분석',
   CONSULTATION: 'AI 커리어 컨설팅',
   COMPATIBILITY: '기업 궁합 분석',
 };

@@ -13,12 +13,16 @@ import { useSessionStore } from '@/stores/sessionStore';
 import { toastUtils } from '@/lib/toast';
 import type { FeedbackRequest } from '@/types/api';
 
-type FeedbackType = 'CAREER_TIMING' | 'CONSULTATION' | 'COMPATIBILITY';
+/**
+ * UI 내부에서 쓰는 피드백 대상 명칭.
+ * 사주(SAJU)는 백엔드에서 피드백 대상이 아니라 요청 시 400을 반환하므로 포함하지 않는다.
+ */
+type FeedbackType = 'CONSULTATION' | 'COMPATIBILITY';
 
+/** UI 내부 명칭 → 백엔드 FeedbackType enum 값 (US6에서 값이 변경됨) */
 const FEEDBACK_TYPE_MAP: Record<FeedbackType, FeedbackRequest['feedbackType']> = {
-  CAREER_TIMING:  'CAREER_TIMING',
-  CONSULTATION:   'CONSULTATION',
-  COMPATIBILITY:  'COMPATIBILITY',
+  CONSULTATION:   'CAREER_CONSULTATION',
+  COMPATIBILITY:  'COMPANY_COMPATIBILITY',
 };
 
 export function useFeedback(feedbackType: FeedbackType, onSuccess?: () => void) {

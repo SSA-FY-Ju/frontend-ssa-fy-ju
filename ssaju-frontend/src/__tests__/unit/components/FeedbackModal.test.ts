@@ -17,7 +17,7 @@ jest.mock('@/hooks/useFeedback', () => ({
 const { useFeedback } = jest.requireMock('@/hooks/useFeedback');
 
 const defaultProps = {
-  feedbackType: 'CAREER_TIMING' as const,
+  feedbackType: 'CONSULTATION' as const,
   onClose: jest.fn(),
 };
 
@@ -30,7 +30,7 @@ describe('FeedbackModal', () => {
   it('모달 렌더링: 제목, 피드백 유형 표시', () => {
     render(React.createElement(FeedbackModal, defaultProps));
     expect(screen.getByText('분석이 도움이 됐나요?')).toBeInTheDocument();
-    expect(screen.getByText('관운 분석')).toBeInTheDocument();
+    expect(screen.getByText('AI 커리어 컨설팅')).toBeInTheDocument();
   });
 
   it('만족도 선택지(도움이 됐어요 / 아쉬웠어요) 표시', () => {
@@ -81,9 +81,9 @@ describe('FeedbackModal', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalledTimes(1), { timeout: 1000 });
   });
 
-  it('CONSULTATION 타입 표시', () => {
-    render(React.createElement(FeedbackModal, { ...defaultProps, feedbackType: 'CONSULTATION' }));
-    expect(screen.getByText('AI 커리어 컨설팅')).toBeInTheDocument();
+  it('COMPATIBILITY 타입 표시', () => {
+    render(React.createElement(FeedbackModal, { ...defaultProps, feedbackType: 'COMPATIBILITY' }));
+    expect(screen.getByText('기업 궁합 분석')).toBeInTheDocument();
   });
 
   it('isSubmitting true일 때 버튼 "전송 중..." 표시', () => {
