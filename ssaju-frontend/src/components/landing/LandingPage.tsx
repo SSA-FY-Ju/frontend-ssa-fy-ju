@@ -10,7 +10,6 @@ import Page2 from './pages/Page2';
 import Page3 from './pages/Page3';
 import Page4 from './pages/Page4';
 import Page5 from './pages/Page5';
-import { AuthModal } from '@/components/auth/AuthModal';
 import { useAuthStore } from '@/stores/authStore';
 
 type PageState = 'landing' | 'chat';
@@ -50,8 +49,11 @@ export default function LandingPage() {
   const [pageIndex, setPageIndex] = useState(0);
   const [state, setState] = useState<PageState>('landing');
   const isLoggedIn = useAuthStore((s) => s.isLoggedIn);
-  const loginModalOpen = useAuthStore((s) => s.isLoginModalOpen);
-  const closeLoginModal = useAuthStore((s) => s.closeLoginModal);
+  // AuthModal 을 여기서 렌더하지 않는 이유:
+  // SessionRehydrationWrapper 가 이미 전역으로 한 번 렌더하고, LandingPage 는 그 안에 들어간다.
+  // 양쪽이 같은 스토어 플래그(isLoginModalOpen)를 보므로 여기서 또 렌더하면
+  // 클릭 한 번에 모달이 2개 열린다(실측: dialog 2개, DOM 155 -> 247, 제목 4개).
+  // 열기 신호만 보내고 렌더는 전역 인스턴스에 맡긴다.
   const openLoginModal = useAuthStore((s) => s.openLoginModal);
 
   const handleStart = () => {
@@ -127,7 +129,6 @@ export default function LandingPage() {
   }, [state, totalPages]);
 
   return (
-    <>
     <div ref={containerRef} className="landing-no-drag relative w-screen h-screen overflow-hidden">
       <Brand
         onClick={() => {
@@ -173,11 +174,5 @@ export default function LandingPage() {
         </div>
       </div>
     </div>
-
-    <AuthModal
-      isOpen={loginModalOpen}
-      onClose={closeLoginModal}
-    />
-    </>
   );
 }
