@@ -8,7 +8,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { HistoryTabs } from '@/components/history/HistoryTabs';
 import { HistoryCard } from '@/components/history/HistoryCard';
 import { EmptyState } from '@/components/history/EmptyState';
-import { DeleteConfirmModal } from '@/components/history/DeleteConfirmModal/DeleteConfirmModal';
+import dynamic from 'next/dynamic';
+
+const DeleteConfirmModal = dynamic(() => import('@/components/history/DeleteConfirmModal/DeleteConfirmModal').then((m) => m.DeleteConfirmModal), { ssr: false });
 import { ProfileCard } from '@/components/history/ProfileCard';
 import { Pagination } from '@/components/history/Pagination';
 
@@ -172,12 +174,14 @@ export default function MyPage() {
         </div>
       </div>
 
+      {deleteTargetId !== null && (
       <DeleteConfirmModal
         recordId={deleteTargetId}
         onConfirm={(id) => deleteRecord(id)}
         onClose={() => setDeleteTargetId(null)}
         isDeleting={isDeleting}
       />
+      )}
     </div>
   );
 }

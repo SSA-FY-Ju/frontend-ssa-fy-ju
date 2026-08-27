@@ -1,7 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FeedbackModal } from '@/components/modals/FeedbackModal/FeedbackModal';
+import dynamic from 'next/dynamic';
+
+const FeedbackModal = dynamic(() => import('@/components/modals/FeedbackModal/FeedbackModal').then((m) => m.FeedbackModal), { ssr: false });
 
 interface FeedbackPromptCardProps {
   onClose: () => void;
