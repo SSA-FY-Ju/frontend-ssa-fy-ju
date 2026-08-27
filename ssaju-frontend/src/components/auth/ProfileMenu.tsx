@@ -4,7 +4,9 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { WithdrawalModal } from '@/components/auth/WithdrawalModal/WithdrawalModal';
+import dynamic from 'next/dynamic';
+
+const WithdrawalModal = dynamic(() => import('@/components/auth/WithdrawalModal/WithdrawalModal').then((m) => m.WithdrawalModal), { ssr: false });
 
 /**
  * 로그인 후 프로필 메뉴

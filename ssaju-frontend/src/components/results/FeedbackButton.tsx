@@ -8,7 +8,9 @@
  */
 
 import { useState } from 'react';
-import { FeedbackModal } from '@/components/modals/FeedbackModal/FeedbackModal';
+import dynamic from 'next/dynamic';
+
+const FeedbackModal = dynamic(() => import('@/components/modals/FeedbackModal/FeedbackModal').then((m) => m.FeedbackModal), { ssr: false });
 
 /** 사주(SAJU)는 백엔드 피드백 대상이 아니므로 타입 단계에서 제외한다. */
 type FeedbackType = 'CONSULTATION' | 'COMPATIBILITY';

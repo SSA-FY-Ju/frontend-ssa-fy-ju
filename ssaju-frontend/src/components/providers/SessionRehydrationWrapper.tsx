@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 import { useSessionRehydration } from '@/hooks/useSessionRehydration';
-import { AuthModal } from '@/components/auth/AuthModal/AuthModal';
+import dynamic from 'next/dynamic';
+
+// AuthModal 을 dynamic import 로 분리한 이유: 이 래퍼는 루트 레이아웃에 있어
+// 정적 import 하면 Radix Dialog 체인(64kB raw)이 모든 라우트의 초기 페이로드에 실린다.
+// 모달이 열리는 순간에만 청크를 받도록 미룬다. ssr:false — 열림 상태는 클라이언트 전용이다.
+const AuthModal = dynamic(() => import('@/components/auth/AuthModal/AuthModal').then((m) => m.AuthModal), { ssr: false });
 import { useAuthStore } from '@/stores/authStore';
 import { tryRefreshToken } from '@/lib/api/client';
 
@@ -67,7 +72,7 @@ export function SessionRehydrationWrapper({
   return (
     <>
       {children}
-      <AuthModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
+      {isLoginModalOpen && <AuthModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />}
     </>
   );
 }

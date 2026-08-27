@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { useAuthStore } from '@/stores/authStore';
-import { AuthModal } from '@/components/auth/AuthModal/AuthModal';
+import dynamic from 'next/dynamic';
+
+const AuthModal = dynamic(() => import('@/components/auth/AuthModal/AuthModal').then((m) => m.AuthModal), { ssr: false });
 import { useSave } from '@/hooks/useSave';
 
 interface SaveButtonProps {
@@ -43,7 +45,7 @@ export function SaveButton({ analysisType }: SaveButtonProps) {
         결과를 저장하려면 로그인해주세요
       </button>
 
-      <AuthModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      {isModalOpen && <AuthModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />}
     </>
   );
 }

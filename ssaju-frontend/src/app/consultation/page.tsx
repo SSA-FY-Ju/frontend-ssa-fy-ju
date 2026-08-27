@@ -9,7 +9,8 @@ import { useSessionStore } from '@/stores/sessionStore';
 import { DisclaimerOverlay } from '@/components/results/DisclaimerOverlay';
 import { ConsultationLoading } from '@/components/results/ConsultationLoading';
 import { ErrorMessage } from '@/components/errors/ErrorMessage';
-import { FeedbackModal } from '@/components/modals/FeedbackModal/FeedbackModal';
+
+const FeedbackModal = dynamic(() => import('@/components/modals/FeedbackModal/FeedbackModal').then((m) => m.FeedbackModal), { ssr: false });
 import { FeedbackNudge } from '@/components/consultation/FeedbackNudge';
 
 // Swiper.js는 브라우저 전용 — SSR 비활성화 필수
