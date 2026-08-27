@@ -51,6 +51,8 @@ describe('useCareerTiming', () => {
   });
 
   it('submitAnalysis 호출 시 즉시 phase가 disclaimer로 전환', () => {
+    // API 는 제출 즉시 호출되므로(고지 문구와 병렬) 반환값이 promise 여야 한다
+    fetchCareerTiming.mockReturnValueOnce(new Promise(() => {}));
     const { result } = renderHook(() => useCareerTiming(), { wrapper: QueryClientWrapper });
 
     act(() => { result.current.submitAnalysis('1990-10-10', '14:30'); });

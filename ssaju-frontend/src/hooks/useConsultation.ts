@@ -4,7 +4,9 @@
  * AI 커리어 컨설팅 훅 (T065b, T066)
  *
  * 흐름:
- * 1. submitConsultation() → disclaimer 1.5초 → API 호출(20초)
+ * 1. submitConsultation() → API 호출 즉시 시작 + disclaimer 표시 (병렬)
+ *    — 원래는 고지 2초가 끝나야 요청이 시작되는 직렬 구조라 총 대기가
+ *      항상 (2초 + API)였다. 병렬화로 max(2초, API)가 된다.
  * 2. 19개 필드 전체 수신 → consultationStore에 저장
  * 3. FullPageConsultation에서 Swiper.js 수직 슬라이드로 탐색
  *
@@ -29,27 +31,24 @@ export function useConsultation() {
   const [error, setError] = useState<string | null>(null);
   const isRequestingRef = useRef(false);
   const pendingArgsRef = useRef<{ birthDate: string; birthTime: string } | null>(null);
+  // 제출 시점에 시작된 진행 중인 API 요청 (disclaimer 와 병렬)
+  const apiPromiseRef = useRef<Promise<ConsultationData> | null>(null);
 
   const consultationStore = useConsultationStore();
   const queryClient = useQueryClient();
   const user = useAuthStore((s) => s.user);
 
-  /** disclaimer 완료 후 실제 API 호출 */
-  const runApiCall = useCallback(async () => {
+  /** disclaimer 완료 후 호출 — 제출 시점에 시작된 요청의 결과를 기다려 화면을 전환한다 */
+  const settleApiCall = useCallback(async () => {
     const args = pendingArgsRef.current;
-    if (!args) return;
+    const promise = apiPromiseRef.current;
+    if (!args || !promise) return;
 
     setPhase('loading');
     consultationStore.setIsLoading(true);
 
     try {
-      const request: ConsultationRequest = {
-        birthDate: args.birthDate,
-        birthTime: args.birthTime,
-        targetName: user?.name || '사용자', // 유저 이름 포함
-      };
-
-      const data = await fetchConsultation(request);
+      const data = await promise;
 
       // Zustand 메모리에 전체 캐싱
       consultationStore.setConsultation(data);
@@ -73,16 +72,17 @@ export function useConsultation() {
     } finally {
       isRequestingRef.current = false;
       pendingArgsRef.current = null;
+      apiPromiseRef.current = null;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, consultationStore]);
+  }, [consultationStore]);
 
   const {
     isVisible: disclaimerVisible,
     isFading: disclaimerFading,
     start: startDisclaimer,
     reset: resetDisclaimer,
-  } = useDisclaimerTimer({ onComplete: runApiCall });
+  } = useDisclaimerTimer({ onComplete: settleApiCall });
 
   /**
    * 컨설팅 분석 시작 — 매번 새로 API 호출 (캐싱 없음)
@@ -103,10 +103,20 @@ export function useConsultation() {
     isRequestingRef.current = true;
 
     pendingArgsRef.current = { birthDate, birthTime };
+    // API 를 여기서 즉시 시작한다 (고지 문구와 병렬).
+    // 에러 처리는 settleApiCall 의 await 에서 하므로, 고지가 끝나기 전에
+    // 거부되어도 unhandledrejection 이 뜨지 않도록 no-op catch 만 붙여둔다.
+    const promise = fetchConsultation({
+      birthDate,
+      birthTime,
+      targetName: user?.name || '사용자', // 유저 이름 포함
+    } satisfies ConsultationRequest);
+    promise.catch(() => {});
+    apiPromiseRef.current = promise;
     setError(null);
     setPhase('disclaimer');
     startDisclaimer();
-  }, [startDisclaimer, consultationStore]);
+  }, [startDisclaimer, consultationStore, user]);
 
   /**
    * Swiper onSlideChange 콜백에서 호출
@@ -123,6 +133,7 @@ export function useConsultation() {
     setError(null);
     isRequestingRef.current = false;
     pendingArgsRef.current = null;
+    apiPromiseRef.current = null;
   };
 
   return {
