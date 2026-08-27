@@ -38,11 +38,6 @@ export function FeedbackModal({ feedbackType, onClose, onSubmitted, exitAction }
         border: '1px solid rgba(139,92,246,0.2)',
         boxShadow: '0 0 0 1px rgba(255,255,255,0.04), 0 32px 80px rgba(0,0,0,0.7), 0 0 60px rgba(109,40,217,0.12)',
       }}
-      motionProps={{
-        initial: { opacity: 0, y: 32, scale: 0.97 },
-        exit: { opacity: 0, y: 20, scale: 0.98 },
-        transition: { duration: 0.32, ease: [0.22, 1, 0.36, 1] },
-      }}
     >
         {/* 배경 별빛 장식 */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">

@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-import type { ACCENT_GRADIENTS, DEFAULT_MOTION } from './ModalShell.utils';
+import type { ACCENT_GRADIENTS } from './ModalShell.utils';
 
 export interface ModalShellProps {
   open: boolean;
@@ -14,7 +14,5 @@ export interface ModalShellProps {
   accentBar?: keyof typeof ACCENT_GRADIENTS;
   /** DialogContent에 병합할 클래스 (위치 오버라이드, 좌우 마진 등) */
   contentClassName?: string;
-  /** 진입/퇴장 모션 커스터마이즈 (기본값은 AuthModal과 동일) */
-  motionProps?: Partial<typeof DEFAULT_MOTION>;
   children: ReactNode;
 }

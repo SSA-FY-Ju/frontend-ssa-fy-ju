@@ -40,11 +40,6 @@ export function CompanyConfirmModal({
         border: '1px solid rgba(139,92,246,0.3)',
         boxShadow: '0 32px 80px rgba(0,0,0,0.4), 0 0 60px rgba(109,40,217,0.1)',
       }}
-      motionProps={{
-        initial: { opacity: 0, y: 16, scale: 0.97 },
-        exit: { opacity: 0, y: 12, scale: 0.98 },
-        transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] },
-      }}
     >
         {/* 헤더 */}
         <div style={{ padding: '24px 24px 0' }}>
