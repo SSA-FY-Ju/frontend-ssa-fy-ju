@@ -58,7 +58,12 @@ const config: Config = {
       },
       fontFamily: {
         body: ['Pretendard', 'system-ui', '-apple-system', 'sans-serif'],
-        heading: ['Garamond', 'Georgia', 'serif'],
+        // 구글 css2 의 'Garamond' 렌더 블로킹 링크를 제거하고, next/font 로
+        // 자체 호스팅하는 같은 계열의 Cormorant Garamond 를 1순위로 쓴다
+        heading: ['var(--font-serif-en)', 'Garamond', 'Georgia', 'serif'],
+        // font-serif 는 Header·ServiceCard 한글 제목에 쓰이는데 시스템 serif 로
+        // 방치돼 있었다. 영문은 Cormorant, 한글은 Noto Serif KR 로 폴백되는 스택
+        serif: ['var(--font-serif-en)', 'var(--font-serif-kr)', 'Georgia', 'serif'],
       },
       fontSize: {
         // 반응형 폰트 크기

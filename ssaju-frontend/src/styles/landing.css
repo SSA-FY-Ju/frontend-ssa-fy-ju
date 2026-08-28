@@ -1,7 +1,11 @@
 /* ============= SSAju — Van Gogh Starry Night ============= */
 
-@import url('https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@400;500;600;700;900&family=Pretendard:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+/*
+  웹폰트 로드는 layout.tsx 의 next/font 가 담당한다. 이전의 @import 2줄은
+  CSS 번들 병합 시 파일 중간(offset 46,846)으로 밀려 스펙상 무효였다 -
+  @import 는 다른 규칙보다 앞에 있어야 하며, 위반 시 브라우저가 조용히 무시한다.
+  그 결과 아래 폰트 변수들이 전부 시스템 폰트로 폴백되고 있었다.
+*/
 
 :root {
   /* Deep Space palette */
@@ -21,8 +25,12 @@
   --paint-cream: #e0e8ff;
   --ink: #0a0f1f;
 
-  --serif: 'Noto Serif KR', 'Gowun Batang', 'Cormorant Garamond', serif;
-  --serif-en: 'Cormorant Garamond', 'Noto Serif KR', serif;
+  /* Gowun Batang 제거: --serif 의 폴백 2순위라 1순위 Noto Serif KR 가 로드되는 한
+     쓰일 수 없는데도 @import 선언만 차지하고 있었다 */
+  --serif: var(--font-serif-kr), 'Cormorant Garamond', serif;
+  --serif-en: var(--font-serif-en), var(--font-serif-kr), serif;
+  /* Pretendard 는 로드하지 않는다(도입 검토 후 기각 - layout.tsx 주석 참조).
+     스택에 남겨둔 것은 로컬 설치 사용자를 위한 것 */
   --sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif;
 }
 
