@@ -49,25 +49,41 @@ export function useCompatibility() {
   const isRequestingRef = useRef(false);
   // disclaimer 완료 후 사용할 인자 보존
   const pendingArgsRef = useRef<CompatibilityArgs | null>(null);
+  // 제출 시점에 시작된 진행 중인 API 요청 (disclaimer 와 병렬)
+  const apiPromiseRef = useRef<Promise<CompatibilityResult> | null>(null);
 
-  /** disclaimer 완료 후 실제 API 호출 */
-  const runApiCall = useCallback(async () => {
+  /**
+   * args 로 요청을 구성해 API 를 즉시 쏘고 진행 중 promise 를 보관한다.
+   * 고지 문구 2초가 끝나야 요청이 시작되던 직렬 구조를 병렬로 바꾼 것 —
+   * 총 대기시간이 (2초 + API)에서 max(2초, API)로 줄어든다.
+   * 에러 처리는 settleApiCall 의 await 에서 하므로, 고지가 끝나기 전에
+   * 거부되어도 unhandledrejection 이 뜨지 않도록 no-op catch 만 붙여둔다.
+   */
+  const startApiCall = useCallback((args: CompatibilityArgs) => {
+    const request: CompatibilityRequest = {
+      userBirthDate: args.birthDate,
+      userBirthTime: args.birthTime || undefined,
+      targetRole: args.targetRole,
+      companyName: args.companyName,
+      ...(args.companyFoundingDate ? { companyFoundingDate: args.companyFoundingDate } : {}),
+      ...(args.companyFoundingTime ? { companyFoundingTime: args.companyFoundingTime } : {}),
+    };
+    const promise = fetchCompatibility(request);
+    promise.catch(() => {});
+    apiPromiseRef.current = promise;
+  }, []);
+
+  /** disclaimer 완료 후 호출 — 진행 중인 요청의 결과를 기다려 화면을 전환한다 */
+  const settleApiCall = useCallback(async () => {
     const args = pendingArgsRef.current;
-    if (!args) return;
+    const promise = apiPromiseRef.current;
+    if (!args || !promise) return;
 
     setPhase('loading');
 
     try {
-      const request: CompatibilityRequest = {
-        userBirthDate: args.birthDate,
-        userBirthTime: args.birthTime || undefined,
-        targetRole: args.targetRole,
-        companyName: args.companyName,
-        ...(args.companyFoundingDate ? { companyFoundingDate: args.companyFoundingDate } : {}),
-        ...(args.companyFoundingTime ? { companyFoundingTime: args.companyFoundingTime } : {}),
-      };
-
-      const data = await fetchCompatibility(request);
+      const data = await promise;
+      apiPromiseRef.current = null;
       setResult(data);
       setPhase('result');
       pendingArgsRef.current = null;
@@ -99,6 +115,7 @@ export function useCompatibility() {
         useAnalysisStore.getState().setCompatibilityInputs(args as unknown as Record<string, unknown>);
       }
     } catch (err) {
+      apiPromiseRef.current = null;
       isRequestingRef.current = false;
 
       // 404 or COMPANY_NOT_FOUND: 설립일자 조회 실패 → 직접 입력 단계 (pendingArgs 보존)
@@ -124,7 +141,7 @@ export function useCompatibility() {
     isFading: disclaimerFading,
     start: startDisclaimer,
     reset: resetDisclaimer,
-  } = useDisclaimerTimer({ onComplete: runApiCall });
+  } = useDisclaimerTimer({ onComplete: settleApiCall });
 
   /**
    * 궁합 분석 시작 (고지 문구 → 로딩 → 결과)
@@ -151,11 +168,13 @@ export function useCompatibility() {
     if (isRequestingRef.current) return;
     isRequestingRef.current = true;
 
-    pendingArgsRef.current = { birthDate, birthTime, targetRole, companyName, companyFoundingDate, companyFoundingTime };
+    const args = { birthDate, birthTime, targetRole, companyName, companyFoundingDate, companyFoundingTime };
+    pendingArgsRef.current = args;
+    startApiCall(args); // 고지 문구와 병렬로 즉시 요청 시작
     setError(null);
     setPhase('disclaimer');
     startDisclaimer();
-  }, [startDisclaimer]);
+  }, [startDisclaimer, startApiCall]);
 
   /**
    * 설립일자 직접 입력 후 재제출 (disclaimer 건너뜜)
@@ -166,13 +185,15 @@ export function useCompatibility() {
     if (!args || isRequestingRef.current) return;
 
     isRequestingRef.current = true;
-    pendingArgsRef.current = {
+    const updated = {
       ...args,
       companyFoundingDate: foundingDate,
       companyFoundingTime: '09:00',
     };
-    runApiCall();
-  }, [runApiCall]);
+    pendingArgsRef.current = updated;
+    startApiCall(updated);
+    settleApiCall();
+  }, [startApiCall, settleApiCall]);
 
   const reset = () => {
     resetDisclaimer();
@@ -181,6 +202,7 @@ export function useCompatibility() {
     setPhase('idle');
     isRequestingRef.current = false;
     pendingArgsRef.current = null;
+    apiPromiseRef.current = null;
   };
 
   return {
