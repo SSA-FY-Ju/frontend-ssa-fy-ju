@@ -71,6 +71,69 @@ const updateLoadingState = (loading: boolean): void => {
 let refreshPromise: Promise<boolean> | null = null;
 
 /**
+ * 마지막으로 refresh 가 2xx 로 성공한 시각(ms).
+ *
+ * accessToken 은 HttpOnly 쿠키라 JS 가 값을 읽을 수 없다. 그래서 갱신이 실제로
+ * 세션을 복구했는지 확인할 방법이 2xx 응답뿐인데, 2xx 는 "서버가 발급했다"는 뜻이지
+ * "브라우저에 저장됐다"는 뜻이 아니다. 실제로 백엔드 쿠키 인증 전환 과도기에는
+ * refresh 가 2xx 를 반환하면서도 Set-Cookie 가 빠져 세션이 복구되지 않았고,
+ * 그 결과 API 호출마다 401 → 갱신 → 재시도 → 401 이 반복됐다.
+ *
+ * 토큰 값을 못 보는 대신 결과로 판단한다. 갱신 직후에도 401 이 계속되면 그 갱신은
+ * 효과가 없었던 것이므로, 같은 갱신을 반복하지 않고 세션 만료로 처리한다.
+ */
+let lastRefreshSuccessAt = 0;
+
+/** 갱신 후 이 시간(ms) 안에 온 401 은 "갱신해도 소용없었다"는 신호로 본다. */
+const RECENT_REFRESH_WINDOW_MS = 3000;
+
+/** accessToken 의 예상 만료 시각(ms)을 보관하는 localStorage 키. */
+const ACCESS_TOKEN_EXPIRY_KEY = 'ssaju_access_token_expiry';
+
+/** 만료 직전 요청이 401 이 되지 않도록 두는 안전 여유(ms). */
+const EXPIRY_SAFETY_MARGIN_MS = 30_000;
+
+/** 로그인·갱신 응답의 accessTokenExpiresIn(초)을 만료 시각으로 바꿔 저장한다. */
+function rememberAccessTokenExpiry(expiresInSeconds: unknown): void {
+  if (typeof window === 'undefined') return;
+  if (typeof expiresInSeconds !== 'number' || !Number.isFinite(expiresInSeconds)) return;
+  try {
+    localStorage.setItem(ACCESS_TOKEN_EXPIRY_KEY, String(Date.now() + expiresInSeconds * 1000));
+  } catch {
+    // 저장 실패는 무시한다 — 없으면 갱신을 시도하는 쪽으로 동작한다.
+  }
+}
+
+/** 로그아웃 등으로 세션이 끝났을 때 보관해 둔 만료 시각을 지운다. */
+export function clearAccessTokenExpiry(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(ACCESS_TOKEN_EXPIRY_KEY);
+  } catch {
+    // 무시
+  }
+}
+
+/**
+ * accessToken 이 아직 살아 있다고 볼 수 있는지 판단한다.
+ *
+ * accessToken 은 HttpOnly 쿠키라 값을 읽을 수 없지만, 로그인·갱신 응답이 알려준
+ * 유효 기간으로 만료 시각은 계산해 둘 수 있다. 이 값이 남아 있으면 앱 부팅 시
+ * 굳이 갱신하지 않아도 된다. 실제로는 쿠키가 없어진 뒤일 수도 있는데, 그때는
+ * 첫 API 요청이 401 을 받고 인터셉터가 갱신하므로 스스로 복구된다.
+ */
+export function isAccessTokenLikelyValid(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const stored = Number(localStorage.getItem(ACCESS_TOKEN_EXPIRY_KEY));
+    if (!Number.isFinite(stored) || stored === 0) return false;
+    return Date.now() + EXPIRY_SAFETY_MARGIN_MS < stored;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * 토큰 갱신 시도
  * refreshToken HttpOnly 쿠키 → 백엔드 → 새 accessToken 응답 → authStore 갱신
  */
@@ -87,6 +150,7 @@ export async function tryRefreshToken(): Promise<boolean> {
       // accessToken은 이제 응답의 Set-Cookie로 세팅되므로 값 자체를 파싱할 필요가 없다.
       // 요청이 2xx로 성공했다는 것 자체가 갱신 성공 신호.
       // user 정보(name, email)는 authStore localStorage에 영속되므로 별도 API 호출 불필요
+      lastRefreshSuccessAt = Date.now();
       if (typeof window !== 'undefined') {
         const { useAuthStore } = require('@/stores/authStore');
         useAuthStore.getState().setIsLoggedIn(true);
@@ -112,7 +176,16 @@ type RetriableConfig = InternalAxiosRequestConfig & { _retry?: boolean };
  * - 갱신 실패 시 로그아웃 + 로그인 모달 오픈
  */
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // 로그인·갱신 응답은 새 accessToken 의 유효 기간(accessTokenExpiresIn, 초)을 알려준다.
+    // 토큰 값 자체는 HttpOnly 라 볼 수 없지만, 이 값으로 만료 시각은 계산해 둘 수 있다.
+    const url = response.config?.url ?? '';
+    if (url.includes('/api/auth/login') || url.includes('/api/auth/refresh')) {
+      const body = response.data as ApiResponse<{ accessTokenExpiresIn?: number }> | undefined;
+      rememberAccessTokenExpiry(body?.data?.accessTokenExpiresIn);
+    }
+    return response;
+  },
   async (error: AxiosError) => {
     const originalConfig = error.config as RetriableConfig | undefined;
     const status = error.response?.status;
@@ -121,19 +194,27 @@ axiosInstance.interceptors.response.use(
     if (status === 401 && originalConfig && !originalConfig._retry && !isRefreshCall) {
       originalConfig._retry = true;
 
-      const refreshed = await tryRefreshToken();
+      // 갱신에 성공한 직후인데 또 401 이라면, 그 갱신은 효과가 없었다는 뜻이다.
+      // 다시 갱신해도 결과는 같고 API 호출 수만큼 갱신 요청만 늘어나므로,
+      // 여기서 멈추고 세션 만료로 처리한다.
+      const refreshDidNotHelp =
+        lastRefreshSuccessAt > 0 &&
+        Date.now() - lastRefreshSuccessAt < RECENT_REFRESH_WINDOW_MS;
+
+      const refreshed = refreshDidNotHelp ? false : await tryRefreshToken();
       if (refreshed) {
         // 새 accessToken은 이미 쿠키로 세팅되어 있으므로 헤더 조작 없이 그대로 재시도
         return axiosInstance(originalConfig);
       }
 
-      // 갱신 실패 (리프레시 토큰 만료) → 로그아웃 + 로그인 모달 오픈
+      // 갱신 실패(리프레시 토큰 만료) 또는 갱신해도 401 지속 → 로그아웃 + 로그인 모달 오픈
       if (typeof window !== 'undefined') {
         try {
           const { useAuthStore } = require('@/stores/authStore');
           const store = useAuthStore.getState();
           store.logout();
           store.openLoginModal();
+          clearAccessTokenExpiry();
         } catch {
           // 스토어 접근 실패 시 무시
         }
