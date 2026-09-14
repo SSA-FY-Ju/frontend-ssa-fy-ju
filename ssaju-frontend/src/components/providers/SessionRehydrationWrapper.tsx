@@ -9,14 +9,15 @@ import dynamic from 'next/dynamic';
 // 모달이 열리는 순간에만 청크를 받도록 미룬다. ssr:false — 열림 상태는 클라이언트 전용이다.
 const AuthModal = dynamic(() => import('@/components/auth/AuthModal/AuthModal').then((m) => m.AuthModal), { ssr: false });
 import { useAuthStore } from '@/stores/authStore';
-import { tryRefreshToken } from '@/lib/api/client';
+import { isAccessTokenLikelyValid, tryRefreshToken } from '@/lib/api/client';
 
 /**
  * Session 복원 래퍼 컴포넌트
  *
  * 동작:
  * 1. 앱 부팅 시 sessionStorage 세션 데이터 복원 (useSessionRehydration)
- * 2. 첫 mount 시 무조건 silent refresh 시도하여 세션 복구
+ * 2. 첫 mount 시 세션 복구가 필요한 경우에만 silent refresh (로그인 이력이 있고
+ *    accessToken 이 만료됐을 때)
  * 3. AuthModal 전역 렌더링
  *
  * 이 컴포넌트는 children을 절대 막지 않는다.
@@ -51,7 +52,23 @@ export function SessionRehydrationWrapper({
     if (!_hasHydrated || triedRef.current) return;
     triedRef.current = true;
 
-    // [핵심] 첫 마운트 시 무조건 refresh 시도하여 쿠키에 있는 세션 확인
+    // 로그인 이력이 없으면(영속된 isLoggedIn=false) refresh 는 항상 401 로 실패한다.
+    // 첫 방문자·로그아웃 사용자에게까지 매 페이지 로드마다 실패 확정 요청을 보내던
+    // 낭비를 제거한다. 이 경우 복구할 세션이 없으므로 곧바로 auth-ready 로 넘어간다.
+    if (!useAuthStore.getState().isLoggedIn) {
+      setIsAuthReady(true);
+      return;
+    }
+
+    // accessToken 이 아직 유효한 시간대라면 복구할 것이 없다. 토큰 수명(10분) 안에
+    // 페이지를 이동할 때마다 갱신을 한 번씩 보내던 낭비를 없앤다. 저장된 만료 시각이
+    // 틀렸더라도 첫 API 요청이 401 을 받아 인터셉터가 갱신하므로 스스로 복구된다.
+    if (isAccessTokenLikelyValid()) {
+      setIsAuthReady(true);
+      return;
+    }
+
+    // 토큰이 만료됐을 때만 쿠키 세션 복구를 시도한다.
     (async () => {
       try {
         // api/client.ts에 정의된 중앙 리프레시 로직 사용

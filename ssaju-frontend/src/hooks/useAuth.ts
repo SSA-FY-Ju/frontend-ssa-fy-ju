@@ -7,6 +7,7 @@ import { useAnalysisStore } from '@/stores/analysisStore';
 import { useConsultationStore } from '@/stores/consultationStore';
 import { useSessionStore } from '@/stores/sessionStore';
 import { login as loginApi, signup as signupApi, logout as logoutApi } from '@/lib/api/auth';
+import { clearAccessTokenExpiry } from '@/lib/api/client';
 import { fetchMyPageData } from '@/lib/api/mypage';
 import type { LoginRequest, SignupRequest } from '@/lib/api/auth';
 
@@ -87,6 +88,8 @@ export function useAuth() {
       queryClient.clear();
       // 분석 결과 세션 캐시 삭제
       analysisCache.clearAll();
+      // 보관해 둔 accessToken 만료 시각 폐기 — 다음 부팅에서 유효하다고 오판하지 않도록
+      clearAccessTokenExpiry();
     }
   };
 
