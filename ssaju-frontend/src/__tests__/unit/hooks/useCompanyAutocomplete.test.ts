@@ -346,7 +346,7 @@ describe('useCompanyAutocomplete', () => {
       act(() => { result.current.search('느린응답_1'); });
       await act(async () => { await runDebounce(); });
 
-      expect(mockGet).toHaveBeenCalledWith('/api/company/search', expect.objectContaining({ timeout: 9000 }));
+      expect(mockGet).toHaveBeenCalledWith('/api/company/search', expect.objectContaining({ timeout: 7000 }));
     });
 
     it('서버가 504 로 응답하면 시간 초과로 안내한다', async () => {

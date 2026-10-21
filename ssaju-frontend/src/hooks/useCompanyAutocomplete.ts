@@ -18,9 +18,9 @@ export type { CompanySuggestion };
 // 금융위 검색은 대소문자를 구분해서 "LG"와 "lg"의 결과가 다르므로 키를 소문자로 합치지 않는다.
 const clientCache = new Map<string, CompanySuggestion[]>();
 
-// 서버가 외부 API 를 6초에 끊으므로, 브라우저는 그보다 길게 기다리되 서버 콜드 스타트와
-// 네트워크 여유를 더한 만큼만 기다린다. 서버까지 응답하지 못하는 경우의 안전장치다.
-const CLIENT_TIMEOUT_MS = 9000;
+// 서버가 외부 API 를 4초에 끊으므로, 브라우저는 그보다 길게 기다리되 서버 콜드 스타트와
+// 네트워크 여유 3초를 더한 만큼만 기다린다. 서버까지 응답하지 못하는 경우의 안전장치다.
+const CLIENT_TIMEOUT_MS = 7000;
 
 /**
  * 'TIMEOUT' 은 응답이 너무 늦은 경우, 'UNAVAILABLE' 은 외부 API 장애가 이어져 서버가 잠시 호출을 멈춘 경우,
