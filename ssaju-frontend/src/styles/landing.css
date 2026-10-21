@@ -1,7 +1,7 @@
 /* ============= SSAju — Van Gogh Starry Night ============= */
 
 /*
-  웹폰트 로드는 layout.tsx 의 next/font 가 담당한다. 이전의 @import 2줄은
+  웹폰트 로드는 layout.tsx 의 Fontsource 패키지가 담당한다. 이전의 @import 2줄은
   CSS 번들 병합 시 파일 중간(offset 46,846)으로 밀려 스펙상 무효였다 -
   @import 는 다른 규칙보다 앞에 있어야 하며, 위반 시 브라우저가 조용히 무시한다.
   그 결과 아래 폰트 변수들이 전부 시스템 폰트로 폴백되고 있었다.

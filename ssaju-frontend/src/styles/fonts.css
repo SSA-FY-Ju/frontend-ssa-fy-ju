@@ -1,0 +1,22 @@
+/*
+  세리프 웹폰트 2종의 이름 변수와 대체 글꼴.
+  폰트 파일과 @font-face 는 layout.tsx 에서 불러오는 Fontsource 패키지가 담당한다.
+*/
+
+/* 웹폰트를 받기 전 Times New Roman 을 Noto Serif KR 크기에 맞춰 레이아웃 흔들림을 줄인다.
+   수치는 next/font 가 자동으로 만들던 값을 그대로 옮겼다. */
+@font-face {
+  font-family: 'Noto Serif KR Fallback';
+  src: local('Times New Roman');
+  ascent-override: 95.82%;
+  descent-override: 23.81%;
+  line-gap-override: 0%;
+  size-adjust: 120.12%;
+}
+
+:root {
+  --font-serif-kr: 'Noto Serif KR Variable', 'Noto Serif KR Fallback';
+  /* Cormorant 는 대체 글꼴을 두지 않는다 - 크기만 맞춘 대체 글꼴은 글자 범위 제한이 없어
+     스택 뒤의 Noto Serif KR 로 한글이 넘어가지 못한다. "영문 Cormorant + 한글 Noto" 조합이 의도다. */
+  --font-serif-en: 'Cormorant Garamond Variable';
+}
