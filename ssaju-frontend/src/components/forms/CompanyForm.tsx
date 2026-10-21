@@ -12,7 +12,7 @@
 import { useState } from 'react';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { CompanyAutocomplete } from './CompanyAutocomplete';
-import type { DartCompany } from '@/hooks/useCompanyAutocomplete';
+import type { CompanySuggestion } from '@/hooks/useCompanyAutocomplete';
 
 interface CompanyFormProps {
   /** 기업 선택 완료 콜백 */
@@ -22,10 +22,10 @@ interface CompanyFormProps {
 }
 
 export function CompanyForm({ onCompanySelect, isLoading = false }: CompanyFormProps) {
-  const [selectedCompany, setSelectedCompany] = useState<DartCompany | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<CompanySuggestion | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSelect = (company: DartCompany) => {
+  const handleSelect = (company: CompanySuggestion) => {
     setSelectedCompany(company);
     setError(null);
   };

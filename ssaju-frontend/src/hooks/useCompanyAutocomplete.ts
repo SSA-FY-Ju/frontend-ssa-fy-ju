@@ -10,23 +10,38 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { axiosInstance } from '@/lib/api/client';
-import type { DartCompany } from '@/lib/api/company';
+import type { CompanySuggestion } from '@/lib/api/company';
 
-export type { DartCompany };
+export type { CompanySuggestion };
 
-// 클라이언트 메모리 캐시 — 같은 쿼리는 네트워크 요청 없이 즉시 반환
-const clientCache = new Map<string, DartCompany[]>();
+// 클라이언트 메모리 캐시 — 같은 쿼리는 네트워크 요청 없이 즉시 반환.
+// 금융위 검색은 대소문자를 구분해서 "LG"와 "lg"의 결과가 다르므로 키를 소문자로 합치지 않는다.
+const clientCache = new Map<string, CompanySuggestion[]>();
 
-/** 더 이상 프리로드가 필요 없지만 호출부 하위 호환을 위해 유지 */
-export function preloadCorpList() {
-  // no-op: FSC API는 요청 시 호출
+// 서버가 외부 API 를 6초에 끊으므로, 브라우저는 그보다 길게 기다리되 서버 콜드 스타트와
+// 네트워크 여유를 더한 만큼만 기다린다. 서버까지 응답하지 못하는 경우의 안전장치다.
+const CLIENT_TIMEOUT_MS = 9000;
+
+/**
+ * 'TIMEOUT' 은 응답이 너무 늦은 경우, 'UNAVAILABLE' 은 외부 API 장애가 이어져 서버가 잠시 호출을 멈춘 경우,
+ * 'FAILED' 는 그 밖의 이유로 불러오지 못한 경우
+ */
+export type CompanySearchError = 'TIMEOUT' | 'UNAVAILABLE' | 'FAILED';
+
+function classifyError(err: unknown): CompanySearchError {
+  const e = err as { response?: { status?: number }; code?: string };
+  if (e.response?.status === 504 || e.code === 'ECONNABORTED' || e.code === 'ETIMEDOUT') return 'TIMEOUT';
+  if (e.response?.status === 503) return 'UNAVAILABLE';
+  return 'FAILED';
 }
 
 export function useCompanyAutocomplete() {
-  const [suggestions, setSuggestions] = useState<DartCompany[]>([]);
+  const [suggestions, setSuggestions] = useState<CompanySuggestion[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [error, setError] = useState<CompanySearchError | null>(null);
+  const lastQueryRef = useRef('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 응답은 보낸 순서대로 도착하지 않는다. 느린 이전 검색어의 응답이 나중에 도착해 지금 입력에
@@ -50,8 +65,37 @@ export function useCompanyAutocomplete() {
     [],
   );
 
+  const runRequest = async (query: string, key: string, seq: number) => {
+    const controller = new AbortController();
+    abortRef.current = controller;
+    try {
+      const res = await axiosInstance.get<{ list: { corpName: string }[] }>('/api/company/search', {
+        params: { q: query.trim() },
+        signal: controller.signal,
+        timeout: CLIENT_TIMEOUT_MS,
+      });
+      const data = res.data;
+      const result: CompanySuggestion[] = data.list.map((item) => ({ corpName: item.corpName }));
+      // 늦게 온 응답도 그 검색어에 대해서는 맞는 데이터이므로 캐시에는 넣고, 화면 반영만 버린다
+      clientCache.set(key, result);
+      if (seq !== requestSeqRef.current) return;
+      setSuggestions(result);
+      setIsOpen(result.length > 0);
+    } catch (err) {
+      // 검색어를 바꿔서 취소된 이전 요청은 순번이 달라 여기서 걸러진다 - 취소를 오류로 보여주지 않는다
+      if (seq !== requestSeqRef.current) return;
+      setSuggestions([]);
+      setIsOpen(false);
+      setError(classifyError(err));
+    } finally {
+      if (seq === requestSeqRef.current) setIsLoading(false);
+    }
+  };
+
   const search = (query: string) => {
     setHighlightedIndex(-1);
+    setError(null);
+    lastQueryRef.current = query;
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
     // 검색창을 비우거나 캐시에서 즉시 표시하는 경우에도 이전 요청은 무효화해야 한다
@@ -64,7 +108,7 @@ export function useCompanyAutocomplete() {
       return;
     }
 
-    const key = query.trim().toLowerCase();
+    const key = query.trim();
 
     // 클라이언트 캐시 히트 → 즉시 표시 (네트워크 요청 없음)
     const hit = clientCache.get(key);
@@ -77,33 +121,20 @@ export function useCompanyAutocomplete() {
 
     setIsLoading(true);
 
-    debounceRef.current = setTimeout(async () => {
-      const controller = new AbortController();
-      abortRef.current = controller;
-      try {
-        const res = await axiosInstance.get<{ list: { corpName: string }[] }>('/api/company/search', {
-          params: { q: query.trim() },
-          signal: controller.signal,
-        });
-        const data = res.data;
-        const result: DartCompany[] = data.list.map((item) => ({
-          corpName: item.corpName,
-          corpCode: '',
-          stockCode: '',
-        }));
-        // 늦게 온 응답도 그 검색어에 대해서는 맞는 데이터이므로 캐시에는 넣고, 화면 반영만 버린다
-        clientCache.set(key, result);
-        if (seq !== requestSeqRef.current) return;
-        setSuggestions(result);
-        setIsOpen(result.length > 0);
-      } catch {
-        if (seq !== requestSeqRef.current) return;
-        setSuggestions([]);
-        setIsOpen(false);
-      } finally {
-        if (seq === requestSeqRef.current) setIsLoading(false);
-      }
+    debounceRef.current = setTimeout(() => {
+      void runRequest(query, key, seq);
     }, 300);
+  };
+
+  /** 실패한 검색어를 입력은 그대로 둔 채 디바운스 없이 바로 다시 요청한다 */
+  const retry = () => {
+    const query = lastQueryRef.current;
+    if (!query.trim()) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    const seq = invalidatePending();
+    setError(null);
+    setIsLoading(true);
+    void runRequest(query, query.trim(), seq);
   };
 
   const close = () => {
@@ -113,10 +144,11 @@ export function useCompanyAutocomplete() {
     setIsOpen(false);
     setIsLoading(false);
     setHighlightedIndex(-1);
+    setError(null);
   };
 
   const navigateUp = () => setHighlightedIndex((i) => Math.max(i - 1, 0));
   const navigateDown = () => setHighlightedIndex((i) => Math.min(i + 1, suggestions.length - 1));
 
-  return { suggestions, isOpen, isLoading, highlightedIndex, search, close, navigateUp, navigateDown };
+  return { suggestions, isOpen, isLoading, error, highlightedIndex, search, retry, close, navigateUp, navigateDown };
 }

@@ -3,7 +3,7 @@
  *
  * 현재 구현 기준: fetchCompanyAutocomplete API 래퍼가 아니라
  * axiosInstance.get('/api/company/search', { params: { q } })를 직접 호출하고,
- * DartCompany[]({corpName, corpCode, stockCode}) 형태로 결과를 저장한다.
+ * CompanySuggestion[]({corpName}) 형태로 결과를 저장한다.
  * 조회 결과는 모듈 레벨 clientCache에 쿼리별로 캐시되므로, 테스트마다
  * 서로 다른 검색어를 써서 캐시 충돌(=axios 재호출 안 됨)을 피한다.
  *
@@ -32,7 +32,7 @@ function companyListResponse(names: string[]) {
 }
 
 function company(corpName: string) {
-  return { corpName, corpCode: '', stockCode: '' };
+  return { corpName };
 }
 
 /** debounce 300ms 실행 후 pending 마이크로태스크 flush */
@@ -287,6 +287,7 @@ describe('useCompanyAutocomplete', () => {
 
     expect(result.current.suggestions).toEqual([]);
     expect(result.current.isOpen).toBe(false);
+    expect(result.current.error).toBe('FAILED');
   });
 
   it('연속 검색 시 마지막 debounce만 실행됨 (이전 타이머 취소)', async () => {
@@ -334,6 +335,130 @@ describe('useCompanyAutocomplete', () => {
 
     // search 즉시 highlightedIndex 리셋
     expect(result.current.highlightedIndex).toBe(-1);
+  });
+
+  // 외부 API 가 느리거나 실패했을 때 "결과 없음"과 구분해 안내하고, 입력을 유지한 채 다시 시도한다
+  describe('느리거나 실패한 응답', () => {
+    it('요청에 브라우저 쪽 대기 상한을 함께 보낸다', async () => {
+      mockGet.mockResolvedValueOnce(companyListResponse(['삼성전자']));
+      const { result } = renderHook(() => useCompanyAutocomplete());
+
+      act(() => { result.current.search('느린응답_1'); });
+      await act(async () => { await runDebounce(); });
+
+      expect(mockGet).toHaveBeenCalledWith('/api/company/search', expect.objectContaining({ timeout: 9000 }));
+    });
+
+    it('서버가 504 로 응답하면 시간 초과로 안내한다', async () => {
+      mockGet.mockRejectedValueOnce({ response: { status: 504 } });
+      const { result } = renderHook(() => useCompanyAutocomplete());
+
+      act(() => { result.current.search('느린응답_2'); });
+      await act(async () => { await runDebounce(); });
+
+      expect(result.current.error).toBe('TIMEOUT');
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('브라우저 대기 상한을 넘기면 시간 초과로 안내한다', async () => {
+      mockGet.mockRejectedValueOnce({ code: 'ECONNABORTED' });
+      const { result } = renderHook(() => useCompanyAutocomplete());
+
+      act(() => { result.current.search('느린응답_3'); });
+      await act(async () => { await runDebounce(); });
+
+      expect(result.current.error).toBe('TIMEOUT');
+    });
+
+    it('새로 검색하면 이전 오류 안내를 지운다', async () => {
+      mockGet.mockRejectedValueOnce({ response: { status: 502 } });
+      const { result } = renderHook(() => useCompanyAutocomplete());
+
+      act(() => { result.current.search('느린응답_4'); });
+      await act(async () => { await runDebounce(); });
+      expect(result.current.error).toBe('FAILED');
+
+      act(() => { result.current.search('느린응답_4_수정'); });
+
+      expect(result.current.error).toBeNull();
+    });
+
+    it('다시 시도하면 디바운스 없이 같은 검색어로 바로 요청하고, 성공하면 안내를 지운다', async () => {
+      mockGet
+        .mockRejectedValueOnce({ response: { status: 504 } })
+        .mockResolvedValueOnce(companyListResponse(['삼성전자']));
+      const { result } = renderHook(() => useCompanyAutocomplete());
+
+      act(() => { result.current.search('느린응답_5'); });
+      await act(async () => { await runDebounce(); });
+      expect(result.current.error).toBe('TIMEOUT');
+
+      await act(async () => {
+        result.current.retry();
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+
+      expect(mockGet).toHaveBeenCalledTimes(2);
+      expect(mockGet).toHaveBeenLastCalledWith('/api/company/search', expect.objectContaining({ params: { q: '느린응답_5' } }));
+      expect(result.current.suggestions).toEqual([company('삼성전자')]);
+      expect(result.current.error).toBeNull();
+    });
+
+    it('검색어를 바꿔서 취소된 이전 요청의 실패는 오류로 보여주지 않는다', async () => {
+      let rejectFirst!: (reason: unknown) => void;
+      mockGet
+        .mockReturnValueOnce(new Promise((_, reject) => { rejectFirst = reject; }))
+        .mockResolvedValueOnce(companyListResponse(['LG전자']));
+      const { result } = renderHook(() => useCompanyAutocomplete());
+
+      act(() => { result.current.search('취소_삼성'); });
+      await act(async () => { await runDebounce(); });
+      act(() => { result.current.search('취소_LG'); });
+      await act(async () => { await runDebounce(); });
+
+      await act(async () => { rejectFirst({ code: 'ERR_CANCELED' }); await Promise.resolve(); });
+
+      expect(result.current.error).toBeNull();
+      expect(result.current.suggestions).toEqual([company('LG전자')]);
+    });
+
+    it('서버가 연속 장애로 호출을 멈춘 503 이면 잠시 멈춤으로 안내한다', async () => {
+      mockGet.mockRejectedValueOnce({ response: { status: 503 } });
+      const { result } = renderHook(() => useCompanyAutocomplete());
+
+      act(() => { result.current.search('느린응답_7'); });
+      await act(async () => { await runDebounce(); });
+
+      expect(result.current.error).toBe('UNAVAILABLE');
+    });
+
+    it('목록을 닫으면 오류 안내도 지운다', async () => {
+      mockGet.mockRejectedValueOnce({ response: { status: 504 } });
+      const { result } = renderHook(() => useCompanyAutocomplete());
+
+      act(() => { result.current.search('느린응답_6'); });
+      await act(async () => { await runDebounce(); });
+      act(() => { result.current.close(); });
+
+      expect(result.current.error).toBeNull();
+    });
+  });
+
+  it('대소문자가 다른 검색어는 캐시를 따로 쓴다 - 금융위 검색은 대소문자를 구분한다', async () => {
+    mockGet
+      .mockResolvedValueOnce(companyListResponse(['(주)lg소문자']))
+      .mockResolvedValueOnce(companyListResponse(['LG전자(주)']));
+    const { result } = renderHook(() => useCompanyAutocomplete());
+
+    act(() => { result.current.search('lg'); });
+    await act(async () => { await runDebounce(); });
+    act(() => { result.current.search('LG'); });
+    await act(async () => { await runDebounce(); });
+
+    expect(mockGet).toHaveBeenCalledTimes(2);
+    expect(result.current.suggestions).toEqual([company('LG전자(주)')]);
   });
 
   // 응답이 보낸 순서와 다르게 도착하는 경우. 이전 요청의 응답을 직접 늦게 풀어 순서를 통제한다.
