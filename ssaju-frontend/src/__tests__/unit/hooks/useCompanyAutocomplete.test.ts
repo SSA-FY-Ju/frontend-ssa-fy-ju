@@ -119,7 +119,7 @@ describe('useCompanyAutocomplete', () => {
       await runDebounce();
     });
 
-    expect(mockGet).toHaveBeenCalledWith('/api/company/search', { params: { q: '현대차_B' } });
+    expect(mockGet).toHaveBeenCalledWith('/api/company/search', expect.objectContaining({ params: { q: '현대차_B' } }));
   });
 
   it('fetch 성공 시 suggestions 설정, isOpen=true', async () => {
@@ -305,7 +305,7 @@ describe('useCompanyAutocomplete', () => {
     });
 
     expect(mockGet).toHaveBeenCalledTimes(1);
-    expect(mockGet).toHaveBeenCalledWith('/api/company/search', { params: { q: '삼성_G' } });
+    expect(mockGet).toHaveBeenCalledWith('/api/company/search', expect.objectContaining({ params: { q: '삼성_G' } }));
   });
 
   it('search 호출 시 highlightedIndex -1로 즉시 초기화', async () => {
@@ -334,5 +334,82 @@ describe('useCompanyAutocomplete', () => {
 
     // search 즉시 highlightedIndex 리셋
     expect(result.current.highlightedIndex).toBe(-1);
+  });
+
+  // 응답이 보낸 순서와 다르게 도착하는 경우. 이전 요청의 응답을 직접 늦게 풀어 순서를 통제한다.
+  describe('늦게 도착하는 응답', () => {
+    function deferred<T>() {
+      let resolve!: (v: T) => void;
+      const promise = new Promise<T>((r) => { resolve = r; });
+      return { promise, resolve };
+    }
+
+    it('이전 검색어의 응답이 나중에 와도 현재 검색어의 목록을 덮어쓰지 않는다', async () => {
+      const slow = deferred<ReturnType<typeof companyListResponse>>();
+      mockGet
+        .mockReturnValueOnce(slow.promise)
+        .mockResolvedValueOnce(companyListResponse(['LG전자']));
+
+      const { result } = renderHook(() => useCompanyAutocomplete());
+
+      act(() => { result.current.search('늦은응답_삼성_1'); });
+      await act(async () => { await runDebounce(); });
+      act(() => { result.current.search('늦은응답_LG_1'); });
+      await act(async () => { await runDebounce(); });
+      expect(result.current.suggestions).toEqual([company('LG전자')]);
+
+      await act(async () => { slow.resolve(companyListResponse(['삼성전자'])); await Promise.resolve(); });
+
+      expect(result.current.suggestions).toEqual([company('LG전자')]);
+    });
+
+    it('검색창을 비운 뒤 도착한 응답은 목록을 다시 열지 않는다', async () => {
+      const slow = deferred<ReturnType<typeof companyListResponse>>();
+      mockGet.mockReturnValueOnce(slow.promise);
+
+      const { result } = renderHook(() => useCompanyAutocomplete());
+
+      act(() => { result.current.search('늦은응답_삼성_2'); });
+      await act(async () => { await runDebounce(); });
+      act(() => { result.current.search(''); });
+
+      await act(async () => { slow.resolve(companyListResponse(['삼성전자'])); await Promise.resolve(); });
+
+      expect(result.current.isOpen).toBe(false);
+      expect(result.current.suggestions).toEqual([]);
+    });
+
+    it('목록을 닫은 뒤 도착한 응답은 목록을 다시 열지 않고 로딩도 끝낸다', async () => {
+      const slow = deferred<ReturnType<typeof companyListResponse>>();
+      mockGet.mockReturnValueOnce(slow.promise);
+
+      const { result } = renderHook(() => useCompanyAutocomplete());
+
+      act(() => { result.current.search('늦은응답_삼성_3'); });
+      await act(async () => { await runDebounce(); });
+      act(() => { result.current.close(); });
+
+      await act(async () => { slow.resolve(companyListResponse(['삼성전자'])); await Promise.resolve(); });
+
+      expect(result.current.isOpen).toBe(false);
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    it('화면에 반영하지 않은 늦은 응답도 그 검색어의 캐시에는 저장한다', async () => {
+      const slow = deferred<ReturnType<typeof companyListResponse>>();
+      mockGet.mockReturnValueOnce(slow.promise);
+
+      const { result } = renderHook(() => useCompanyAutocomplete());
+
+      act(() => { result.current.search('늦은응답_삼성_4'); });
+      await act(async () => { await runDebounce(); });
+      act(() => { result.current.search(''); });
+      await act(async () => { slow.resolve(companyListResponse(['삼성전자'])); await Promise.resolve(); });
+
+      act(() => { result.current.search('늦은응답_삼성_4'); });
+
+      expect(result.current.suggestions).toEqual([company('삼성전자')]);
+      expect(mockGet).toHaveBeenCalledTimes(1);
+    });
   });
 });

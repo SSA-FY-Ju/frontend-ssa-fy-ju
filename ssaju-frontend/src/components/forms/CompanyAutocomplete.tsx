@@ -62,11 +62,13 @@ export function CompanyAutocomplete({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // 목록이 아직 열리지 않은 로딩 중에도 Escape 는 진행 중인 검색을 취소해야 한다.
+    // 열린 경우에만 처리하면 로딩 중 누른 Escape 가 무시되고, 잠시 뒤 결과 목록이 열린다.
+    if (e.key === 'Escape') { close(); return; }
     if (!isOpen) return;
     if (e.key === 'ArrowDown') { e.preventDefault(); navigateDown(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); navigateUp(); }
     else if (e.key === 'Enter' && highlightedIndex >= 0) { e.preventDefault(); handleSelect(suggestions[highlightedIndex]); }
-    else if (e.key === 'Escape') { close(); }
   };
 
   /** 선택된 기업이 있으면 chip 표시 */
