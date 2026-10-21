@@ -1,7 +1,7 @@
 'use client';
 
 import { CompanyAutocomplete } from '@/components/forms/CompanyAutocomplete';
-import type { DartCompany } from '@/hooks/useCompanyAutocomplete';
+import type { CompanySuggestion } from '@/hooks/useCompanyAutocomplete';
 import type { RoleCategory } from '@/types/api';
 
 export const ROLE_CATEGORIES: { value: RoleCategory; label: string }[] = [
@@ -23,13 +23,13 @@ interface CompatibilityFormProps {
   hasError: boolean;
   errorMessage: string | null;
   onRetry: () => void;
-  selectedCompany: DartCompany | null;
+  selectedCompany: CompanySuggestion | null;
   directMode: boolean;
   directInput: string;
   roleCategory: RoleCategory;
   roleDetailName: string;
   finalCompanyName: string;
-  onSelectCompany: (company: DartCompany) => void;
+  onSelectCompany: (company: CompanySuggestion) => void;
   onClearCompany: () => void;
   onToggleDirectMode: (enabled: boolean) => void;
   onDirectInputChange: (value: string) => void;

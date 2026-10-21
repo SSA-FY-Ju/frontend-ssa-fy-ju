@@ -15,11 +15,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useCompanyAutocomplete } from '@/hooks/useCompanyAutocomplete';
-import type { DartCompany } from '@/hooks/useCompanyAutocomplete';
+import type { CompanySuggestion } from '@/hooks/useCompanyAutocomplete';
 
 interface CompanyAutocompleteProps {
   selectedName?: string;
-  onSelect: (company: DartCompany) => void;
+  onSelect: (company: CompanySuggestion) => void;
   onClear?: () => void;
   disabled?: boolean;
 }
@@ -32,7 +32,7 @@ export function CompanyAutocomplete({
 }: CompanyAutocompleteProps) {
   const [query, setQuery] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
-  const { suggestions, isOpen, isLoading, highlightedIndex, search, close, navigateUp, navigateDown } =
+  const { suggestions, isOpen, isLoading, error, highlightedIndex, search, retry, close, navigateUp, navigateDown } =
     useCompanyAutocomplete();
 
   const closeRef = useRef(close);
@@ -55,18 +55,20 @@ export function CompanyAutocomplete({
     search(val);
   };
 
-  const handleSelect = (company: DartCompany) => {
+  const handleSelect = (company: CompanySuggestion) => {
     onSelect(company);
     setQuery('');
     close();
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    // 목록이 아직 열리지 않은 로딩 중에도 Escape 는 진행 중인 검색을 취소해야 한다.
+    // 열린 경우에만 처리하면 로딩 중 누른 Escape 가 무시되고, 잠시 뒤 결과 목록이 열린다.
+    if (e.key === 'Escape') { close(); return; }
     if (!isOpen) return;
     if (e.key === 'ArrowDown') { e.preventDefault(); navigateDown(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); navigateUp(); }
     else if (e.key === 'Enter' && highlightedIndex >= 0) { e.preventDefault(); handleSelect(suggestions[highlightedIndex]); }
-    else if (e.key === 'Escape') { close(); }
   };
 
   /** 선택된 기업이 있으면 chip 표시 */
@@ -141,6 +143,56 @@ export function CompanyAutocomplete({
           />
         )}
       </div>
+
+      {error && !isLoading && (
+        <div
+          role="alert"
+          style={{
+            position: 'absolute',
+            zIndex: 50,
+            top: '100%',
+            left: 0,
+            right: 30,
+            marginTop: 6,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+            background: 'rgba(10,12,28,0.99)',
+            border: '1px solid rgba(248,113,113,0.3)',
+            borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            padding: '12px 14px',
+            fontSize: 13,
+            color: 'rgba(255,255,255,0.8)',
+          }}
+        >
+          <span style={{ wordBreak: 'keep-all' }}>
+            {error === 'TIMEOUT'
+              ? '검색이 너무 오래 걸려 중단했어요.'
+              : error === 'UNAVAILABLE'
+                ? '기업 검색이 잠시 원활하지 않아요. 잠시 후 다시 시도해 주세요.'
+                : '기업 정보를 불러오지 못했어요.'}
+          </span>
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={retry}
+            style={{
+              flexShrink: 0,
+              padding: '6px 12px',
+              borderRadius: 8,
+              border: '1px solid rgba(139,92,246,0.4)',
+              background: 'rgba(139,92,246,0.15)',
+              color: '#c4b5fd',
+              fontSize: 13,
+              cursor: 'pointer',
+            }}
+          >
+            다시 시도
+          </button>
+        </div>
+      )}
 
       {isOpen && suggestions.length > 0 && (
         <ul

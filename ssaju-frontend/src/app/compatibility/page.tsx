@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCompatibility } from '@/hooks/useCompatibility';
-import type { DartCompany } from '@/hooks/useCompanyAutocomplete';
+import type { CompanySuggestion } from '@/hooks/useCompanyAutocomplete';
 import { useSessionStore } from '@/stores/sessionStore';
 import { useRouteGuard } from '@/hooks/useRouteGuard';
 import { FoundingDatePicker } from '@/components/forms/FoundingDatePicker';
@@ -24,7 +24,7 @@ export default function CompatibilityPage() {
   const exitRequestPending = useSessionStore((s) => s.exitRequestPending);
   const clearExitRequest = useSessionStore((s) => s.clearExitRequest);
 
-  const [selectedCompany, setSelectedCompany] = useState<DartCompany | null>(null);
+  const [selectedCompany, setSelectedCompany] = useState<CompanySuggestion | null>(null);
   const [directMode, setDirectMode] = useState(false);
   const [directInput, setDirectInput] = useState('');
   const [roleCategory, setRoleCategory] = useState<RoleCategory>('TECH_BACKEND');
@@ -50,7 +50,7 @@ export default function CompatibilityPage() {
   }, [exitRequestPending, clearExitRequest, router]);
 
   // 드롭다운에서 기업 선택 → 바로 확정 (모달 없음)
-  const handleCompanySelect = (company: DartCompany) => {
+  const handleCompanySelect = (company: CompanySuggestion) => {
     setSelectedCompany(company);
     setDirectMode(false);
     setDirectInput('');

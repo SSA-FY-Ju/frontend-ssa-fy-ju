@@ -26,6 +26,55 @@ async function fillDirectInputAndSubmit(canvasElement: HTMLElement, companyName 
 /** 기본 폼 — 기업명 자동완성 입력 화면 */
 export const Idle: Story = { name: '기본 폼' };
 
+/**
+ * 자동완성 - "삼성" 응답만 2초 늦게 도착하는 환경.
+ * 먼저 보낸 요청의 응답이 나중에 입력한 검색어의 결과를 덮어쓰는 순서 역전을 재현한다.
+ */
+export const AutocompleteSlowResponse: Story = {
+  name: '자동완성 - 늦게 도착하는 응답',
+  parameters: {
+    msw: {
+      handlers: [
+        http.get('/api/company/search', async ({ request }) => {
+          const q = new URL(request.url).searchParams.get('q') ?? '';
+          const companies: Record<string, string[]> = {
+            삼성: ['삼성전자', '삼성SDI', '삼성바이오로직스'],
+            LG: ['LG전자', 'LG화학', 'LG에너지솔루션'],
+          };
+          const key = Object.keys(companies).find((k) => q.includes(k));
+          await delay(key === '삼성' ? 2000 : 100);
+          return HttpResponse.json({ list: (key ? companies[key] : []).map((corpName) => ({ corpName })) });
+        }),
+      ],
+    },
+  },
+};
+
+let timeoutStoryCalls = 0;
+
+/**
+ * 자동완성 - 첫 검색은 서버가 외부 API 시간 초과로 504 를 돌려주고, 다시 시도하면 성공하는 환경.
+ * 시간 초과를 사용자에게 안내하고 입력을 유지한 채 다시 시도할 수 있는지 확인한다.
+ */
+export const AutocompleteTimeout: Story = {
+  name: '자동완성 - 외부 API 시간 초과',
+  parameters: {
+    msw: {
+      handlers: [
+        http.get('/api/company/search', async () => {
+          timeoutStoryCalls += 1;
+          if (timeoutStoryCalls === 1) {
+            await delay(1500);
+            return HttpResponse.json({ list: [], error: 'TIMEOUT' }, { status: 504 });
+          }
+          await delay(300);
+          return HttpResponse.json({ list: ['삼성전자', '삼성SDI', '삼성바이오로직스'].map((corpName) => ({ corpName })) });
+        }),
+      ],
+    },
+  },
+};
+
 /** "목록에 없는 기업이라면?" 클릭 → 기업명 직접 입력 모드 */
 export const DirectInputMode: Story = {
   name: '직접 입력 모드',
