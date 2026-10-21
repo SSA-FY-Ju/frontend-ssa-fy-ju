@@ -13,7 +13,7 @@
  * 7. 성향 & 케어    — workStyle · environmentFit · mentalCare · wealthStyle · relationshipStrategy
  */
 
-import { useRef, useMemo } from 'react';
+import { memo, useRef, useMemo } from 'react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Mousewheel, Keyboard, A11y } from 'swiper/modules';
 import type { Swiper as SwiperType } from 'swiper';
@@ -47,7 +47,7 @@ interface FullPageConsultationProps {
   onSectionChange: (index: number) => void;
 }
 
-export function FullPageConsultation({ data, currentSectionIndex, onSectionChange }: FullPageConsultationProps) {
+export const FullPageConsultation = memo(function FullPageConsultation({ data, currentSectionIndex, onSectionChange }: FullPageConsultationProps) {
   const swiperRef = useRef<SwiperType | null>(null);
 
   // data가 바뀔 때만 재생성 — onSectionChange/currentSectionIndex 변경 시 리렌더 없음
@@ -102,7 +102,7 @@ export function FullPageConsultation({ data, currentSectionIndex, onSectionChang
       </Swiper>
     </div>
   );
-}
+});
 
 /* ────────────────────────────────────────────────────────────
    공통: 슬라이드 쉘
