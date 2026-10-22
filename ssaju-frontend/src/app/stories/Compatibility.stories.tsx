@@ -26,6 +26,30 @@ async function fillDirectInputAndSubmit(canvasElement: HTMLElement, companyName 
 /** 기본 폼 — 기업명 자동완성 입력 화면 */
 export const Idle: Story = { name: '기본 폼' };
 
+/**
+ * 자동완성 - "삼성" 응답만 2초 늦게 도착하는 환경.
+ * 먼저 보낸 요청의 응답이 나중에 입력한 검색어의 결과를 덮어쓰는 순서 역전을 재현한다.
+ */
+export const AutocompleteSlowResponse: Story = {
+  name: '자동완성 - 늦게 도착하는 응답',
+  parameters: {
+    msw: {
+      handlers: [
+        http.get('/api/company/search', async ({ request }) => {
+          const q = new URL(request.url).searchParams.get('q') ?? '';
+          const companies: Record<string, string[]> = {
+            삼성: ['삼성전자', '삼성SDI', '삼성바이오로직스'],
+            LG: ['LG전자', 'LG화학', 'LG에너지솔루션'],
+          };
+          const key = Object.keys(companies).find((k) => q.includes(k));
+          await delay(key === '삼성' ? 2000 : 100);
+          return HttpResponse.json({ list: (key ? companies[key] : []).map((corpName) => ({ corpName })) });
+        }),
+      ],
+    },
+  },
+};
+
 /** "목록에 없는 기업이라면?" 클릭 → 기업명 직접 입력 모드 */
 export const DirectInputMode: Story = {
   name: '직접 입력 모드',
