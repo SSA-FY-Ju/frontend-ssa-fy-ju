@@ -122,9 +122,9 @@ export function useConsultation() {
    * Swiper onSlideChange 콜백에서 호출
    * swiper.activeIndex (0-based) → consultationStore.currentSectionIndex 동기화
    */
-  const handleSectionChange = (index: number) => {
-    consultationStore.setCurrentSectionIndex(index);
-  };
+  // 화살표 함수로 감싸지 않고 스토어 액션을 그대로 넘긴다. zustand 액션은 참조가 고정이라
+  // 결과 화면의 memo 비교를 깨뜨리지 않는다 - 감싸면 렌더마다 새 함수가 되어 memo 가 무력화됨.
+  const handleSectionChange = useConsultationStore((s) => s.setCurrentSectionIndex);
 
   const reset = () => {
     resetDisclaimer();
