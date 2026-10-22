@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, FocusEvent } from 'react';
 import { ApiError } from '@/lib/api/client';
 
 export const inputStyle: CSSProperties = {
@@ -46,4 +46,15 @@ export function toUserMessage(err: unknown): string {
     return '네트워크 오류가 발생했습니다.';
   }
   return '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+}
+
+/** input 포커스/블러 시 인라인 스타일 전환 - 세 뷰가 공유 */
+export function focusInput(e: FocusEvent<HTMLInputElement>) {
+  e.currentTarget.style.borderColor = 'rgba(139,92,246,0.55)';
+  e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+}
+
+export function blurInput(e: FocusEvent<HTMLInputElement>) {
+  e.currentTarget.style.borderColor = 'rgba(139,92,246,0.2)';
+  e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
 }
